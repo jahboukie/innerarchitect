@@ -2,16 +2,10 @@ import os
 import logging
 import uuid
 from flask import Flask, render_template, request, jsonify, session
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from openai import OpenAI
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Define base class for SQLAlchemy models
-class Base(DeclarativeBase):
-    pass
 
 # Create Flask app
 app = Flask(__name__)
@@ -25,10 +19,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 
 # Initialize database
-db = SQLAlchemy(model_class=Base)
+from database import db
 db.init_app(app)
 
-# Import models after defining db to avoid circular imports
+# Import models
 from models import User, ChatHistory, JournalEntry
 
 # Create database tables
@@ -61,8 +55,14 @@ def chat():
     message = data.get('message', '')
     mood = data.get('mood', 'neutral')
     
+    # Get session ID for tracking the conversation
+    session_id = session.get('session_id')
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+    
     # Log the received message for debugging
-    logging.debug(f"Received message: {message} (Mood: {mood})")
+    logging.debug(f"Received message: {message} (Mood: {mood}, Session: {session_id})")
     
     # Check if OpenAI API key is available
     if not OPENAI_API_KEY:
@@ -91,10 +91,27 @@ def chat():
             max_tokens=300  # Limit response length
         )
         
-        # Extract and return the AI response
+        # Extract the AI response
         ai_response = response.choices[0].message.content.strip()
         logging.debug(f"AI response: {ai_response}")
         
+        # Save the chat history to the database
+        try:
+            chat_entry = ChatHistory(
+                session_id=session_id,
+                user_message=message,
+                ai_response=ai_response,
+                mood=mood
+            )
+            db.session.add(chat_entry)
+            db.session.commit()
+            logging.info(f"Chat history saved with ID: {chat_entry.id}")
+        except Exception as db_error:
+            # Log the error but don't interrupt user experience
+            logging.error(f"Error saving chat history: {str(db_error)}")
+            db.session.rollback()
+        
+        # Return the AI response to the frontend
         return jsonify({
             'response': ai_response
         })
