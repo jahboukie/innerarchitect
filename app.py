@@ -1,14 +1,40 @@
 import os
 import logging
-from flask import Flask, render_template, request, jsonify
+import uuid
+from flask import Flask, render_template, request, jsonify, session
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
 from openai import OpenAI
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
+# Define base class for SQLAlchemy models
+class Base(DeclarativeBase):
+    pass
+
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key")
+
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+
+# Initialize database
+db = SQLAlchemy(model_class=Base)
+db.init_app(app)
+
+# Import models after defining db to avoid circular imports
+from models import User, ChatHistory, JournalEntry
+
+# Create database tables
+with app.app_context():
+    db.create_all()
+    logging.info("Database tables created")
 
 # Initialize OpenAI client
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -17,6 +43,10 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 # Home route
 @app.route('/')
 def index():
+    # Generate a session ID if one doesn't exist
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+    
     return render_template('index.html')
 
 @app.route('/chat', methods=['POST'])
