@@ -8,6 +8,11 @@
     <!-- Bootstrap CSS (Replit Theme) -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -16,50 +21,86 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="bg-dark py-3">
+    <header>
         <div class="container">
             <div class="d-flex align-items-center justify-content-between">
-                <h1 class="h3 mb-0">
+                <h1 class="mb-0">
                     <i class="fas fa-brain me-2"></i>The Inner Architect
                 </h1>
-                <small class="text-muted">MVP Version</small>
+                <div class="badge bg-dark-subtle text-primary-emphasis px-3 py-2">
+                    <i class="fas fa-code me-1"></i> MVP Version
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="container my-4">
-        <div class="row">
-            <!-- Sidebar - Placeholder for future mood selection controls -->
-            <div class="col-md-3 mb-4">
-                <div class="card">
-                    <div class="card-header">
+        <div class="row g-4">
+            <!-- Introduction panel (New) -->
+            <div class="col-12 mb-2">
+                <div class="card welcome-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h2 class="h4 mb-3">Welcome to Your Mental Wellness Journey</h2>
+                                <p class="text-secondary mb-0">
+                                    The Inner Architect helps you build healthier thought patterns through guided conversation. 
+                                    Share your thoughts and feelings, and receive personalized insights to help reframe negative thinking.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
+                                <i class="fas fa-brain" style="font-size: 3rem; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar - Mood selection controls -->
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-heart me-2 text-danger"></i>
                         <h5 class="mb-0">Mood Check-in</h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-3">How are you feeling today?</p>
+                        <p class="text-secondary mb-3">How are you feeling today?</p>
                         
-                        <!-- Placeholder for future mood selection interface -->
+                        <!-- Mood selection interface -->
                         <div class="d-grid gap-2">
-                            <button class="btn btn-outline-secondary" disabled>
+                            <button class="btn btn-outline-secondary mood-btn" data-mood="happy">
                                 <i class="fas fa-smile me-2"></i>Happy
                             </button>
-                            <button class="btn btn-outline-secondary" disabled>
+                            <button class="btn btn-outline-secondary mood-btn" data-mood="neutral">
                                 <i class="fas fa-meh me-2"></i>Neutral
                             </button>
-                            <button class="btn btn-outline-secondary" disabled>
+                            <button class="btn btn-outline-secondary mood-btn" data-mood="sad">
                                 <i class="fas fa-frown me-2"></i>Sad
                             </button>
-                            <button class="btn btn-outline-secondary" disabled>
+                            <button class="btn btn-outline-secondary mood-btn" data-mood="frustrated">
                                 <i class="fas fa-angry me-2"></i>Frustrated
                             </button>
-                            <button class="btn btn-outline-secondary" disabled>
+                            <button class="btn btn-outline-secondary mood-btn" data-mood="exhausted">
                                 <i class="fas fa-tired me-2"></i>Exhausted
                             </button>
                         </div>
-                        <p class="text-muted small mt-3">
+                        
+                        <hr class="my-4 border-secondary">
+                        
+                        <!-- Daily Reflection (New) -->
+                        <h6 class="mb-3">
+                            <i class="fas fa-pen-to-square me-2"></i>Daily Reflection
+                        </h6>
+                        <p class="text-secondary small">
+                            Tracking your moods and thoughts helps build self-awareness.
+                        </p>
+                        <button class="btn btn-outline-secondary w-100" disabled>
+                            <i class="fas fa-journal-whills me-2"></i>Start Journal Entry
+                        </button>
+                        <p class="text-secondary small mt-2">
                             <i class="fas fa-info-circle me-1"></i>
-                            Mood selection coming soon
+                            Journal feature coming soon
                         </p>
                     </div>
                 </div>
@@ -67,14 +108,20 @@
             
             <!-- Chat Interface -->
             <div class="col-md-9">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Chat with Your Inner Architect</h5>
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-comments me-2 text-primary"></i>
+                            <h5 class="mb-0">Chat with Your Inner Architect</h5>
+                        </div>
+                        <div id="selectedMood" class="badge bg-secondary px-2 py-1 d-none">
+                            <i class="fas fa-meh me-1"></i> Neutral
+                        </div>
                     </div>
                     
                     <!-- Chat display area -->
-                    <div class="card-body">
-                        <div id="chatbox" class="mb-3">
+                    <div class="card-body d-flex flex-column">
+                        <div id="chatbox" class="flex-grow-1">
                             <!-- Welcome message -->
                             <div class="chat-message assistant">
                                 <div class="message-content">
@@ -106,11 +153,19 @@
     </main>
     
     <!-- Footer -->
-    <footer class="bg-dark text-center py-3 mt-5">
+    <footer class="text-center py-4 mt-5">
         <div class="container">
-            <p class="small text-muted mb-0">
-                &copy; 2023 The Inner Architect | A self-help chat application
-            </p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <p class="mb-3">
+                        <i class="fas fa-brain me-2" style="color: var(--accent-color);"></i>
+                        <span class="fw-bold">The Inner Architect</span>
+                    </p>
+                    <p class="small text-muted mb-0">
+                        &copy; 2025 The Inner Architect | A self-help chat application for mental wellness
+                    </p>
+                </div>
+            </div>
         </div>
     </footer>
 
