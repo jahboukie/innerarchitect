@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chatbox.scrollTop = chatbox.scrollHeight;
     }
 
-    // Function to send a message (currently client-side only)
+    // Function to send a message and get AI response
     function sendMessage() {
         const message = messageInput.value.trim();
         
@@ -52,37 +52,49 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear input field
         messageInput.value = '';
         
-        // For MVP: Show a "typing" indicator
+        // Show a "typing" indicator
         const typingIndicator = document.createElement('div');
         typingIndicator.className = 'chat-message assistant';
         typingIndicator.innerHTML = '<div class="message-content"><p class="mb-0"><em>Thinking...</em></p></div>';
         chatbox.appendChild(typingIndicator);
         chatbox.scrollTop = chatbox.scrollHeight;
         
-        // Simulate response delay (will be replaced with actual API call)
-        setTimeout(() => {
+        // For now, use a placeholder for mood (will be implemented later)
+        const mood = "neutral";
+        
+        // Make API call to the backend
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                message: message,
+                mood: mood
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
             // Remove typing indicator
             chatbox.removeChild(typingIndicator);
             
-            // Future: This is where the API call to the backend would go
-            fetch('/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: message })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Add response to chat
-                addMessageToChat(data.response, 'assistant');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Show error message in chat
-                addMessageToChat("I'm sorry, I couldn't process your message. Please try again later.", 'assistant');
-            });
-        }, 1000);
+            // Log the response to console for debugging
+            console.log("AI Response:", data);
+            
+            // Add the AI's response to chat
+            addMessageToChat(data.response, 'assistant');
+            
+            // Scroll to the bottom of the chatbox
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            // Remove typing indicator
+            chatbox.removeChild(typingIndicator);
+            
+            console.error('Error:', error);
+            // Show error message in chat
+            addMessageToChat("I'm sorry, I couldn't process your message. Please try again later.", 'assistant');
+        });
     }
 
     // Event listener for send button click
