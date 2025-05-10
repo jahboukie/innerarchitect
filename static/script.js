@@ -6,9 +6,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendButton = document.getElementById('sendButton');
     const moodButtons = document.querySelectorAll('.mood-btn');
     const selectedMoodDisplay = document.getElementById('selectedMood');
+    const nlpTechniqueSelect = document.getElementById('nlpTechniqueSelect');
+    const techniqueDescription = document.getElementById('techniqueDescription');
     
-    // Track the current selected mood
+    // Track the current selected mood and NLP technique
     let currentMood = "neutral"; // Default mood
+    let currentTechnique = "reframing"; // Default technique
+    
+    // NLP technique descriptions
+    const nlpDescriptions = {
+        'reframing': '<strong>Reframing</strong>: See situations from new perspectives and find positive aspects in challenges.',
+        'pattern_interruption': '<strong>Pattern Interruption</strong>: Break negative thought cycles and establish new, healthier patterns.',
+        'anchoring': '<strong>Anchoring</strong>: Associate positive emotions with specific physical or mental triggers.',
+        'future_pacing': '<strong>Future Pacing</strong>: Visualize positive future outcomes and mentally rehearse success.',
+        'sensory_language': '<strong>Sensory Language</strong>: Use visual, auditory, and kinesthetic language to enhance communication.',
+        'meta_model': '<strong>Meta Model Questions</strong>: Challenge limiting beliefs and generalizations through targeted questions.'
+    };
     
     // Function to format time for message timestamps
     function formatTime() {
@@ -87,7 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ 
                 message: message,
-                mood: currentMood
+                mood: currentMood,
+                technique: currentTechnique
             })
         })
         .then(response => response.json())
@@ -162,6 +176,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const mood = this.getAttribute('data-mood');
             updateMood(mood, this);
         });
+    });
+    
+    // Event listener for NLP technique select
+    nlpTechniqueSelect.addEventListener('change', function() {
+        currentTechnique = this.value;
+        techniqueDescription.innerHTML = `<p class="mb-0">${nlpDescriptions[currentTechnique]}</p>`;
+        
+        // Add a system message about the technique change
+        const systemMessage = document.createElement('div');
+        systemMessage.className = 'chat-message system';
+        systemMessage.innerHTML = `<div class="message-content system"><p class="mb-0"><i class="fas fa-lightbulb me-1"></i> Now focusing on <strong>${currentTechnique.replace('_', ' ')}</strong> technique.</p></div>`;
+        chatbox.appendChild(systemMessage);
+        chatbox.scrollTop = chatbox.scrollHeight;
     });
 
     // Event listener for send button click

@@ -24,6 +24,7 @@ class ChatHistory(db.Model):
     user_message = db.Column(db.Text, nullable=False)
     ai_response = db.Column(db.Text, nullable=False)
     mood = db.Column(db.String(20), nullable=True)
+    nlp_technique = db.Column(db.String(30), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
