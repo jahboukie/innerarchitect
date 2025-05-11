@@ -98,7 +98,7 @@ QUOTA_FIELDS = {
 
 class UsageQuota(db.Model):
     """Model for tracking usage quotas."""
-    __tablename__ = 'usage_quotas'
+    __tablename__ = 'usage_quota'
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey('users.id'), nullable=True)
