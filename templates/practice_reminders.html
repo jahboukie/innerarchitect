@@ -45,26 +45,26 @@
                     
                     <div class="row g-4">
                         <div class="col-md-3">
-                            <div class="card bg-dark-subtle text-center h-100 border-0 p-3">
-                                <h4 class="text-primary" id="total-reminders">0</h4>
+                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                                <h4 class="text-info" id="total-reminders">0</h4>
                                 <p class="mb-0">Total Reminders</p>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-dark-subtle text-center h-100 border-0 p-3">
-                                <h4 class="text-primary" id="active-reminders">0</h4>
+                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                                <h4 class="text-info" id="active-reminders">0</h4>
                                 <p class="mb-0">Active Reminders</p>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-dark-subtle text-center h-100 border-0 p-3">
-                                <h4 class="text-primary" id="completion-rate">0%</h4>
+                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                                <h4 class="text-info" id="completion-rate">0%</h4>
                                 <p class="mb-0">Completion Rate</p>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-dark-subtle text-center h-100 border-0 p-3">
-                                <h4 class="text-primary" id="longest-streak">0</h4>
+                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                                <h4 class="text-info" id="longest-streak">0</h4>
                                 <p class="mb-0">Longest Streak</p>
                             </div>
                         </div>
@@ -607,7 +607,7 @@
                     
                     data.reminders.forEach(reminder => {
                         const reminderItem = document.createElement('div');
-                        reminderItem.className = 'card bg-dark-subtle mb-3 border-0';
+                        reminderItem.className = 'card bg-dark mb-3 border-0';
                         
                         reminderItem.innerHTML = `
                             <div class="card-body">

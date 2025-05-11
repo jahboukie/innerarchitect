@@ -424,6 +424,29 @@ footer p {
     height: 8px;
 }
 
+/* Practice reminders stats styling */
+.practice-stats-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.practice-stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.practice-stats-card h4 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.practice-stats-card p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .chat-message.user .message-content,
