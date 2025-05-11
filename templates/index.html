@@ -95,6 +95,11 @@
                         <p class="text-secondary small mb-3">
                             Select a technique to focus on in your conversation:
                         </p>
+                        <!-- Recommendation Button -->
+                        <button id="recommendButton" class="btn btn-sm btn-outline-primary w-100 mb-3">
+                            <i class="fas fa-magic me-1"></i> Recommend Technique
+                        </button>
+                        
                         <select class="form-select mb-3" id="nlpTechniqueSelect">
                             <option value="reframing">Reframing</option>
                             <option value="pattern_interruption">Pattern Interruption</option>
@@ -105,6 +110,12 @@
                         </select>
                         <div id="techniqueDescription" class="text-secondary small mb-3 p-2 bg-dark rounded">
                             <p class="mb-0"><strong>Reframing</strong>: See situations from new perspectives and find positive aspects in challenges.</p>
+                        </div>
+                        
+                        <!-- Recommendation Explanation (hidden by default) -->
+                        <div id="recommendationExplanation" class="text-secondary small mb-3 p-2 bg-gradient rounded border border-info d-none">
+                            <p class="mb-1 fw-bold"><i class="fas fa-lightbulb me-1 text-warning"></i> Recommendation:</p>
+                            <p class="mb-0 recommendation-text"></p>
                         </div>
                         
                         <hr class="my-4 border-secondary">

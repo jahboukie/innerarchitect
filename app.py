@@ -1,6 +1,7 @@
 import os
 import logging
 import uuid
+import json
 from flask import Flask, render_template, request, jsonify, session
 from openai import OpenAI
 
@@ -34,6 +35,9 @@ with app.app_context():
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
+# Import NLP analyzer
+from nlp_analyzer import recommend_technique, get_technique_description
+
 # Home route
 @app.route('/')
 def index():
@@ -42,6 +46,27 @@ def index():
         session['session_id'] = str(uuid.uuid4())
     
     return render_template('index.html')
+
+# Route to get NLP technique recommendations
+@app.route('/recommend_technique', methods=['POST'])
+def get_technique_recommendation():
+    """
+    Endpoint for recommending the most appropriate NLP technique
+    based on the user's message and mood.
+    """
+    # Get the user message and mood from the request
+    data = request.json
+    message = data.get('message', '')
+    mood = data.get('mood', 'neutral')
+    
+    # Log the received request
+    logging.debug(f"Technique recommendation request: Message={message}, Mood={mood}")
+    
+    # Get technique recommendation
+    recommendation = recommend_technique(message, mood)
+    
+    # Return the recommendation as JSON
+    return jsonify(recommendation)
 
 @app.route('/chat', methods=['POST'])
 def chat():
