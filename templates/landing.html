@@ -79,7 +79,8 @@
 </section>
 
 <!-- Pricing -->
-<section id="pricing" class="py-5">
+<section id="pricing" class="py-5 position-relative overflow-hidden">
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: radial-gradient(circle at 30% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 60%), radial-gradient(circle at 70% 70%, rgba(14, 165, 233, 0.05) 0%, transparent 65%); z-index: -1;"></div>
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="fw-bold">{{ g.translate('landing_pricing_title', 'Choose Your Path') }}</h2>
@@ -89,7 +90,7 @@
         <div class="row g-4 justify-content-center">
             <!-- Free Tier -->
             <div class="col-lg-4">
-                <div class="card bg-secondary bg-opacity-25 border-0 rounded-4 shadow-sm h-100">
+                <div class="card bg-secondary bg-opacity-10 border-0 rounded-4 shadow-sm h-100">
                     <div class="card-body p-4 text-center">
                         <h3 class="mb-3 fw-bold">{{ g.translate('pricing_free_title', 'Free') }}</h3>
                         <div class="mb-4">
@@ -99,27 +100,39 @@
                         
                         <ul class="list-unstyled text-start">
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_free_feature1', 'Basic cognitive reframing techniques') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_free_feature2', 'Limited AI chat interactions (10/day)') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_free_feature3', 'Access to basic dashboard') }}</span>
                             </li>
                             <li class="mb-3 text-muted d-flex align-items-start">
-                                <i class="fas fa-times text-muted me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-times"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_free_limit1', 'Advanced NLP techniques') }}</span>
                             </li>
                             <li class="mb-3 text-muted d-flex align-items-start">
-                                <i class="fas fa-times text-muted me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-times"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_free_limit2', 'Progress tracking') }}</span>
                             </li>
                             <li class="mb-3 text-muted d-flex align-items-start">
-                                <i class="fas fa-times text-muted me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-times"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_free_limit3', 'Personalized journeys') }}</span>
                             </li>
                         </ul>
@@ -135,7 +148,7 @@
             
             <!-- Premium Tier -->
             <div class="col-lg-4">
-                <div class="card bg-primary bg-opacity-10 border-0 rounded-4 shadow position-relative h-100">
+                <div class="card highlight bg-primary bg-opacity-10 border-0 rounded-4 shadow position-relative h-100">
                     <div class="position-absolute top-0 start-50 translate-middle">
                         <span class="badge bg-primary px-3 py-2 rounded-pill">
                             {{ g.translate('pricing_popular', 'Most Popular') }}
@@ -150,27 +163,39 @@
                         
                         <ul class="list-unstyled text-start">
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-primary me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-check"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_premium_feature1', 'All NLP techniques') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-primary me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-check"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_premium_feature2', 'Unlimited AI chat interactions') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-primary me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-check"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_premium_feature3', 'Full progress tracking') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-primary me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-check"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_premium_feature4', 'Communication analysis') }}</span>
                             </li>
                             <li class="mb-3 text-muted d-flex align-items-start">
-                                <i class="fas fa-times text-muted me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-times"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_premium_limit1', 'Voice practice features') }}</span>
                             </li>
                             <li class="mb-3 text-muted d-flex align-items-start">
-                                <i class="fas fa-times text-muted me-2"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-times"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_premium_limit2', 'Personalized journeys') }}</span>
                             </li>
                         </ul>
@@ -186,7 +211,7 @@
             
             <!-- Professional Tier -->
             <div class="col-lg-4">
-                <div class="card bg-secondary bg-opacity-25 border-0 rounded-4 shadow-sm h-100">
+                <div class="card bg-secondary bg-opacity-10 border-0 rounded-4 shadow-sm h-100">
                     <div class="card-body p-4 text-center">
                         <h3 class="mb-3 fw-bold">{{ g.translate('pricing_pro_title', 'Professional') }}</h3>
                         <div class="mb-4">
@@ -196,27 +221,39 @@
                         
                         <ul class="list-unstyled text-start">
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_pro_feature1', 'Everything in Premium') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_pro_feature2', 'Voice practice features') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_pro_feature3', 'Personalized journeys') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_pro_feature4', 'Belief change protocol') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_pro_feature5', 'Practice reminders') }}</span>
                             </li>
                             <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span class="dot-indicator">
+                                    <i class="fas fa-circle text-info"></i>
+                                </span>
                                 <span>{{ g.translate('pricing_pro_feature6', 'Priority support') }}</span>
                             </li>
                         </ul>

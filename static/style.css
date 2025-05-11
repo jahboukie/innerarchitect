@@ -14,6 +14,26 @@
     --header-bg: #1a1a24;
     --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
     --shadow-strong: 0 8px 32px rgba(0, 0, 0, 0.35);
+    
+    /* Shadcn-inspired colors */
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card-bg-subtle: #1c1c21;
+    --card-bg-primary: rgba(124, 58, 237, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.1);
+    --primary-color: #8b5cf6;
+    --primary-foreground: #ffffff;
+    --secondary-color: #71717a;
+    --secondary-foreground: #fafafa;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --accent: #18181b;
+    --accent-foreground: #fafafa;
+    --destructive: #ef4444;
+    --destructive-foreground: #fafafa;
+    --info-color: #0ea5e9;
+    --info-dot-color: #0ea5e9;
+    --success-color: #22c55e;
 }
 
 /* Base styling */
@@ -447,6 +467,112 @@ footer p {
     opacity: 0.8;
 }
 
+/* Modern Pricing Tables */
+#pricing .container {
+    max-width: 1200px;
+}
+
+#pricing .card {
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: visible;
+}
+
+#pricing .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+#pricing .card.highlight {
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
+}
+
+#pricing .card.highlight:hover {
+    box-shadow: 0 15px 35px rgba(139, 92, 246, 0.3);
+}
+
+#pricing h3 {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+#pricing .display-5 {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+#pricing ul li {
+    margin-bottom: 0.9rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+#pricing .badge {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+#pricing .btn-primary, 
+#pricing .btn-outline-primary {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#pricing .btn-primary::before,
+#pricing .btn-outline-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.7s ease;
+}
+
+#pricing .btn-primary:hover::before,
+#pricing .btn-outline-primary:hover::before {
+    left: 100%;
+}
+
+#pricing .text-muted {
+    color: var(--muted-foreground) !important;
+}
+
+/* Dot indicator styling */
+#pricing .dot-indicator {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    margin-right: 10px;
+    margin-top: 4px;
+}
+
+#pricing .dot-indicator i.fa-circle {
+    font-size: 6px;
+    color: var(--info-dot-color);
+}
+
+#pricing .dot-indicator i.fa-check {
+    color: var(--primary-color);
+}
+
+#pricing .dot-indicator i.fa-times {
+    color: var(--muted-foreground);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .chat-message.user .message-content,
@@ -486,6 +612,11 @@ footer p {
         border-radius: 8px;
         margin-top: 0.5rem;
         box-shadow: var(--shadow-soft);
+    }
+    
+    /* Pricing adjustments */
+    #pricing .card {
+        margin-bottom: 2rem;
     }
 }
 
