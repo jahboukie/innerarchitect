@@ -4,26 +4,40 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="py-5 text-center">
+<section class="hero-section">
+    <!-- Floating shapes for modern look -->
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+    <div class="floating-shape shape-3"></div>
+    
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
-                <h1 class="display-4 fw-bold mb-4">{{ g.translate('landing_hero_title', 'Reshape Your Thoughts, Transform Your Life') }}</h1>
-                <p class="lead mb-4">{{ g.translate('landing_hero_subtitle', 'The Inner Architect uses AI-powered Neuro-Linguistic Programming techniques to help you recognize patterns, reframe negative thoughts, and build emotional resilience.') }}</p>
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <h1 class="hero-title">{{ g.translate('landing_hero_title', 'Reshape Your Thoughts, Transform Your Life') }}</h1>
+                <p class="hero-subtitle">{{ g.translate('landing_hero_subtitle', 'The Inner Architect uses AI-powered Neuro-Linguistic Programming techniques to help you recognize patterns, reframe negative thoughts, and build emotional resilience.') }}</p>
                 
-                <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-5">
+                <div class="d-flex flex-column flex-sm-row gap-3 mt-5">
                     {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg px-4 py-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary hero-cta-btn">
                         <i class="fas fa-brain me-2"></i> {{ g.translate('landing_cta_logged_in', 'Go to Dashboard') }}
                     </a>
                     {% else %}
-                    <a href="{{ url_for('login_check') }}" class="btn btn-primary btn-lg px-4 py-3">
+                    <a href="{{ url_for('login_check') }}" class="btn btn-primary hero-cta-btn">
                         <i class="fas fa-sign-in-alt me-2"></i> {{ g.translate('landing_cta_login', 'Get Started Now') }}
                     </a>
                     {% endif %}
-                    <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3">
+                    <a href="#features" class="btn btn-outline-light">
                         <i class="fas fa-info-circle me-2"></i> {{ g.translate('landing_cta_learn', 'Learn More') }}
                     </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="hero-image-container">
+                    <div class="hero-image-backdrop"></div>
+                    <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                         alt="Mind transformation concept" 
+                         class="hero-image">
                 </div>
             </div>
         </div>
@@ -31,47 +45,78 @@
 </section>
 
 <!-- Key Features -->
-<section id="features" class="py-5 bg-dark">
-    <div class="container">
+<section id="features" class="features-section py-5">
+    <div class="container position-relative" style="z-index: 1;">
         <div class="text-center mb-5">
-            <h2 class="fw-bold">{{ g.translate('landing_features_title', 'Powerful NLP Techniques') }}</h2>
-            <p class="lead text-muted">{{ g.translate('landing_features_subtitle', 'Leverage the power of Neuro-Linguistic Programming') }}</p>
+            <h2 class="fw-bold mb-2" style="font-size: 2.5rem; letter-spacing: -0.02em;">
+                {{ g.translate('landing_features_title', 'Powerful NLP Techniques') }}
+            </h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                {{ g.translate('landing_features_subtitle', 'Leverage the power of Neuro-Linguistic Programming') }}
+            </p>
         </div>
         
         <div class="row g-4">
             <div class="col-lg-4">
-                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-sync-alt text-primary" style="font-size: 48px;"></i>
-                        </div>
-                        <h4 class="card-title mb-3">{{ g.translate('landing_feature1_title', 'Cognitive Reframing') }}</h4>
-                        <p class="card-text">{{ g.translate('landing_feature1_desc', 'Learn to view situations from different perspectives, turning challenges into opportunities for growth.') }}</p>
+                <div class="feature-card h-100 p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-sync-alt"></i>
                     </div>
+                    <h4 class="feature-title text-center">{{ g.translate('landing_feature1_title', 'Cognitive Reframing') }}</h4>
+                    <p class="text-center text-muted">{{ g.translate('landing_feature1_desc', 'Learn to view situations from different perspectives, turning challenges into opportunities for growth.') }}</p>
                 </div>
             </div>
             
             <div class="col-lg-4">
-                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-comments text-primary" style="font-size: 48px;"></i>
-                        </div>
-                        <h4 class="card-title mb-3">{{ g.translate('landing_feature2_title', 'Communication Analysis') }}</h4>
-                        <p class="card-text">{{ g.translate('landing_feature2_desc', 'Understand your communication style and learn techniques to connect more effectively with others.') }}</p>
+                <div class="feature-card h-100 p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
                     </div>
+                    <h4 class="feature-title text-center">{{ g.translate('landing_feature2_title', 'Communication Analysis') }}</h4>
+                    <p class="text-center text-muted">{{ g.translate('landing_feature2_desc', 'Understand your communication style and learn techniques to connect more effectively with others.') }}</p>
                 </div>
             </div>
             
             <div class="col-lg-4">
-                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-brain text-primary" style="font-size: 48px;"></i>
-                        </div>
-                        <h4 class="card-title mb-3">{{ g.translate('landing_feature3_title', 'Belief Change Protocol') }}</h4>
-                        <p class="card-text">{{ g.translate('landing_feature3_desc', 'Identify and transform limiting beliefs that hold you back from reaching your full potential.') }}</p>
+                <div class="feature-card h-100 p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
                     </div>
+                    <h4 class="feature-title text-center">{{ g.translate('landing_feature3_title', 'Belief Change Protocol') }}</h4>
+                    <p class="text-center text-muted">{{ g.translate('landing_feature3_desc', 'Identify and transform limiting beliefs that hold you back from reaching your full potential.') }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional features in a second row -->
+        <div class="row g-4 mt-4">
+            <div class="col-lg-4">
+                <div class="feature-card h-100 p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-microphone-alt"></i>
+                    </div>
+                    <h4 class="feature-title text-center">{{ g.translate('landing_feature4_title', 'Voice Practice') }}</h4>
+                    <p class="text-center text-muted">{{ g.translate('landing_feature4_desc', 'Enhance your verbal communication skills through targeted voice exercises and feedback.') }}</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="feature-card h-100 p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4 class="feature-title text-center">{{ g.translate('landing_feature5_title', 'Progress Tracking') }}</h4>
+                    <p class="text-center text-muted">{{ g.translate('landing_feature5_desc', 'Monitor your growth with detailed progress analytics and personalized insights.') }}</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="feature-card h-100 p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h4 class="feature-title text-center">{{ g.translate('landing_feature6_title', 'Personalized Journeys') }}</h4>
+                    <p class="text-center text-muted">{{ g.translate('landing_feature6_desc', 'Follow customized development pathways designed to meet your specific goals and needs.') }}</p>
                 </div>
             </div>
         </div>
