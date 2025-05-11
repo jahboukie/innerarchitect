@@ -7,10 +7,49 @@ from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
 from flask_login import current_user, login_required
 from openai import OpenAI
+import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Set up Stripe
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+
+# Subscription plan configuration
+SUBSCRIPTION_PLANS = {
+    'premium': {
+        'name': 'Premium Plan',
+        'price_id': 'price_1234567890', # You can update this with actual price IDs from Stripe
+        'amount': 999,  # $9.99 in cents
+        'currency': 'usd',
+        'interval': 'month',
+        'features': [
+            'All NLP techniques',
+            'Unlimited AI chat interactions',
+            'Full progress tracking',
+            'Communication analysis'
+        ]
+    },
+    'professional': {
+        'name': 'Professional Plan',
+        'price_id': 'price_0987654321', # You can update this with actual price IDs from Stripe
+        'amount': 1999,  # $19.99 in cents
+        'currency': 'usd',
+        'interval': 'month',
+        'features': [
+            'Everything in Premium',
+            'Voice practice features',
+            'Personalized journeys',
+            'Belief change protocol',
+            'Practice reminders',
+            'Priority support'
+        ]
+    }
+}
 
 # Import language utilities
 import language_util
+
+# Import models
+from models import User, OAuth, Subscription
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -307,6 +346,90 @@ def landing():
         session['session_id'] = str(uuid.uuid4())
         
     return render_template('landing.html')
+
+
+# Checkout route for subscription plans
+@app.route('/checkout/<plan>')
+@require_login
+def create_checkout(plan):
+    """
+    Create a Stripe checkout session for subscription plans.
+    
+    Args:
+        plan (str): The subscription plan ('premium' or 'professional')
+    """
+    if plan not in SUBSCRIPTION_PLANS:
+        flash(f"Invalid plan: {plan}", "danger")
+        return redirect(url_for('landing'))
+        
+    plan_data = SUBSCRIPTION_PLANS[plan]
+    
+    # Get the domain for the success/cancel URLs
+    domain_url = request.host_url.rstrip('/')
+    
+    try:
+        # Check if user already has a customer ID
+        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+        
+        if subscription and subscription.stripe_customer_id:
+            # Existing customer
+            customer_id = subscription.stripe_customer_id
+        else:
+            # Create a new customer in Stripe
+            customer = stripe.Customer.create(
+                email=current_user.email,
+                name=f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or None,
+                metadata={
+                    'user_id': current_user.id
+                }
+            )
+            customer_id = customer.id
+            
+            # Create or update subscription record
+            if not subscription:
+                subscription = Subscription(
+                    user_id=current_user.id,
+                    stripe_customer_id=customer_id,
+                    plan_name='free',
+                    status='active'
+                )
+                db.session.add(subscription)
+            else:
+                subscription.stripe_customer_id = customer_id
+            
+            db.session.commit()
+        
+        # Create a checkout session
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': plan_data['currency'],
+                        'product_data': {
+                            'name': plan_data['name'],
+                            'description': f"The Inner Architect {plan.capitalize()} Plan",
+                        },
+                        'unit_amount': plan_data['amount'],
+                        'recurring': {
+                            'interval': plan_data['interval'],
+                        },
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='subscription',
+            success_url=f"{domain_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{domain_url}/subscription/cancel",
+        )
+        
+        # Redirect to Stripe checkout
+        return redirect(checkout_session.url)
+    except Exception as e:
+        logging.error(f"Error creating checkout session: {str(e)}")
+        flash("An error occurred while processing your request. Please try again later.", "danger")
+        return redirect(url_for('landing'))
 
 @app.route('/')
 def index():

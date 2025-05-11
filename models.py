@@ -2,6 +2,7 @@ from datetime import datetime
 from database import db
 from flask_login import UserMixin
 from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
+from sqlalchemy import ForeignKey, UniqueConstraint
 
 class User(UserMixin, db.Model):
     """User model for authentication and profile information."""
@@ -39,6 +40,43 @@ class OAuth(OAuthConsumerMixin, db.Model):
             name='uq_user_browser_session_key_provider',
         ),
     )
+
+
+class Subscription(db.Model):
+    """Model for user subscription information."""
+    __tablename__ = 'subscriptions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey(User.id), nullable=False)
+    stripe_customer_id = db.Column(db.String, unique=True, nullable=True)
+    stripe_subscription_id = db.Column(db.String, unique=True, nullable=True)
+    plan_name = db.Column(db.String, nullable=False)  # 'free', 'premium', 'professional'
+    status = db.Column(db.String, nullable=False, default='active')  # 'active', 'canceled', 'past_due'
+    current_period_start = db.Column(db.DateTime, nullable=True)
+    current_period_end = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship to User
+    user = db.relationship('User', backref=db.backref('subscription', uselist=False))
+    
+    def __repr__(self):
+        return f'<Subscription {self.id} - {self.plan_name} - {self.status}>'
+        
+    @property
+    def is_active(self):
+        """Check if subscription is active."""
+        return self.status == 'active'
+        
+    @property
+    def has_premium_access(self):
+        """Check if the user has premium or better access."""
+        return self.is_active and self.plan_name in ['premium', 'professional']
+        
+    @property
+    def has_professional_access(self):
+        """Check if the user has professional access."""
+        return self.is_active and self.plan_name == 'professional'
 
 
 class ChatHistory(db.Model):
