@@ -2114,5 +2114,44 @@ def belief_session_page(session_id):
     
     return render_template('belief_session.html', session=belief_session.to_dict())
 
+
+# Administrative route for development testing
+@app.route('/admin/enable-professional')
+@require_login
+def admin_enable_professional():
+    """
+    Developer route to set the current user to have a Professional subscription.
+    This is for testing purposes only.
+    """
+    # Check if user already has a subscription
+    subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+    
+    current_time = datetime.utcnow()
+    one_year_later = current_time + timedelta(days=365)
+    
+    if not subscription:
+        # Create a new subscription
+        subscription = Subscription(
+            user_id=current_user.id,
+            stripe_customer_id=f"dev_customer_{current_user.id}",
+            stripe_subscription_id=f"dev_subscription_{current_user.id}",
+            plan_name='professional',
+            status='active',
+            current_period_start=current_time,
+            current_period_end=one_year_later
+        )
+        db.session.add(subscription)
+    else:
+        # Update existing subscription
+        subscription.plan_name = 'professional'
+        subscription.status = 'active'
+        subscription.current_period_start = current_time
+        subscription.current_period_end = one_year_later
+    
+    db.session.commit()
+    
+    flash("Professional subscription enabled for your account.", "success")
+    return redirect(url_for('profile'))
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
