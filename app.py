@@ -24,7 +24,7 @@ from database import db
 db.init_app(app)
 
 # Import models
-from models import User, ChatHistory, JournalEntry
+from models import User, ChatHistory, JournalEntry, TechniqueEffectiveness, TechniqueUsageStats
 
 # Create database tables
 with app.app_context():
@@ -44,6 +44,16 @@ from nlp_exercises import (
     start_exercise,
     update_exercise_progress,
     get_exercise_progress
+)
+
+# Import progress tracker
+from progress_tracker import (
+    add_technique_rating,
+    update_technique_stats,
+    get_technique_usage,
+    get_technique_ratings,
+    get_chat_history_with_techniques,
+    get_progress_summary
 )
 
 # Initialize default NLP exercises
@@ -281,6 +291,165 @@ def get_progress():
         'started_at': p.started_at.isoformat(),
         'completed_at': p.completed_at.isoformat() if p.completed_at else None
     } for p in progress_records])
+
+# Progress Dashboard Routes
+@app.route('/progress/dashboard', methods=['GET'])
+def progress_dashboard():
+    """
+    Render the progress dashboard page.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+        
+    # Render the dashboard template
+    return render_template('dashboard.html')
+
+@app.route('/progress/summary', methods=['GET'])
+def get_progress_summary_route():
+    """
+    Get progress summary data.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+        
+    # Get the summary
+    summary = get_progress_summary(session_id)
+    
+    return jsonify(summary)
+
+@app.route('/progress/technique-usage', methods=['GET'])
+def get_technique_usage_route():
+    """
+    Get technique usage statistics.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+        
+    # Get the usage stats
+    usage = get_technique_usage(session_id)
+    
+    return jsonify(usage)
+
+@app.route('/progress/technique-ratings', methods=['GET'])
+def get_technique_ratings_route():
+    """
+    Get technique ratings history.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+        
+    # Get optional technique parameter
+    technique = request.args.get('technique')
+    
+    # Get the ratings
+    ratings = get_technique_ratings(session_id, technique)
+    
+    return jsonify(ratings)
+
+@app.route('/progress/chat-history', methods=['GET'])
+def get_chat_history_route():
+    """
+    Get chat history with techniques.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+        
+    # Get the chat history
+    history = get_chat_history_with_techniques(session_id)
+    
+    return jsonify(history)
+
+@app.route('/progress/rate-technique', methods=['POST'])
+def rate_technique():
+    """
+    Add a rating for a technique.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+        
+    # Get the request data
+    data = request.json
+    technique = data.get('technique')
+    rating = data.get('rating')
+    notes = data.get('notes')
+    situation = data.get('situation')
+    
+    # Validate the data
+    if not technique or not rating:
+        return jsonify({'error': 'Technique and rating are required'}), 400
+        
+    try:
+        rating = int(rating)
+    except ValueError:
+        return jsonify({'error': 'Rating must be a number'}), 400
+        
+    # Add the rating
+    success = add_technique_rating(
+        session_id=session_id,
+        technique=technique,
+        rating=rating,
+        notes=notes,
+        situation=situation
+    )
+    
+    if not success:
+        return jsonify({'error': 'Failed to add rating'}), 500
+        
+    return jsonify({'success': True})
+
+@app.route('/progress/update-chat', methods=['POST'])
+def update_chat_effectiveness():
+    """
+    Update the effectiveness of a technique after a chat interaction.
+    Called when user provides feedback on how helpful an AI response was.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+        
+    # Get the request data
+    data = request.json
+    technique = data.get('technique')
+    rating = data.get('rating')
+    
+    # Validate the data
+    if not technique or not rating:
+        return jsonify({'error': 'Technique and rating are required'}), 400
+        
+    try:
+        rating = int(rating)
+    except ValueError:
+        return jsonify({'error': 'Rating must be a number'}), 400
+        
+    # Update the statistics
+    stats = update_technique_stats(
+        session_id=session_id,
+        technique=technique,
+        rating=rating
+    )
+    
+    if not stats:
+        return jsonify({'error': 'Failed to update stats'}), 500
+        
+    return jsonify({
+        'success': True,
+        'usage_count': stats.usage_count,
+        'avg_rating': round(stats.avg_rating, 1)
+    })
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

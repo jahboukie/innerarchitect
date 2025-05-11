@@ -15,6 +15,9 @@ class User(db.Model):
     # Relationship with NLPExerciseProgress
     exercise_progress = db.relationship('NLPExerciseProgress', backref='user', lazy='dynamic')
     
+    # Relationship with TechniqueEffectiveness
+    technique_ratings = db.relationship('TechniqueEffectiveness', backref='user', lazy='dynamic')
+    
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -79,3 +82,33 @@ class NLPExerciseProgress(db.Model):
     def __repr__(self):
         status = "completed" if self.completed else f"step {self.current_step}"
         return f'<NLPExerciseProgress {self.exercise_id} - {status}>'
+
+
+class TechniqueEffectiveness(db.Model):
+    """Model to track the effectiveness of NLP techniques for a user."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    session_id = db.Column(db.String(64), nullable=False)
+    technique = db.Column(db.String(30), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # Scale of 1-5
+    notes = db.Column(db.Text, nullable=True)
+    situation = db.Column(db.String(100), nullable=True)  # Brief context/situation description
+    entry_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<TechniqueEffectiveness {self.technique} - Rating: {self.rating}>'
+
+
+class TechniqueUsageStats(db.Model):
+    """Model to track aggregated statistics about technique usage."""
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(64), nullable=False, index=True)
+    technique = db.Column(db.String(30), nullable=False, index=True)
+    usage_count = db.Column(db.Integer, default=0)
+    avg_rating = db.Column(db.Float, default=0.0)
+    last_used = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (db.UniqueConstraint('session_id', 'technique', name='_session_technique_uc'),)
+    
+    def __repr__(self):
+        return f'<TechniqueUsageStats {self.technique} - Count: {self.usage_count}>'

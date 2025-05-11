@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Dashboard - The Inner Architect</title>
+    
+    <!-- Bootstrap CSS (Replit Theme) -->
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* Dashboard-specific styles */
+        .stat-card {
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .technique-badge {
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .rating-star {
+            color: gold;
+        }
+        
+        .rating-count {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        
+        .activity-item {
+            border-left: 3px solid var(--accent-color);
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -9px;
+            top: 0;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--accent-color);
+        }
+        
+        .dashboard-header {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .technique-progress {
+            height: 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 class="mb-0">
+                    <i class="fas fa-brain me-2"></i>The Inner Architect
+                </h1>
+                <a href="/" class="btn btn-outline-light">
+                    <i class="fas fa-comments me-1"></i> Return to Chat
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2 class="mb-2">Your NLP Journey Dashboard</h2>
+                    <p class="text-secondary mb-0">
+                        Track your progress and see which techniques work best for you.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <div class="d-flex justify-content-md-end align-items-center">
+                        <div class="me-4">
+                            <span class="text-secondary">Active Streak</span>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-fire text-danger me-2"></i>
+                                <span class="h3 mb-0" id="activeStreak">0</span>
+                                <span class="ms-1 text-secondary">days</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-secondary">Total Interactions</span>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-comments text-primary me-2"></i>
+                                <span class="h3 mb-0" id="totalInteractions">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Technique Usage Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="card-title mb-0">Techniques Tried</h6>
+                            <i class="fas fa-lightbulb stat-icon"></i>
+                        </div>
+                        <div class="d-flex align-items-baseline">
+                            <h2 class="display-4 mb-0 me-2" id="techniquesTried">0</h2>
+                            <span class="text-secondary">/6</span>
+                        </div>
+                        <p class="text-secondary" id="techniqueTriedText">
+                            You haven't tried any NLP techniques yet.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Most Used Technique Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="card-title mb-0">Most Used Technique</h6>
+                            <i class="fas fa-star stat-icon"></i>
+                        </div>
+                        <h3 class="mb-2" id="mostUsedTechnique">-</h3>
+                        <div class="d-flex align-items-center mb-1">
+                            <div class="progress technique-progress w-100 me-2">
+                                <div class="progress-bar bg-success" style="width: 0%" id="mostUsedProgress"></div>
+                            </div>
+                            <span class="text-secondary" id="mostUsedCount">0</span>
+                        </div>
+                        <p class="text-secondary" id="mostUsedText">
+                            You haven't used any techniques enough times to determine a favorite.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Highest Rated Technique Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="card-title mb-0">Highest Rated</h6>
+                            <i class="fas fa-award stat-icon"></i>
+                        </div>
+                        <h3 class="mb-2" id="highestRatedTechnique">-</h3>
+                        <div id="highestRatedStars" class="mb-1">
+                            <i class="fas fa-star rating-star"></i>
+                            <i class="fas fa-star rating-star"></i>
+                            <i class="fas fa-star rating-star"></i>
+                            <i class="fas fa-star rating-star"></i>
+                            <i class="fas fa-star rating-star"></i>
+                            <span class="rating-count">(0)</span>
+                        </div>
+                        <p class="text-secondary" id="highestRatedText">
+                            You haven't rated any techniques yet.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Exercise Completion Card -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="card-title mb-0">Exercise Completion</h6>
+                            <i class="fas fa-check-circle stat-icon"></i>
+                        </div>
+                        <div class="d-flex align-items-baseline">
+                            <h2 class="display-4 mb-0 me-2" id="exercisesCompleted">0</h2>
+                            <span class="text-secondary" id="exercisesStarted">/0</span>
+                        </div>
+                        <div class="d-flex align-items-center mt-2">
+                            <div class="progress technique-progress w-100 me-2">
+                                <div class="progress-bar bg-info" style="width: 0%" id="exerciseCompletionRate"></div>
+                            </div>
+                            <span class="text-secondary" id="completionRateText">0%</span>
+                        </div>
+                        <p class="text-secondary" id="exerciseCompletionText">
+                            You haven't started any exercises yet.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Technique Usage and Rating Charts -->
+        <div class="row g-4 mb-4">
+            <!-- Technique Usage Chart -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2 text-primary"></i>
+                            Technique Usage
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="techniqueUsageChart"></canvas>
+                        </div>
+                        <div id="noTechniqueUsageData" class="text-center py-4 d-none">
+                            <i class="fas fa-chart-bar text-secondary mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-secondary">No technique usage data available yet. Try using different techniques in your conversations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Technique Rating Chart -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2 text-primary"></i>
+                            Technique Effectiveness Ratings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="techniqueRatingChart"></canvas>
+                        </div>
+                        <div id="noRatingData" class="text-center py-4 d-none">
+                            <i class="fas fa-chart-line text-secondary mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-secondary">No rating data available yet. Rate techniques to see your progress.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity and Technique Details -->
+        <div class="row g-4">
+            <!-- Recent Activity -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2 text-primary"></i>
+                            Recent Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-timeline" id="activityTimeline">
+                            <!-- Activity items will be added here dynamically -->
+                        </div>
+                        <div id="noActivityData" class="text-center py-4 d-none">
+                            <i class="fas fa-history text-secondary mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-secondary">No activity data available yet. Start chatting to see your history.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Technique Details -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                            Technique Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="technique-selector mb-3">
+                            <label for="techniqueSelect" class="form-label">Select a technique to view details:</label>
+                            <select class="form-select" id="techniqueSelect">
+                                <option value="" selected disabled>Choose a technique...</option>
+                                <option value="reframing">Reframing</option>
+                                <option value="pattern_interruption">Pattern Interruption</option>
+                                <option value="anchoring">Anchoring</option>
+                                <option value="future_pacing">Future Pacing</option>
+                                <option value="sensory_language">Sensory Language</option>
+                                <option value="meta_model">Meta Model</option>
+                            </select>
+                        </div>
+                        
+                        <div id="techniqueDetails" class="d-none">
+                            <h4 id="techniqueDetailName"></h4>
+                            <p id="techniqueDetailDescription" class="mb-3"></p>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="small text-secondary mb-1">Used</div>
+                                        <div class="h4 mb-0" id="techniqueDetailUsage">0</div>
+                                        <div class="small text-secondary">times</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-3 text-center">
+                                        <div class="small text-secondary mb-1">Rating</div>
+                                        <div class="h4 mb-0">
+                                            <span id="techniqueDetailRating">0</span>
+                                            <i class="fas fa-star rating-star small ms-1"></i>
+                                        </div>
+                                        <div class="small text-secondary">average</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h6 class="mb-2">Rate this technique:</h6>
+                                <div class="rating-input mb-3">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary rating-btn" data-rating="1">1</button>
+                                        <button type="button" class="btn btn-outline-secondary rating-btn" data-rating="2">2</button>
+                                        <button type="button" class="btn btn-outline-secondary rating-btn" data-rating="3">3</button>
+                                        <button type="button" class="btn btn-outline-secondary rating-btn" data-rating="4">4</button>
+                                        <button type="button" class="btn btn-outline-secondary rating-btn" data-rating="5">5</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="ratingSituation" class="form-label">Situation (optional):</label>
+                                    <input type="text" class="form-control" id="ratingSituation" placeholder="e.g., Handling work stress">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="ratingNotes" class="form-label">Notes (optional):</label>
+                                    <textarea class="form-control" id="ratingNotes" rows="3" placeholder="What did you like or dislike about this technique?"></textarea>
+                                </div>
+                                
+                                <button class="btn btn-primary w-100" id="submitRatingBtn" disabled>
+                                    <i class="fas fa-star me-1"></i> Submit Rating
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="noTechniqueSelected" class="text-center py-4">
+                            <i class="fas fa-info-circle text-secondary mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-secondary">Select a technique from the dropdown to view details and rate it.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <p class="mb-3">
+                        <i class="fas fa-brain me-2" style="color: var(--accent-color);"></i>
+                        <span class="fw-bold">The Inner Architect</span>
+                    </p>
+                    <p class="small text-muted mb-0">
+                        &copy; 2025 The Inner Architect | A self-help chat application for mental wellness
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dashboard JavaScript -->
+    <script>
+        // Dashboard initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart color configuration
+            const chartColors = {
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ]
+            };
+            
+            // Technique names mapping
+            const techniqueNames = {
+                'reframing': 'Reframing',
+                'pattern_interruption': 'Pattern Interruption',
+                'anchoring': 'Anchoring',
+                'future_pacing': 'Future Pacing',
+                'sensory_language': 'Sensory Language',
+                'meta_model': 'Meta Model'
+            };
+            
+            // Technique descriptions
+            const techniqueDescriptions = {
+                'reframing': 'Reframing helps you see situations from different perspectives and find positive aspects in challenges.',
+                'pattern_interruption': 'Pattern interruption breaks negative thought cycles and establishes new, healthier patterns.',
+                'anchoring': 'Anchoring associates positive emotions with specific physical or mental triggers.',
+                'future_pacing': 'Future pacing guides you to visualize positive outcomes and mentally rehearse success.',
+                'sensory_language': 'Sensory language uses visual, auditory, and kinesthetic language to enhance communication.',
+                'meta_model': 'Meta model questioning challenges limiting beliefs and generalizations through targeted questions.'
+            };
+            
+            // Chart instances
+            let usageChart = null;
+            let ratingChart = null;
+            
+            // Elements
+            const techniqueSelect = document.getElementById('techniqueSelect');
+            const submitRatingBtn = document.getElementById('submitRatingBtn');
+            const ratingButtons = document.querySelectorAll('.rating-btn');
+            const ratingSituation = document.getElementById('ratingSituation');
+            const ratingNotes = document.getElementById('ratingNotes');
+            
+            // Event Listeners
+            techniqueSelect.addEventListener('change', function() {
+                loadTechniqueDetails(this.value);
+            });
+            
+            ratingButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    ratingButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-secondary');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    this.classList.remove('btn-outline-secondary');
+                    this.classList.add('btn-primary');
+                    
+                    // Enable submit button
+                    submitRatingBtn.disabled = false;
+                });
+            });
+            
+            submitRatingBtn.addEventListener('click', function() {
+                const technique = techniqueSelect.value;
+                const ratingButton = document.querySelector('.rating-btn.active');
+                
+                if (!technique || !ratingButton) {
+                    return;
+                }
+                
+                const rating = parseInt(ratingButton.getAttribute('data-rating'), 10);
+                const situation = ratingSituation.value.trim();
+                const notes = ratingNotes.value.trim();
+                
+                // Submit the rating
+                submitRating(technique, rating, situation, notes);
+            });
+            
+            // Load data
+            loadSummaryData();
+            loadTechniqueUsage();
+            loadTechniqueRatings();
+            loadActivity();
+            
+            // Functions
+            function submitRating(technique, rating, situation, notes) {
+                // Disable submit button and show loading state
+                submitRatingBtn.disabled = true;
+                submitRatingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Submitting...';
+                
+                // API call to submit rating
+                fetch('/progress/rate-technique', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        technique: technique,
+                        rating: rating,
+                        situation: situation || null,
+                        notes: notes || null
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success state
+                        submitRatingBtn.innerHTML = '<i class="fas fa-check me-1"></i> Rating Submitted';
+                        
+                        // Clear form
+                        setTimeout(() => {
+                            ratingButtons.forEach(btn => {
+                                btn.classList.remove('active');
+                                btn.classList.remove('btn-primary');
+                                btn.classList.add('btn-outline-secondary');
+                            });
+                            ratingSituation.value = '';
+                            ratingNotes.value = '';
+                            submitRatingBtn.disabled = true;
+                            submitRatingBtn.innerHTML = '<i class="fas fa-star me-1"></i> Submit Rating';
+                            
+                            // Reload data
+                            loadSummaryData();
+                            loadTechniqueUsage();
+                            loadTechniqueRatings();
+                            loadTechniqueDetails(technique);
+                        }, 1500);
+                    } else {
+                        // Show error state
+                        submitRatingBtn.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Submission Failed';
+                        setTimeout(() => {
+                            submitRatingBtn.disabled = false;
+                            submitRatingBtn.innerHTML = '<i class="fas fa-star me-1"></i> Submit Rating';
+                        }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting rating:', error);
+                    submitRatingBtn.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Submission Failed';
+                    setTimeout(() => {
+                        submitRatingBtn.disabled = false;
+                        submitRatingBtn.innerHTML = '<i class="fas fa-star me-1"></i> Submit Rating';
+                    }, 1500);
+                });
+            }
+            
+            function loadSummaryData() {
+                fetch('/progress/summary')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update summary stats
+                        document.getElementById('activeStreak').textContent = data.active_days_streak;
+                        document.getElementById('totalInteractions').textContent = data.chat_count;
+                        document.getElementById('techniquesTried').textContent = data.techniques_tried;
+                        document.getElementById('exercisesCompleted').textContent = data.exercises_completed;
+                        document.getElementById('exercisesStarted').textContent = `/${data.exercises_started}`;
+                        
+                        // Update technique tried text
+                        if (data.techniques_tried > 0) {
+                            let techniqueTriedText = '';
+                            if (data.techniques_tried === 1) {
+                                techniqueTriedText = 'You have tried 1 out of 6 NLP techniques.';
+                            } else if (data.techniques_tried < 6) {
+                                techniqueTriedText = `You have tried ${data.techniques_tried} out of 6 NLP techniques.`;
+                            } else {
+                                techniqueTriedText = 'Great job! You have tried all 6 NLP techniques.';
+                            }
+                            document.getElementById('techniqueTriedText').textContent = techniqueTriedText;
+                        }
+                        
+                        // Update most used technique
+                        if (data.most_used_technique) {
+                            document.getElementById('mostUsedTechnique').textContent = 
+                                techniqueNames[data.most_used_technique] || data.most_used_technique;
+                            
+                            // Update progress text based on chat count
+                            let mostUsedText = '';
+                            if (data.chat_count < 10) {
+                                mostUsedText = 'Keep using this technique to see how effective it is for you.';
+                            } else if (data.chat_count < 30) {
+                                mostUsedText = 'You are building good experience with this technique.';
+                            } else {
+                                mostUsedText = 'You have a strong preference for this technique.';
+                            }
+                            document.getElementById('mostUsedText').textContent = mostUsedText;
+                        }
+                        
+                        // Update highest rated technique
+                        if (data.highest_rated_technique) {
+                            document.getElementById('highestRatedTechnique').textContent = 
+                                techniqueNames[data.highest_rated_technique] || data.highest_rated_technique;
+                            
+                            // Update rating text
+                            let highestRatedText = '';
+                            if (data.techniques_tried <= 1) {
+                                highestRatedText = 'Try other techniques to compare effectiveness.';
+                            } else if (data.techniques_tried < 4) {
+                                highestRatedText = 'This technique seems to work well for you.';
+                            } else {
+                                highestRatedText = 'This technique has been most effective for your needs.';
+                            }
+                            document.getElementById('highestRatedText').textContent = highestRatedText;
+                        }
+                        
+                        // Update exercise completion rate
+                        if (data.exercises_started > 0) {
+                            const completionRate = data.completion_rate;
+                            document.getElementById('exerciseCompletionRate').style.width = `${completionRate}%`;
+                            document.getElementById('completionRateText').textContent = `${completionRate}%`;
+                            
+                            // Update completion text
+                            let completionText = '';
+                            if (completionRate < 30) {
+                                completionText = 'Try to complete more of the exercises you start.';
+                            } else if (completionRate < 70) {
+                                completionText = 'You are making good progress with exercises.';
+                            } else {
+                                completionText = 'Excellent completion rate! Keep it up.';
+                            }
+                            document.getElementById('exerciseCompletionText').textContent = completionText;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading summary data:', error);
+                    });
+            }
+            
+            function loadTechniqueUsage() {
+                fetch('/progress/technique-usage')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            document.getElementById('noTechniqueUsageData').classList.remove('d-none');
+                            document.querySelector('#techniqueUsageChart').classList.add('d-none');
+                            return;
+                        }
+                        
+                        document.getElementById('noTechniqueUsageData').classList.add('d-none');
+                        document.querySelector('#techniqueUsageChart').classList.remove('d-none');
+                        
+                        // Update most used technique if available
+                        if (data.length > 0) {
+                            const mostUsed = data[0];
+                            document.getElementById('mostUsedCount').textContent = mostUsed.usage_count;
+                            document.getElementById('mostUsedProgress').style.width = `${Math.min(mostUsed.usage_count * 5, 100)}%`;
+                        }
+                        
+                        // Prepare data for chart
+                        const chartLabels = [];
+                        const chartData = [];
+                        const exerciseData = [];
+                        
+                        data.forEach(item => {
+                            chartLabels.push(techniqueNames[item.technique] || item.technique);
+                            chartData.push(item.usage_count);
+                            exerciseData.push(item.exercises_completed);
+                        });
+                        
+                        // Create the chart
+                        if (usageChart) {
+                            usageChart.destroy();
+                        }
+                        
+                        const ctx = document.getElementById('techniqueUsageChart').getContext('2d');
+                        usageChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: chartLabels,
+                                datasets: [
+                                    {
+                                        label: 'Chat Usage',
+                                        data: chartData,
+                                        backgroundColor: chartColors.backgroundColor,
+                                        borderColor: chartColors.borderColor,
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Exercises Completed',
+                                        data: exerciseData,
+                                        backgroundColor: chartColors.backgroundColor.map(color => color.replace('0.2', '0.5')),
+                                        borderColor: chartColors.borderColor,
+                                        borderWidth: 1
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: {
+                                            color: 'rgba(255, 255, 255, 0.1)'
+                                        }
+                                    },
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top'
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading technique usage:', error);
+                    });
+            }
+            
+            function loadTechniqueRatings() {
+                fetch('/progress/technique-ratings')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            document.getElementById('noRatingData').classList.remove('d-none');
+                            document.querySelector('#techniqueRatingChart').classList.add('d-none');
+                            return;
+                        }
+                        
+                        document.getElementById('noRatingData').classList.add('d-none');
+                        document.querySelector('#techniqueRatingChart').classList.remove('d-none');
+                        
+                        // Group data by technique
+                        const techniqueRatings = {};
+                        
+                        data.forEach(item => {
+                            if (!techniqueRatings[item.technique]) {
+                                techniqueRatings[item.technique] = [];
+                            }
+                            techniqueRatings[item.technique].push({
+                                rating: item.rating,
+                                date: new Date(item.date)
+                            });
+                        });
+                        
+                        // Prepare data for chart
+                        const datasets = [];
+                        let colorIndex = 0;
+                        
+                        for (const technique in techniqueRatings) {
+                            const ratings = techniqueRatings[technique].sort((a, b) => a.date - b.date);
+                            const data = ratings.map(r => r.rating);
+                            const labels = ratings.map(r => r.date.toLocaleDateString());
+                            
+                            datasets.push({
+                                label: techniqueNames[technique] || technique,
+                                data: data,
+                                borderColor: chartColors.borderColor[colorIndex % chartColors.borderColor.length],
+                                backgroundColor: chartColors.backgroundColor[colorIndex % chartColors.backgroundColor.length],
+                                fill: false,
+                                tension: 0.4
+                            });
+                            
+                            colorIndex++;
+                        }
+                        
+                        // Create the chart
+                        if (ratingChart) {
+                            ratingChart.destroy();
+                        }
+                        
+                        const ctx = document.getElementById('techniqueRatingChart').getContext('2d');
+                        ratingChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: Array.from({ length: Math.max(...datasets.map(d => d.data.length)) }, (_, i) => `Rating ${i + 1}`),
+                                datasets: datasets
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        min: 0,
+                                        max: 5,
+                                        ticks: {
+                                            stepSize: 1
+                                        },
+                                        grid: {
+                                            color: 'rgba(255, 255, 255, 0.1)'
+                                        }
+                                    },
+                                    x: {
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top'
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading technique ratings:', error);
+                    });
+            }
+            
+            function loadActivity() {
+                fetch('/progress/chat-history')
+                    .then(response => response.json())
+                    .then(data => {
+                        const timelineContainer = document.getElementById('activityTimeline');
+                        
+                        if (data.length === 0) {
+                            document.getElementById('noActivityData').classList.remove('d-none');
+                            timelineContainer.classList.add('d-none');
+                            return;
+                        }
+                        
+                        document.getElementById('noActivityData').classList.add('d-none');
+                        timelineContainer.classList.remove('d-none');
+                        timelineContainer.innerHTML = '';
+                        
+                        // Create activity items
+                        data.slice(0, 5).forEach(item => {
+                            const date = new Date(item.date);
+                            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                            
+                            const activityItem = document.createElement('div');
+                            activityItem.className = 'activity-item mb-4';
+                            activityItem.innerHTML = `
+                                <div class="mb-2">
+                                    <small class="text-secondary">${formattedDate}</small>
+                                </div>
+                                <p class="mb-1">${item.message}</p>
+                                <div>
+                                    <span class="badge bg-info px-2 py-1 me-1">
+                                        <i class="fas fa-brain me-1"></i>${techniqueNames[item.technique] || item.technique}
+                                    </span>
+                                    <span class="badge bg-secondary px-2 py-1">
+                                        <i class="fas fa-heart me-1"></i>${item.mood}
+                                    </span>
+                                </div>
+                            `;
+                            
+                            timelineContainer.appendChild(activityItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading activity:', error);
+                    });
+            }
+            
+            function loadTechniqueDetails(technique) {
+                if (!technique) {
+                    document.getElementById('techniqueDetails').classList.add('d-none');
+                    document.getElementById('noTechniqueSelected').classList.remove('d-none');
+                    return;
+                }
+                
+                document.getElementById('techniqueDetails').classList.remove('d-none');
+                document.getElementById('noTechniqueSelected').classList.add('d-none');
+                
+                // Update technique name and description
+                document.getElementById('techniqueDetailName').textContent = techniqueNames[technique] || technique;
+                document.getElementById('techniqueDetailDescription').textContent = techniqueDescriptions[technique] || '';
+                
+                // Reset rating buttons
+                ratingButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-secondary');
+                });
+                
+                // Reset rating form
+                ratingSituation.value = '';
+                ratingNotes.value = '';
+                submitRatingBtn.disabled = true;
+                submitRatingBtn.innerHTML = '<i class="fas fa-star me-1"></i> Submit Rating';
+                
+                // Fetch technique usage data
+                fetch('/progress/technique-usage')
+                    .then(response => response.json())
+                    .then(data => {
+                        const techniqueData = data.find(item => item.technique === technique);
+                        
+                        if (techniqueData) {
+                            document.getElementById('techniqueDetailUsage').textContent = techniqueData.usage_count;
+                            document.getElementById('techniqueDetailRating').textContent = techniqueData.avg_rating;
+                        } else {
+                            document.getElementById('techniqueDetailUsage').textContent = '0';
+                            document.getElementById('techniqueDetailRating').textContent = '0';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading technique details:', error);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
