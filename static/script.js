@@ -115,6 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add the AI's response to chat
             addMessageToChat(data.response, 'assistant');
             
+            // Add rating prompt for the technique
+            addRatingPrompt(currentTechnique);
+            
             // Scroll to the bottom of the chatbox
             chatbox.scrollTop = chatbox.scrollHeight;
         })
@@ -311,6 +314,93 @@ document.addEventListener('DOMContentLoaded', function() {
             chatbox.scrollTop += e.deltaY;
         }
     });
+    
+    // Function to add rating prompt after AI response
+    function addRatingPrompt(technique) {
+        // Only show rating prompt occasionally (every 3rd message)
+        if (Math.random() > 0.33) return;
+        
+        // Create the rating prompt
+        const ratingDiv = document.createElement('div');
+        ratingDiv.className = 'chat-message system';
+        ratingDiv.innerHTML = `
+            <div class="message-content system">
+                <p class="mb-2">
+                    <i class="fas fa-star text-warning me-1"></i>
+                    How helpful was the <strong>${technique.replace('_', ' ')}</strong> technique?
+                </p>
+                <div class="rating-buttons d-flex justify-content-center mb-1">
+                    <button class="btn btn-sm btn-outline-secondary me-1 rating-btn" data-rating="1">1</button>
+                    <button class="btn btn-sm btn-outline-secondary me-1 rating-btn" data-rating="2">2</button>
+                    <button class="btn btn-sm btn-outline-secondary me-1 rating-btn" data-rating="3">3</button>
+                    <button class="btn btn-sm btn-outline-secondary me-1 rating-btn" data-rating="4">4</button>
+                    <button class="btn btn-sm btn-outline-secondary rating-btn" data-rating="5">5</button>
+                </div>
+                <p class="text-secondary small mb-0">(1 = Not helpful, 5 = Very helpful)</p>
+            </div>
+        `;
+        
+        // Add to chat
+        chatbox.appendChild(ratingDiv);
+        
+        // Add event listeners to rating buttons
+        const ratingButtons = ratingDiv.querySelectorAll('.rating-btn');
+        ratingButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-rating'), 10);
+                
+                // Update UI
+                ratingButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-secondary');
+                });
+                
+                this.classList.add('active');
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-primary');
+                
+                // Send rating to server
+                submitRating(technique, rating);
+            });
+        });
+    }
+    
+    // Function to submit technique rating
+    function submitRating(technique, rating) {
+        fetch('/progress/update-chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                technique: technique,
+                rating: rating
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Rating submitted:', data);
+            
+            // Add confirmation message
+            const confirmDiv = document.createElement('div');
+            confirmDiv.className = 'chat-message system';
+            confirmDiv.innerHTML = `
+                <div class="message-content system">
+                    <p class="mb-0">
+                        <i class="fas fa-check-circle text-success me-1"></i>
+                        Thank you for your feedback! Your rating has been recorded.
+                    </p>
+                </div>
+            `;
+            
+            chatbox.appendChild(confirmDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error submitting rating:', error);
+        });
+    }
     
     // ======== NLP Exercise Functionality ========
     
