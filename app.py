@@ -3,8 +3,12 @@ import logging
 import uuid
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for
+from functools import wraps
+from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
 from openai import OpenAI
+
+# Import language utilities
+import language_util
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
