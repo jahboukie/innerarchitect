@@ -659,7 +659,26 @@ def index():
     if not current_user.is_authenticated:
         return redirect(url_for('landing'))
     
-    return render_template('index.html')
+    # Get subscription information for feature gating
+    from subscription_manager import get_subscription_details, check_feature_access
+    
+    # Get detailed subscription information
+    subscription_details = get_subscription_details(current_user.id)
+    
+    # Prepare feature access flags
+    features = {
+        'has_premium': subscription_details['plan_name'] in ['premium', 'professional'],
+        'has_professional': subscription_details['plan_name'] == 'professional',
+        'advanced_nlp': check_feature_access(current_user.id, 'advanced_nlp'),
+        'progress_tracking': check_feature_access(current_user.id, 'progress_tracking'),
+        'communication_analysis': check_feature_access(current_user.id, 'communication_analysis'),
+        'voice_practice': check_feature_access(current_user.id, 'voice_practice'),
+        'personalized_journeys': check_feature_access(current_user.id, 'personalized_journeys'),
+        'belief_change': check_feature_access(current_user.id, 'belief_change'),
+        'reminders': check_feature_access(current_user.id, 'reminders')
+    }
+    
+    return render_template('index.html', subscription=subscription_details, features=features)
 
 # Route to get NLP technique recommendations
 @app.route('/recommend_technique', methods=['POST'])
@@ -937,15 +956,27 @@ def get_progress():
 def progress_dashboard():
     """
     Render the progress dashboard page.
+    Premium feature: Requires premium or professional subscription.
     """
     # Get session ID
     session_id = session.get('session_id')
     if not session_id:
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
-        
-    # Render the dashboard template
-    return render_template('dashboard.html')
+    
+    # Get subscription information for feature gating
+    from subscription_manager import get_subscription_details, check_feature_access
+    
+    # Get detailed subscription information
+    subscription_details = get_subscription_details(current_user.id)
+    
+    # Check if user has access to full progress tracking
+    has_full_tracking = check_feature_access(current_user.id, 'progress_tracking')
+    
+    # Render the dashboard template with subscription details
+    return render_template('dashboard.html', 
+                         subscription=subscription_details,
+                         has_full_tracking=has_full_tracking)
 
 @app.route('/progress/summary', methods=['GET'])
 def get_progress_summary_route():
