@@ -1,13 +1,18 @@
 from datetime import datetime
 from database import db
+from flask_login import UserMixin
+from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """User model for authentication and profile information."""
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256))
+    __tablename__ = 'users'
+    id = db.Column(db.String, primary_key=True)
+    email = db.Column(db.String, unique=True, nullable=True)
+    first_name = db.Column(db.String, nullable=True)
+    last_name = db.Column(db.String, nullable=True)
+    profile_image_url = db.Column(db.String, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationship with ChatHistory
     chats = db.relationship('ChatHistory', backref='user', lazy='dynamic')
@@ -19,13 +24,27 @@ class User(db.Model):
     technique_ratings = db.relationship('TechniqueEffectiveness', backref='user', lazy='dynamic')
     
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.id}>'
+        
+class OAuth(OAuthConsumerMixin, db.Model):
+    user_id = db.Column(db.String, db.ForeignKey(User.id))
+    browser_session_key = db.Column(db.String, nullable=False)
+    user = db.relationship(User)
+    
+    __table_args__ = (
+        db.UniqueConstraint(
+            'user_id',
+            'browser_session_key',
+            'provider',
+            name='uq_user_browser_session_key_provider',
+        ),
+    )
 
 
 class ChatHistory(db.Model):
     """Model to store chat history between users and the AI."""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(64), nullable=False)
     user_message = db.Column(db.Text, nullable=False)
     ai_response = db.Column(db.Text, nullable=False)
@@ -40,7 +59,7 @@ class ChatHistory(db.Model):
 class JournalEntry(db.Model):
     """Model for user journal entries and reflections."""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
     content = db.Column(db.Text, nullable=False)
     mood = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
