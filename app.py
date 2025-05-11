@@ -10,6 +10,9 @@ from openai import OpenAI
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+
 # Set up Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
@@ -76,15 +79,28 @@ from replit_auth import make_replit_blueprint, require_login
 
 # Subscription access decorators
 def require_premium(f):
+    """
+    Decorator to require premium or professional subscription.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Check if user is authenticated
         if not current_user.is_authenticated:
             session["next_url"] = request.url
             return redirect(url_for('login_check'))
             
-        # Check if user has premium or better subscription
-        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
-        if not (subscription and subscription.has_premium_access):
+        # Import subscription manager
+        from subscription_manager import check_feature_access
+        
+        # Check if user has premium or professional subscription
+        has_access = False
+        try:
+            # Check if user has access to premium features
+            has_access = check_feature_access(current_user.id, 'advanced_nlp')
+        except Exception as e:
+            logging.error(f"Error checking premium access: {str(e)}")
+            
+        if not has_access:
             flash("This feature requires a Premium subscription. Please upgrade your plan.", "warning")
             return redirect(url_for('landing'))
             
@@ -93,15 +109,28 @@ def require_premium(f):
 
 
 def require_professional(f):
+    """
+    Decorator to require professional subscription.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Check if user is authenticated
         if not current_user.is_authenticated:
             session["next_url"] = request.url
             return redirect(url_for('login_check'))
             
+        # Import subscription manager
+        from subscription_manager import check_feature_access
+        
         # Check if user has professional subscription
-        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
-        if not (subscription and subscription.has_professional_access):
+        has_access = False
+        try:
+            # Check if user has access to professional features
+            has_access = check_feature_access(current_user.id, 'personalized_journeys')
+        except Exception as e:
+            logging.error(f"Error checking professional access: {str(e)}")
+            
+        if not has_access:
             flash("This feature requires a Professional subscription. Please upgrade your plan.", "warning")
             return redirect(url_for('landing'))
             
@@ -576,7 +605,7 @@ def stripe_webhook():
     """
     Handle Stripe webhook events.
     """
-    from subscription_manager import process_webhook_event
+    from subscription_manager import handle_webhook_event
     
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
@@ -586,29 +615,41 @@ def stripe_webhook():
     
     try:
         if webhook_secret:
+            # Verify the webhook signature using the secret
             event = stripe.Webhook.construct_event(
                 payload, sig_header, webhook_secret
             )
+            logging.info(f"Webhook signature verified for event type: {event['type']}")
         else:
             # For development, we can parse the payload directly
+            # Note: In production, always use webhook signatures for security
             data = json.loads(payload)
             event = data
+            logging.warning("Processing webhook without signature verification (development mode)")
+        
+        # Log the event type
+        event_type = event['type']
+        logging.info(f"Processing Stripe webhook: {event_type}")
         
         # Process the event
-        if process_webhook_event(event):
+        if handle_webhook_event(event):
+            logging.info(f"Successfully processed webhook event: {event_type}")
             return jsonify({'status': 'success'}), 200
         else:
+            logging.error(f"Failed to process webhook event: {event_type}")
             return jsonify({'status': 'error', 'message': 'Event processing failed'}), 500
             
     except ValueError as e:
         # Invalid payload
+        logging.error(f"Invalid webhook payload: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Invalid payload'}), 400
     except stripe.error.SignatureVerificationError as e:
         # Invalid signature
+        logging.error(f"Invalid webhook signature: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Invalid signature'}), 400
     except Exception as e:
-        logging.error(f"Error processing webhook: {str(e)}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        logging.error(f"Unexpected error processing webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
 
 
 # User subscription management
