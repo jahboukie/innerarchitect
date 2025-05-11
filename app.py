@@ -296,6 +296,32 @@ def profile():
         user_id=current_user.id
     ).with_entities(TechniqueEffectiveness.technique).distinct().count()
     
+    # Get subscription info
+    subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+    
+    # Default to free plan if no subscription exists
+    subscription_info = {
+        'plan_name': 'Free',
+        'status': 'active',
+        'current_period_end': None,
+        'features': ['Basic cognitive reframing techniques', 'Limited AI chat interactions (10/day)', 'Access to basic dashboard']
+    }
+    
+    if subscription and subscription.is_active:
+        # Set subscription info based on active subscription
+        plan_features = []
+        if subscription.plan_name == 'premium':
+            plan_features = SUBSCRIPTION_PLANS['premium']['features']
+        elif subscription.plan_name == 'professional':
+            plan_features = SUBSCRIPTION_PLANS['professional']['features']
+            
+        subscription_info = {
+            'plan_name': subscription.plan_name.capitalize(),
+            'status': subscription.status,
+            'current_period_end': subscription.current_period_end,
+            'features': plan_features
+        }
+    
     # Get recent activity (last 5 items)
     recent_chats = ChatHistory.query.filter_by(
         user_id=current_user.id
@@ -332,7 +358,8 @@ def profile():
         'profile.html',
         exercise_count=exercise_count,
         technique_count=techniques,
-        recent_activity=activity
+        recent_activity=activity,
+        subscription=subscription_info
     )
 
 # Landing page route
@@ -410,6 +437,9 @@ def create_checkout(plan):
                         'product_data': {
                             'name': plan_data['name'],
                             'description': f"The Inner Architect {plan.capitalize()} Plan",
+                            'metadata': {
+                                'plan': plan
+                            }
                         },
                         'unit_amount': plan_data['amount'],
                         'recurring': {
@@ -419,6 +449,10 @@ def create_checkout(plan):
                     'quantity': 1,
                 }
             ],
+            metadata={
+                'user_id': current_user.id,
+                'plan': plan
+            },
             mode='subscription',
             success_url=f"{domain_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{domain_url}/subscription/cancel",
@@ -430,6 +464,81 @@ def create_checkout(plan):
         logging.error(f"Error creating checkout session: {str(e)}")
         flash("An error occurred while processing your request. Please try again later.", "danger")
         return redirect(url_for('landing'))
+
+
+# Subscription success route
+@app.route('/subscription/success')
+@require_login
+def subscription_success():
+    """
+    Handle successful subscription checkout.
+    """
+    session_id = request.args.get('session_id')
+    if not session_id:
+        flash("Invalid checkout session.", "danger")
+        return redirect(url_for('profile'))
+        
+    try:
+        # Retrieve checkout session from Stripe
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Ensure this session belongs to the current user
+        if checkout_session.metadata.get('user_id') != current_user.id:
+            flash("Invalid checkout session.", "danger")
+            return redirect(url_for('profile'))
+            
+        # Get the subscription ID
+        subscription_id = checkout_session.subscription
+        
+        # Retrieve the subscription details
+        stripe_subscription = stripe.Subscription.retrieve(subscription_id)
+        
+        # Update the user's subscription in the database
+        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+        
+        if not subscription:
+            # Create a new subscription record
+            subscription = Subscription(
+                user_id=current_user.id,
+                stripe_customer_id=checkout_session.customer,
+                stripe_subscription_id=subscription_id,
+                plan_name=checkout_session.metadata.get('plan', 'premium'),
+                status='active',
+                current_period_start=datetime.fromtimestamp(stripe_subscription.current_period_start),
+                current_period_end=datetime.fromtimestamp(stripe_subscription.current_period_end)
+            )
+            db.session.add(subscription)
+        else:
+            # Update existing subscription
+            subscription.stripe_subscription_id = subscription_id
+            subscription.plan_name = checkout_session.metadata.get('plan', 'premium')
+            subscription.status = 'active'
+            subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start)
+            subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end)
+            
+        db.session.commit()
+        
+        # Show success message
+        plan_name = subscription.plan_name.capitalize()
+        flash(f"Thank you! Your {plan_name} subscription has been activated.", "success")
+        
+        return redirect(url_for('profile'))
+        
+    except Exception as e:
+        logging.error(f"Error processing subscription: {str(e)}")
+        flash("An error occurred while processing your subscription. Please contact support.", "danger")
+        return redirect(url_for('profile'))
+
+
+# Subscription cancel route
+@app.route('/subscription/cancel')
+@require_login
+def subscription_cancel():
+    """
+    Handle canceled subscription checkout.
+    """
+    flash("Your subscription checkout was canceled. You can try again anytime.", "info")
+    return redirect(url_for('landing'))
 
 @app.route('/')
 def index():
