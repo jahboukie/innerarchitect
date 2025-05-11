@@ -5,7 +5,9 @@ import json
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
+from flask_login import current_user
 from openai import OpenAI
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import language utilities
 import language_util
@@ -16,6 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Create Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "default_secret_key")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
@@ -27,6 +30,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize database
 from database import db
 db.init_app(app)
+
+# Initialize login manager and replit auth after db init
+from replit_auth import make_replit_blueprint, require_login
+app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
 # Import models
 from models import User, ChatHistory, JournalEntry, TechniqueEffectiveness, TechniqueUsageStats

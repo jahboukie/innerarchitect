@@ -93,6 +93,38 @@
                                 {% endfor %}
                             </ul>
                         </div>
+                        
+                        <!-- Authentication -->
+                        {% if current_user.is_authenticated %}
+                        <div class="dropdown me-2">
+                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if current_user.profile_image_url %}
+                                <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle me-1" style="width: 24px; height: 24px; object-fit: cover;">
+                                {% else %}
+                                <i class="fas fa-user-circle me-1"></i>
+                                {% endif %}
+                                {% if current_user.first_name %}{{ current_user.first_name }}{% else %}{{ g.translate('account', 'Account') }}{% endif %}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="/profile">
+                                        <i class="fas fa-id-card me-2"></i> {{ g.translate('profile', 'Profile') }}
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('replit_auth.logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i> {{ g.translate('logout', 'Logout') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('replit_auth.login') }}" class="btn btn-sm btn-primary me-2">
+                            <i class="fas fa-sign-in-alt me-1"></i> {{ g.translate('login', 'Login') }}
+                        </a>
+                        {% endif %}
+                        
                         <div class="badge bg-dark-subtle text-primary-emphasis px-3 py-2">
                             <i class="fas fa-code me-1"></i> MVP Version
                         </div>

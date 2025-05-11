@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Denied - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-dark shadow-sm border-0 rounded-4">
+                <div class="card-body p-5 text-center">
+                    <i class="fas fa-exclamation-triangle text-warning mb-4" style="font-size: 64px;"></i>
+                    <h2 class="mb-4">Access Denied</h2>
+                    
+                    <p class="lead mb-4">
+                        We're sorry, but there was an error during the authentication process.
+                    </p>
+                    
+                    <p class="mb-4">
+                        This could be due to insufficient permissions or an authentication error. Please try again or contact support if the problem persists.
+                    </p>
+                    
+                    <div class="d-grid gap-2 col-md-6 mx-auto">
+                        <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-home me-2"></i>Return to Home
+                        </a>
+                        <a href="{{ url_for('replit_auth.login') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Try Again
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

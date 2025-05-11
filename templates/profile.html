@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('profile_title', 'Your Profile') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-dark shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        {% if current_user.profile_image_url %}
+                        <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
+                            <i class="fas fa-user-circle" style="font-size: 64px;"></i>
+                        </div>
+                        {% endif %}
+                        <h2 class="card-title">
+                            {% if current_user.first_name or current_user.last_name %}
+                                {{ current_user.first_name or '' }} {{ current_user.last_name or '' }}
+                            {% else %}
+                                {{ g.translate('replit_user', 'Replit User') }}
+                            {% endif %}
+                        </h2>
+                        {% if current_user.email %}
+                        <p class="text-muted">
+                            <i class="fas fa-envelope me-2"></i>{{ current_user.email }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                                <h4 class="text-info" id="total-exercises">{{ exercise_count }}</h4>
+                                <p class="mb-0">{{ g.translate('completed_exercises', 'Completed Exercises') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                                <h4 class="text-info" id="total-techniques">{{ technique_count }}</h4>
+                                <p class="mb-0">{{ g.translate('used_techniques', 'Used Techniques') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h3 class="mb-3">{{ g.translate('recent_activity', 'Recent Activity') }}</h3>
+                    
+                    {% if recent_activity %}
+                    <div class="list-group bg-transparent">
+                        {% for activity in recent_activity %}
+                        <div class="list-group-item bg-dark-subtle border-0 mb-2 rounded">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ activity.title }}</h5>
+                                <small class="text-muted">{{ activity.date }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ g.translate('no_activity', 'No recent activity to display. Start using the app to track your progress!') }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid mt-4">
+                        <a href="{{ url_for('replit_auth.logout') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i>{{ g.translate('logout', 'Logout') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

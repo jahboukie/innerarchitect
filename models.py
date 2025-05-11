@@ -89,7 +89,7 @@ class NLPExercise(db.Model):
 class NLPExerciseProgress(db.Model):
     """Model to track user progress with NLP exercises."""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
     exercise_id = db.Column(db.Integer, db.ForeignKey('nlp_exercise.id'), nullable=False)
     session_id = db.Column(db.String(64), nullable=False)
     completed = db.Column(db.Boolean, default=False)
@@ -106,7 +106,7 @@ class NLPExerciseProgress(db.Model):
 class TechniqueEffectiveness(db.Model):
     """Model to track the effectiveness of NLP techniques for a user."""
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(64), nullable=False)
     technique = db.Column(db.String(30), nullable=False)
     rating = db.Column(db.Integer, nullable=False)  # Scale of 1-5
