@@ -19,7 +19,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, F
 from sqlalchemy.orm import relationship
 
 from app import db
-from models import User, Subscription
+from models import User, Subscription, UsageQuota
 
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -96,39 +96,7 @@ QUOTA_FIELDS = {
 
 # Note: Subscription class is imported from models.py
 
-class UsageQuota(db.Model):
-    """Model for tracking usage quotas."""
-    __tablename__ = 'usage_quota'
-    
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey('users.id'), nullable=True)
-    browser_session_id = Column(String, nullable=True)
-    messages_used_today = Column(Integer, default=0)
-    exercises_used_today = Column(Integer, default=0)
-    analyses_used_this_month = Column(Integer, default=0)
-    last_reset_date = Column(DateTime, default=datetime.now)
-    last_monthly_reset_date = Column(DateTime, default=datetime.now)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationship with User model
-    user = relationship('User', backref='usage_quota')
-    
-    def __repr__(self):
-        return f'<UsageQuota - User: {self.user_id or "Anonymous"} - Messages: {self.messages_used_today}>'
-    
-    def to_dict(self):
-        """Convert usage quota to dictionary for JSON serialization."""
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'browser_session_id': self.browser_session_id,
-            'messages_used_today': self.messages_used_today,
-            'exercises_used_today': self.exercises_used_today,
-            'analyses_used_this_month': self.analyses_used_this_month,
-            'last_reset_date': self.last_reset_date.isoformat() if self.last_reset_date else None,
-            'last_monthly_reset_date': self.last_monthly_reset_date.isoformat() if self.last_monthly_reset_date else None
-        }
+# Note: UsageQuota class is imported from models.py
 
 def get_subscription(user_id):
     """
