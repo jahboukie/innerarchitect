@@ -2123,35 +2123,49 @@ def admin_enable_professional():
     Developer route to set the current user to have a Professional subscription.
     This is for testing purposes only.
     """
+    from datetime import datetime, timedelta
+    
+    # Debug information
+    app.logger.debug(f"Admin route accessed by user ID: {current_user.id}")
+    
     # Check if user already has a subscription
     subscription = Subscription.query.filter_by(user_id=current_user.id).first()
     
     current_time = datetime.utcnow()
     one_year_later = current_time + timedelta(days=365)
     
-    if not subscription:
-        # Create a new subscription
-        subscription = Subscription(
-            user_id=current_user.id,
-            stripe_customer_id=f"dev_customer_{current_user.id}",
-            stripe_subscription_id=f"dev_subscription_{current_user.id}",
-            plan_name='professional',
-            status='active',
-            current_period_start=current_time,
-            current_period_end=one_year_later
-        )
-        db.session.add(subscription)
-    else:
-        # Update existing subscription
-        subscription.plan_name = 'professional'
-        subscription.status = 'active'
-        subscription.current_period_start = current_time
-        subscription.current_period_end = one_year_later
-    
-    db.session.commit()
-    
-    flash("Professional subscription enabled for your account.", "success")
-    return redirect(url_for('profile'))
+    try:
+        if not subscription:
+            # Create a new subscription
+            subscription = Subscription(
+                user_id=current_user.id,
+                stripe_customer_id=f"dev_customer_{current_user.id}",
+                stripe_subscription_id=f"dev_subscription_{current_user.id}",
+                plan_name='professional',
+                status='active',
+                current_period_start=current_time,
+                current_period_end=one_year_later
+            )
+            db.session.add(subscription)
+            app.logger.debug("Created new subscription")
+        else:
+            # Update existing subscription
+            subscription.plan_name = 'professional'
+            subscription.status = 'active'
+            subscription.current_period_start = current_time
+            subscription.current_period_end = one_year_later
+            app.logger.debug("Updated existing subscription")
+        
+        db.session.commit()
+        app.logger.debug("Committed subscription changes to database")
+        
+        flash("Professional subscription enabled for your account.", "success")
+        return redirect(url_for('profile'))
+    except Exception as e:
+        app.logger.error(f"Error setting professional subscription: {str(e)}")
+        db.session.rollback()
+        flash(f"An error occurred: {str(e)}", "danger")
+        return redirect(url_for('profile'))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
