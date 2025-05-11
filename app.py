@@ -116,6 +116,24 @@ from practice_reminders import (
     PracticeReminder
 )
 
+# Import belief change protocol
+from belief_change import (
+    create_belief_session,
+    get_belief_session,
+    save_belief_session,
+    update_step_response,
+    get_belief_sessions,
+    categorize_belief,
+    analyze_belief,
+    generate_reframe_suggestions,
+    generate_meta_model_questions,
+    suggest_action_steps,
+    get_belief_categories,
+    get_protocol_steps,
+    get_techniques_for_belief_change,
+    BeliefChangeSession
+)
+
 # Initialize default NLP exercises
 with app.app_context():
     initialize_default_exercises()
@@ -1275,6 +1293,376 @@ def reminders_page():
     Render the practice reminders page.
     """
     return render_template('practice_reminders.html')
+
+# ===== Belief Change Protocol Routes =====
+
+@app.route('/api/belief-change/categories')
+def get_belief_categories_api():
+    """
+    Get all belief categories.
+    """
+    categories = get_belief_categories()
+    return jsonify({'categories': categories})
+
+@app.route('/api/belief-change/steps')
+def get_protocol_steps_api():
+    """
+    Get all steps in the belief change protocol.
+    """
+    steps = get_protocol_steps()
+    return jsonify({'steps': steps})
+
+@app.route('/api/belief-change/techniques')
+def get_belief_techniques_api():
+    """
+    Get NLP techniques used in belief change.
+    """
+    techniques = get_techniques_for_belief_change()
+    return jsonify({'techniques': techniques})
+
+@app.route('/api/belief-change/analyze', methods=['POST'])
+def analyze_belief_api():
+    """
+    Analyze a belief statement to identify patterns and suggest approaches.
+    """
+    data = request.json
+    
+    if not data or 'belief' not in data:
+        return jsonify({'error': 'No belief provided'}), 400
+    
+    belief_text = data.get('belief')
+    
+    if not belief_text or len(belief_text.strip()) < 5:
+        return jsonify({
+            'error': 'Belief too short for analysis. Please provide at least 5 characters.'
+        }), 400
+    
+    # Analyze the belief
+    analysis = analyze_belief(belief_text)
+    
+    return jsonify({
+        'belief': belief_text,
+        'analysis': analysis
+    })
+
+@app.route('/api/belief-change/reframe', methods=['POST'])
+def reframe_belief_api():
+    """
+    Generate suggestions for reframing a limiting belief.
+    """
+    data = request.json
+    
+    if not data or 'belief' not in data:
+        return jsonify({'error': 'No belief provided'}), 400
+    
+    belief_text = data.get('belief')
+    
+    if not belief_text or len(belief_text.strip()) < 5:
+        return jsonify({
+            'error': 'Belief too short for reframing. Please provide at least 5 characters.'
+        }), 400
+    
+    # Generate reframing suggestions
+    suggestions = generate_reframe_suggestions(belief_text)
+    
+    return jsonify({
+        'belief': belief_text,
+        'suggestions': suggestions
+    })
+
+@app.route('/api/belief-change/meta-model', methods=['POST'])
+def meta_model_questions_api():
+    """
+    Generate Meta Model questions to challenge a limiting belief.
+    """
+    data = request.json
+    
+    if not data or 'belief' not in data:
+        return jsonify({'error': 'No belief provided'}), 400
+    
+    belief_text = data.get('belief')
+    
+    if not belief_text or len(belief_text.strip()) < 5:
+        return jsonify({
+            'error': 'Belief too short for questioning. Please provide at least 5 characters.'
+        }), 400
+    
+    # Generate Meta Model questions
+    questions = generate_meta_model_questions(belief_text)
+    
+    return jsonify({
+        'belief': belief_text,
+        'questions': questions
+    })
+
+@app.route('/api/belief-change/actions', methods=['POST'])
+def suggest_actions_api():
+    """
+    Suggest concrete actions to reinforce a new empowering belief.
+    """
+    data = request.json
+    
+    if not data or 'belief' not in data:
+        return jsonify({'error': 'No belief provided'}), 400
+    
+    belief_text = data.get('belief')
+    
+    if not belief_text or len(belief_text.strip()) < 5:
+        return jsonify({
+            'error': 'Belief too short for action planning. Please provide at least 5 characters.'
+        }), 400
+    
+    # Generate action suggestions
+    actions = suggest_action_steps(belief_text)
+    
+    return jsonify({
+        'belief': belief_text,
+        'actions': actions
+    })
+
+@app.route('/api/belief-change/sessions', methods=['GET'])
+def get_belief_sessions_api():
+    """
+    Get belief change sessions for the current user or browser session.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'sessions': []})
+    
+    include_completed = request.args.get('include_completed', 'true').lower() == 'true'
+    limit = request.args.get('limit')
+    
+    if limit:
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = None
+    
+    sessions = get_belief_sessions(browser_session_id=session_id, limit=limit, include_completed=include_completed)
+    
+    return jsonify({
+        'sessions': [s.to_dict() for s in sessions]
+    })
+
+@app.route('/api/belief-change/sessions', methods=['POST'])
+def create_belief_session_api():
+    """
+    Create a new belief change session.
+    """
+    data = request.json
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    # Get session ID
+    session_id = session.get('session_id', str(uuid.uuid4()))
+    if 'session_id' not in session:
+        session['session_id'] = session_id
+    
+    # Extract fields from request
+    initial_belief = data.get('initial_belief')
+    category = data.get('category')
+    
+    # Validate if initial belief provided
+    if initial_belief and len(initial_belief.strip()) < 5:
+        return jsonify({
+            'error': 'Belief too short. Please provide at least 5 characters.'
+        }), 400
+    
+    # If category not provided but belief is, auto-categorize
+    if initial_belief and not category:
+        category = categorize_belief(initial_belief)
+    
+    # Create the session
+    belief_session = create_belief_session(
+        user_id=None,  # No user ID for now
+        initial_belief=initial_belief,
+        category=category
+    )
+    
+    if not belief_session:
+        return jsonify({'error': 'Failed to create belief change session'}), 500
+    
+    # Save the session
+    save_success = save_belief_session(belief_session)
+    
+    if not save_success:
+        return jsonify({'error': 'Failed to save belief change session'}), 500
+    
+    # Store session in browser session storage
+    if 'belief_sessions' not in session:
+        session['belief_sessions'] = {}
+    
+    session['belief_sessions'][belief_session.belief_session_id] = belief_session.to_dict()
+    session.modified = True
+    
+    return jsonify({
+        'success': True,
+        'session': belief_session.to_dict()
+    })
+
+@app.route('/api/belief-change/sessions/<session_id>', methods=['GET'])
+def get_belief_session_api(session_id):
+    """
+    Get a specific belief change session.
+    """
+    # Try to get from browser session first
+    browser_sessions = session.get('belief_sessions', {})
+    
+    if session_id in browser_sessions:
+        return jsonify({'session': browser_sessions[session_id]})
+    
+    # If not in browser session, try to get from database
+    belief_session = get_belief_session(session_id)
+    
+    if not belief_session:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    return jsonify({'session': belief_session.to_dict()})
+
+@app.route('/api/belief-change/sessions/<session_id>/advance', methods=['POST'])
+def advance_session_step_api(session_id):
+    """
+    Advance a belief change session to the next step.
+    """
+    data = request.json or {}
+    response = data.get('response')
+    
+    # Try to get from browser session first
+    browser_sessions = session.get('belief_sessions', {})
+    
+    if session_id not in browser_sessions:
+        # If not in browser session, try to get from database
+        belief_session = get_belief_session(session_id)
+        
+        if not belief_session:
+            return jsonify({'error': 'Session not found'}), 404
+    else:
+        # Recreate the session object from stored data
+        session_data = browser_sessions[session_id]
+        belief_session = BeliefChangeSession(
+            session_id=session_data['belief_session_id'],
+            user_id=session_data['user_id'],
+            initial_belief=session_data['initial_belief'],
+            category=session_data['category'],
+            current_step=session_data['current_step'],
+            completed=session_data['completed']
+        )
+        belief_session.responses = session_data['responses']
+        
+        if 'created_at' in session_data:
+            belief_session.created_at = datetime.fromisoformat(session_data['created_at'])
+        if 'updated_at' in session_data:
+            belief_session.updated_at = datetime.fromisoformat(session_data['updated_at'])
+        if 'completed_at' in session_data and session_data['completed_at']:
+            belief_session.completed_at = datetime.fromisoformat(session_data['completed_at'])
+    
+    # Save current response if provided
+    if response:
+        belief_session.responses[belief_session.current_step] = response
+    
+    # Advance to the next step
+    advanced = belief_session.advance_step()
+    
+    # Save the updated session
+    save_success = save_belief_session(belief_session)
+    
+    if not save_success:
+        return jsonify({'error': 'Failed to save session update'}), 500
+    
+    # Update browser session storage
+    browser_sessions[belief_session.belief_session_id] = belief_session.to_dict()
+    session['belief_sessions'] = browser_sessions
+    session.modified = True
+    
+    return jsonify({
+        'success': True,
+        'advanced': advanced,
+        'session': belief_session.to_dict()
+    })
+
+@app.route('/api/belief-change/sessions/<session_id>/back', methods=['POST'])
+def go_back_session_step_api(session_id):
+    """
+    Go back to the previous step in a belief change session.
+    """
+    # Try to get from browser session first
+    browser_sessions = session.get('belief_sessions', {})
+    
+    if session_id not in browser_sessions:
+        # If not in browser session, try to get from database
+        belief_session = get_belief_session(session_id)
+        
+        if not belief_session:
+            return jsonify({'error': 'Session not found'}), 404
+    else:
+        # Recreate the session object from stored data
+        session_data = browser_sessions[session_id]
+        belief_session = BeliefChangeSession(
+            session_id=session_data['belief_session_id'],
+            user_id=session_data['user_id'],
+            initial_belief=session_data['initial_belief'],
+            category=session_data['category'],
+            current_step=session_data['current_step'],
+            completed=session_data['completed']
+        )
+        belief_session.responses = session_data['responses']
+        
+        if 'created_at' in session_data:
+            belief_session.created_at = datetime.fromisoformat(session_data['created_at'])
+        if 'updated_at' in session_data:
+            belief_session.updated_at = datetime.fromisoformat(session_data['updated_at'])
+        if 'completed_at' in session_data and session_data['completed_at']:
+            belief_session.completed_at = datetime.fromisoformat(session_data['completed_at'])
+    
+    # Go back to the previous step
+    went_back = belief_session.go_back()
+    
+    # Save the updated session
+    save_success = save_belief_session(belief_session)
+    
+    if not save_success:
+        return jsonify({'error': 'Failed to save session update'}), 500
+    
+    # Update browser session storage
+    browser_sessions[belief_session.belief_session_id] = belief_session.to_dict()
+    session['belief_sessions'] = browser_sessions
+    session.modified = True
+    
+    return jsonify({
+        'success': True,
+        'went_back': went_back,
+        'session': belief_session.to_dict()
+    })
+
+@app.route('/belief-change')
+def belief_change_page():
+    """
+    Render the belief change protocol page.
+    """
+    return render_template('belief_change.html')
+
+@app.route('/belief-change/session/<session_id>')
+def belief_session_page(session_id):
+    """
+    Render the specific belief change session page.
+    """
+    # Try to get from browser session first
+    browser_sessions = session.get('belief_sessions', {})
+    
+    if session_id in browser_sessions:
+        session_data = browser_sessions[session_id]
+        return render_template('belief_session.html', session=session_data)
+    
+    # If not in browser session, try to get from database
+    belief_session = get_belief_session(session_id)
+    
+    if not belief_session:
+        flash('Belief change session not found', 'danger')
+        return redirect(url_for('belief_change_page'))
+    
+    return render_template('belief_session.html', session=belief_session.to_dict())
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

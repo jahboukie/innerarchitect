@@ -1,0 +1,944 @@
+{% extends 'base.html' %}
+
+{% block title %}Belief Change Session - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Session Header -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <a href="/belief-change" class="text-light text-decoration-none mb-3 d-inline-block">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Protocol Overview
+                            </a>
+                            <h2 class="card-title mb-0" id="session-title">Belief Change Session</h2>
+                        </div>
+                        <span class="badge bg-primary px-3 py-2" id="session-status">In Progress</span>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4" role="alert">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-lightbulb fa-2x"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0">
+                                    <strong>Initial Belief:</strong> <span id="initial-belief">Loading...</span>
+                                </p>
+                                <p class="mb-0 mt-2">
+                                    <strong>Category:</strong> <span id="belief-category">Loading...</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress" style="height: 15px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 0%;" 
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progress-bar"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 mb-3">
+                        <small class="text-muted" id="progress-text">Progress: 0%</small>
+                        <small class="text-muted" id="step-text">Step 0 of 7</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Current Step -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4" id="current-step-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary rounded-circle me-3 text-white d-flex align-items-center justify-content-center" 
+                             style="width: 40px; height: 40px;" id="step-number">
+                            1
+                        </div>
+                        <h3 class="card-title mb-0" id="step-title">Loading...</h3>
+                    </div>
+                    
+                    <p class="lead mb-4" id="step-description">Loading...</p>
+                    
+                    <div class="mb-4" id="step-prompt-container">
+                        <label class="form-label fw-bold" id="step-prompt">Loading...</label>
+                        <textarea class="form-control" id="step-response" rows="5"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-light bg-dark-subtle border-0" id="examples-container">
+                        <h5 class="alert-heading"><i class="fas fa-lightbulb text-warning me-2"></i>Examples</h5>
+                        <ul id="examples-list">
+                            <li>Loading examples...</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="tools-container" class="mt-4 mb-4 border rounded-3 p-3 bg-dark-subtle">
+                        <h5><i class="fas fa-tools me-2"></i>Helpful Tools</h5>
+                        
+                        <div class="row g-3" id="tools-buttons">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-light w-100" id="reframe-tool-btn">
+                                    <i class="fas fa-sync-alt me-2"></i>Generate Reframing Suggestions
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-light w-100" id="meta-model-tool-btn">
+                                    <i class="fas fa-question-circle me-2"></i>Generate Meta Model Questions
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-light w-100" id="action-steps-tool-btn">
+                                    <i class="fas fa-tasks me-2"></i>Suggest Action Steps
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="tools-results" class="mt-3" style="display: none;">
+                            <div class="alert alert-primary border-0">
+                                <h6 class="alert-heading" id="tools-results-title">Results</h6>
+                                <div id="tools-results-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-outline-light" id="previous-btn" disabled>
+                            <i class="fas fa-arrow-left me-2"></i>Previous Step
+                        </button>
+                        <button class="btn btn-primary" id="next-btn">
+                            Continue<i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Session Complete Card -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4" id="session-complete-card" style="display: none;">
+                <div class="card-body p-4 text-center">
+                    <div class="my-4">
+                        <i class="fas fa-check-circle text-success fa-5x"></i>
+                    </div>
+                    
+                    <h3 class="card-title mb-3">Belief Change Protocol Complete!</h3>
+                    
+                    <p class="lead mb-4">
+                        Congratulations on completing your belief change protocol session. Here's a summary of your journey:
+                    </p>
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark-subtle h-100 border-0 p-3 text-start">
+                                <h5 class="card-title text-danger">Initial Limiting Belief</h5>
+                                <p class="card-text" id="summary-initial-belief"></p>
+                                <small class="text-muted">Step 1: Identify Limiting Belief</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark-subtle h-100 border-0 p-3 text-start">
+                                <h5 class="card-title text-success">New Empowering Belief</h5>
+                                <p class="card-text" id="summary-new-belief"></p>
+                                <small class="text-muted">Step 4: Create Empowering Alternative</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-dark-subtle border-0 p-3 mb-4 text-start">
+                        <h5 class="card-title">Action Steps</h5>
+                        <p class="card-text" id="summary-action-steps"></p>
+                        <small class="text-muted">Step 7: Take Aligned Action</small>
+                    </div>
+                    
+                    <p>Remember to revisit these insights and practice the techniques regularly to fully integrate your new belief.</p>
+                    
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a href="/belief-change" class="btn btn-outline-light">
+                            <i class="fas fa-list me-2"></i>Return to Protocol Overview
+                        </a>
+                        <button class="btn btn-primary" id="start-new-session-btn">
+                            <i class="fas fa-plus-circle me-2"></i>Start a New Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Session Modal -->
+<div class="modal fade" id="newSessionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Start New Belief Change Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="new-session-form">
+                    <div class="mb-3">
+                        <label for="limiting-belief" class="form-label">What limiting belief would you like to transform?</label>
+                        <textarea class="form-control" id="limiting-belief" rows="3" placeholder="Example: I'm not good enough to apply for that promotion."></textarea>
+                        <div class="form-text text-muted">Be specific and honest. Write the belief exactly as it appears in your mind.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="belief-category" class="form-label">Category (Optional)</label>
+                        <select class="form-select" id="belief-category">
+                            <option value="" selected>Auto-detect category</option>
+                            <option value="self">Self-Image & Identity</option>
+                            <option value="capability">Abilities & Skills</option>
+                            <option value="possibility">Possibilities & Opportunities</option>
+                            <option value="worth">Worthiness & Deservingness</option>
+                            <option value="relationships">Relationships & Connection</option>
+                            <option value="world">World & Environment</option>
+                        </select>
+                        <div class="form-text text-muted">We can analyze and suggest a category, or you can select one yourself.</div>
+                    </div>
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="analyze-belief-check" checked>
+                        <label class="form-check-label" for="analyze-belief-check">
+                            Analyze this belief with AI to identify patterns and suggested approaches
+                        </label>
+                    </div>
+                    
+                    <div id="belief-analysis-loading" style="display: none;">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span>Analyzing belief...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="belief-analysis-results" style="display: none;" class="mb-4">
+                        <div class="card bg-dark-subtle border-0">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Analysis Results</h6>
+                                <div class="mb-2">
+                                    <strong>Category:</strong> <span id="analysis-category"></span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Thinking Patterns:</strong>
+                                    <ul id="analysis-patterns" class="mb-0"></ul>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Suggested Techniques:</strong>
+                                    <ul id="analysis-techniques" class="mb-0"></ul>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Potential Origin:</strong> <span id="analysis-origin"></span>
+                                </div>
+                                <div>
+                                    <strong>Areas Impacted:</strong>
+                                    <ul id="analysis-impact" class="mb-0"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="analyze-belief-btn">Analyze Belief</button>
+                <button type="button" class="btn btn-success" id="create-session-btn" style="display: none;">Start Protocol</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get session ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const sessionId = pathParts[pathParts.length - 1];
+        
+        // Session data
+        let sessionData = null;
+        
+        // Elements
+        const sessionTitle = document.getElementById('session-title');
+        const sessionStatus = document.getElementById('session-status');
+        const initialBelief = document.getElementById('initial-belief');
+        const beliefCategory = document.getElementById('belief-category');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const stepText = document.getElementById('step-text');
+        
+        const currentStepCard = document.getElementById('current-step-card');
+        const stepNumber = document.getElementById('step-number');
+        const stepTitle = document.getElementById('step-title');
+        const stepDescription = document.getElementById('step-description');
+        const stepPromptContainer = document.getElementById('step-prompt-container');
+        const stepPrompt = document.getElementById('step-prompt');
+        const stepResponse = document.getElementById('step-response');
+        const examplesContainer = document.getElementById('examples-container');
+        const examplesList = document.getElementById('examples-list');
+        
+        const toolsContainer = document.getElementById('tools-container');
+        const reframeToolBtn = document.getElementById('reframe-tool-btn');
+        const metaModelToolBtn = document.getElementById('meta-model-tool-btn');
+        const actionStepsToolBtn = document.getElementById('action-steps-tool-btn');
+        const toolsResults = document.getElementById('tools-results');
+        const toolsResultsTitle = document.getElementById('tools-results-title');
+        const toolsResultsContent = document.getElementById('tools-results-content');
+        
+        const previousBtn = document.getElementById('previous-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        const sessionCompleteCard = document.getElementById('session-complete-card');
+        const summaryInitialBelief = document.getElementById('summary-initial-belief');
+        const summaryNewBelief = document.getElementById('summary-new-belief');
+        const summaryActionSteps = document.getElementById('summary-action-steps');
+        const startNewSessionBtn = document.getElementById('start-new-session-btn');
+        
+        const newSessionModal = new bootstrap.Modal(document.getElementById('newSessionModal'));
+        const limitingBeliefTextarea = document.getElementById('limiting-belief');
+        const beliefCategorySelect = document.getElementById('belief-category');
+        const analyzeBeliefCheck = document.getElementById('analyze-belief-check');
+        const analyzeBeliefBtn = document.getElementById('analyze-belief-btn');
+        const createSessionBtn = document.getElementById('create-session-btn');
+        
+        const beliefAnalysisLoading = document.getElementById('belief-analysis-loading');
+        const beliefAnalysisResults = document.getElementById('belief-analysis-results');
+        const analysisCategory = document.getElementById('analysis-category');
+        const analysisPatterns = document.getElementById('analysis-patterns');
+        const analysisTechniques = document.getElementById('analysis-techniques');
+        const analysisOrigin = document.getElementById('analysis-origin');
+        const analysisImpact = document.getElementById('analysis-impact');
+        
+        // Fetch session data
+        function loadSession() {
+            fetch(`/api/belief-change/sessions/${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error loading session: ' + data.error);
+                        window.location.href = '/belief-change';
+                        return;
+                    }
+                    
+                    sessionData = data.session;
+                    updateUI();
+                })
+                .catch(error => {
+                    console.error('Error loading session:', error);
+                    alert('Failed to load session. Redirecting to protocol overview.');
+                    window.location.href = '/belief-change';
+                });
+        }
+        
+        // Update UI with session data
+        function updateUI() {
+            // Top card
+            sessionTitle.textContent = `Belief Change Session${sessionData.initial_belief ? ': ' + truncateText(sessionData.initial_belief, 50) : ''}`;
+            sessionStatus.textContent = sessionData.completed ? 'Completed' : 'In Progress';
+            sessionStatus.className = sessionData.completed ? 'badge bg-success px-3 py-2' : 'badge bg-primary px-3 py-2';
+            
+            initialBelief.textContent = sessionData.initial_belief || 'Not specified';
+            beliefCategory.textContent = sessionData.category_name || 'Not categorized';
+            
+            // Progress
+            progressBar.style.width = `${sessionData.progress_percentage}%`;
+            progressBar.setAttribute('aria-valuenow', sessionData.progress_percentage);
+            progressText.textContent = `Progress: ${sessionData.progress_percentage}%`;
+            
+            const currentStepIndex = sessionData.current_step_index + 1;
+            const totalSteps = sessionData.total_steps;
+            stepText.textContent = `Step ${currentStepIndex} of ${totalSteps}`;
+            
+            // Handle completed session
+            if (sessionData.completed) {
+                currentStepCard.style.display = 'none';
+                sessionCompleteCard.style.display = 'block';
+                
+                // Summary
+                summaryInitialBelief.textContent = sessionData.responses['identify'] || sessionData.initial_belief || 'Not specified';
+                summaryNewBelief.textContent = sessionData.responses['alternative'] || 'Not specified';
+                summaryActionSteps.textContent = sessionData.responses['action'] || 'Not specified';
+                
+                return;
+            }
+            
+            // Current step
+            stepNumber.textContent = sessionData.current_step_index + 1;
+            
+            if (sessionData.current_step_data) {
+                stepTitle.textContent = sessionData.current_step_data.name || 'Current Step';
+                stepDescription.textContent = sessionData.current_step_data.description || '';
+                stepPrompt.textContent = sessionData.current_step_data.prompt || 'Please provide your response:';
+                
+                // Show previous response if any
+                const currentResponse = sessionData.responses[sessionData.current_step] || '';
+                stepResponse.value = currentResponse;
+                
+                // Examples
+                examplesList.innerHTML = '';
+                if (sessionData.current_step_data.examples && sessionData.current_step_data.examples.length > 0) {
+                    sessionData.current_step_data.examples.forEach(example => {
+                        const li = document.createElement('li');
+                        li.textContent = example;
+                        examplesList.appendChild(li);
+                    });
+                    examplesContainer.style.display = 'block';
+                } else {
+                    examplesContainer.style.display = 'none';
+                }
+            }
+            
+            // Tools visibility
+            updateToolsVisibility();
+            
+            // Button states
+            previousBtn.disabled = sessionData.current_step_index === 0;
+            
+            // If there is a saved response, enable the next button
+            nextBtn.disabled = sessionData.current_step === 'action' && !stepResponse.value.trim();
+            
+            // Update button text for last step
+            if (sessionData.current_step === 'action') {
+                nextBtn.innerHTML = 'Complete Protocol<i class="fas fa-check-circle ms-2"></i>';
+            } else {
+                nextBtn.innerHTML = 'Continue<i class="fas fa-arrow-right ms-2"></i>';
+            }
+        }
+        
+        // Update which tools are visible based on current step
+        function updateToolsVisibility() {
+            // Default: hide all tools
+            toolsContainer.style.display = 'block';
+            reframeToolBtn.style.display = 'none';
+            metaModelToolBtn.style.display = 'none';
+            actionStepsToolBtn.style.display = 'none';
+            
+            // Show specific tools based on step
+            switch (sessionData.current_step) {
+                case 'challenge':
+                    reframeToolBtn.style.display = 'block';
+                    metaModelToolBtn.style.display = 'block';
+                    break;
+                    
+                case 'evidence':
+                    metaModelToolBtn.style.display = 'block';
+                    break;
+                    
+                case 'alternative':
+                    reframeToolBtn.style.display = 'block';
+                    break;
+                    
+                case 'action':
+                    actionStepsToolBtn.style.display = 'block';
+                    break;
+                    
+                default:
+                    // For other steps, hide the tools container
+                    toolsContainer.style.display = 'none';
+            }
+            
+            // Hide tools results
+            toolsResults.style.display = 'none';
+        }
+        
+        // Navigate to previous step
+        function goToPreviousStep() {
+            previousBtn.disabled = true;
+            previousBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Going back...';
+            
+            fetch(`/api/belief-change/sessions/${sessionId}/back`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error going to previous step: ' + data.error);
+                    previousBtn.disabled = false;
+                    previousBtn.innerHTML = '<i class="fas fa-arrow-left me-2"></i>Previous Step';
+                    return;
+                }
+                
+                // Update session data and UI
+                sessionData = data.session;
+                updateUI();
+                
+                // Re-enable button
+                previousBtn.disabled = false;
+                previousBtn.innerHTML = '<i class="fas fa-arrow-left me-2"></i>Previous Step';
+            })
+            .catch(error => {
+                console.error('Error going to previous step:', error);
+                alert('Failed to go to previous step. Please try again.');
+                previousBtn.disabled = false;
+                previousBtn.innerHTML = '<i class="fas fa-arrow-left me-2"></i>Previous Step';
+            });
+        }
+        
+        // Navigate to next step
+        function goToNextStep() {
+            const response = stepResponse.value.trim();
+            
+            // Validate response
+            if (!response) {
+                alert('Please provide a response before continuing.');
+                return;
+            }
+            
+            // Disable button to prevent multiple submissions
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            fetch(`/api/belief-change/sessions/${sessionId}/advance`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    response: response
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error advancing step: ' + data.error);
+                    nextBtn.disabled = false;
+                    nextBtn.innerHTML = 'Continue<i class="fas fa-arrow-right ms-2"></i>';
+                    return;
+                }
+                
+                // Update session data and UI
+                sessionData = data.session;
+                updateUI();
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+                
+                // Re-enable button
+                nextBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error advancing step:', error);
+                alert('Failed to advance step. Please try again.');
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = 'Continue<i class="fas fa-arrow-right ms-2"></i>';
+            });
+        }
+        
+        // Use the reframing tool
+        function useReframeTool() {
+            let targetText = '';
+            
+            if (sessionData.current_step === 'challenge') {
+                targetText = sessionData.responses['identify'] || sessionData.initial_belief || '';
+            } else if (sessionData.current_step === 'alternative') {
+                targetText = sessionData.responses['identify'] || sessionData.initial_belief || '';
+            } else {
+                return;
+            }
+            
+            if (!targetText) {
+                alert('No belief text found to reframe.');
+                return;
+            }
+            
+            // Disable button and show loading
+            reframeToolBtn.disabled = true;
+            reframeToolBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Hide previous results
+            toolsResults.style.display = 'none';
+            
+            fetch('/api/belief-change/reframe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    belief: targetText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error generating reframes: ' + data.error);
+                    reframeToolBtn.disabled = false;
+                    reframeToolBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Generate Reframing Suggestions';
+                    return;
+                }
+                
+                // Show results
+                toolsResultsTitle.textContent = 'Reframing Suggestions';
+                
+                let resultsHtml = '<ul class="mb-0">';
+                data.suggestions.forEach(suggestion => {
+                    resultsHtml += `<li>${suggestion}</li>`;
+                });
+                resultsHtml += '</ul>';
+                
+                toolsResultsContent.innerHTML = resultsHtml;
+                toolsResults.style.display = 'block';
+                
+                // Re-enable button
+                reframeToolBtn.disabled = false;
+                reframeToolBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Generate Reframing Suggestions';
+            })
+            .catch(error => {
+                console.error('Error generating reframes:', error);
+                alert('Failed to generate reframing suggestions. Please try again.');
+                reframeToolBtn.disabled = false;
+                reframeToolBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Generate Reframing Suggestions';
+            });
+        }
+        
+        // Use the meta model tool
+        function useMetaModelTool() {
+            let targetText = '';
+            
+            if (sessionData.current_step === 'challenge' || sessionData.current_step === 'evidence') {
+                targetText = sessionData.responses['identify'] || sessionData.initial_belief || '';
+            } else {
+                return;
+            }
+            
+            if (!targetText) {
+                alert('No belief text found to question.');
+                return;
+            }
+            
+            // Disable button and show loading
+            metaModelToolBtn.disabled = true;
+            metaModelToolBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Hide previous results
+            toolsResults.style.display = 'none';
+            
+            fetch('/api/belief-change/meta-model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    belief: targetText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error generating questions: ' + data.error);
+                    metaModelToolBtn.disabled = false;
+                    metaModelToolBtn.innerHTML = '<i class="fas fa-question-circle me-2"></i>Generate Meta Model Questions';
+                    return;
+                }
+                
+                // Show results
+                toolsResultsTitle.textContent = 'Meta Model Questions';
+                
+                let resultsHtml = '<ul class="mb-0">';
+                data.questions.forEach(question => {
+                    resultsHtml += `<li>${question}</li>`;
+                });
+                resultsHtml += '</ul>';
+                
+                toolsResultsContent.innerHTML = resultsHtml;
+                toolsResults.style.display = 'block';
+                
+                // Re-enable button
+                metaModelToolBtn.disabled = false;
+                metaModelToolBtn.innerHTML = '<i class="fas fa-question-circle me-2"></i>Generate Meta Model Questions';
+            })
+            .catch(error => {
+                console.error('Error generating questions:', error);
+                alert('Failed to generate Meta Model questions. Please try again.');
+                metaModelToolBtn.disabled = false;
+                metaModelToolBtn.innerHTML = '<i class="fas fa-question-circle me-2"></i>Generate Meta Model Questions';
+            });
+        }
+        
+        // Use the action steps tool
+        function useActionStepsTool() {
+            const newBelief = sessionData.responses['alternative'] || '';
+            
+            if (!newBelief) {
+                alert('No new empowering belief found to suggest actions for.');
+                return;
+            }
+            
+            // Disable button and show loading
+            actionStepsToolBtn.disabled = true;
+            actionStepsToolBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Hide previous results
+            toolsResults.style.display = 'none';
+            
+            fetch('/api/belief-change/actions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    belief: newBelief
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error generating action steps: ' + data.error);
+                    actionStepsToolBtn.disabled = false;
+                    actionStepsToolBtn.innerHTML = '<i class="fas fa-tasks me-2"></i>Suggest Action Steps';
+                    return;
+                }
+                
+                // Show results
+                toolsResultsTitle.textContent = 'Suggested Action Steps';
+                
+                let resultsHtml = '<ul class="mb-0">';
+                data.actions.forEach(action => {
+                    resultsHtml += `<li>${action}</li>`;
+                });
+                resultsHtml += '</ul>';
+                
+                toolsResultsContent.innerHTML = resultsHtml;
+                toolsResults.style.display = 'block';
+                
+                // Re-enable button
+                actionStepsToolBtn.disabled = true;
+                actionStepsToolBtn.innerHTML = '<i class="fas fa-tasks me-2"></i>Suggest Action Steps';
+            })
+            .catch(error => {
+                console.error('Error generating action steps:', error);
+                alert('Failed to generate action steps. Please try again.');
+                actionStepsToolBtn.disabled = false;
+                actionStepsToolBtn.innerHTML = '<i class="fas fa-tasks me-2"></i>Suggest Action Steps';
+            });
+        }
+        
+        // Create new session
+        function createNewSession() {
+            const beliefText = limitingBeliefTextarea.value.trim();
+            
+            if (beliefText.length < 5) {
+                alert('Please enter a meaningful belief statement (at least 5 characters).');
+                return;
+            }
+            
+            // Disable button to prevent multiple submissions
+            createSessionBtn.disabled = true;
+            createSessionBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+            
+            // Call API to create session
+            fetch('/api/belief-change/sessions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    initial_belief: beliefText,
+                    category: beliefCategorySelect.value || null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error creating session: ' + data.error);
+                    createSessionBtn.disabled = false;
+                    createSessionBtn.textContent = 'Start Protocol';
+                    return;
+                }
+                
+                // Redirect to the session page
+                window.location.href = '/belief-change/session/' + data.session.belief_session_id;
+            })
+            .catch(error => {
+                console.error('Error creating session:', error);
+                alert('Failed to create session. Please try again.');
+                createSessionBtn.disabled = false;
+                createSessionBtn.textContent = 'Start Protocol';
+            });
+        }
+        
+        // Analyze belief for new session
+        function analyzeBeliefText(beliefText) {
+            if (!analyzeBeliefCheck.checked) {
+                createSessionBtn.style.display = 'block';
+                return;
+            }
+            
+            // Show loading
+            beliefAnalysisLoading.style.display = 'block';
+            beliefAnalysisResults.style.display = 'none';
+            analyzeBeliefBtn.disabled = true;
+            
+            // Call API to analyze belief
+            fetch('/api/belief-change/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    belief: beliefText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading
+                beliefAnalysisLoading.style.display = 'none';
+                
+                if (data.error) {
+                    alert('Error analyzing belief: ' + data.error);
+                    analyzeBeliefBtn.disabled = false;
+                    return;
+                }
+                
+                // Update UI with analysis results
+                const analysis = data.analysis;
+                
+                // Category
+                if (analysis.category) {
+                    const categoryMap = {
+                        'self': 'Self-Image & Identity',
+                        'capability': 'Abilities & Skills',
+                        'possibility': 'Possibilities & Opportunities',
+                        'worth': 'Worthiness & Deservingness',
+                        'relationships': 'Relationships & Connection',
+                        'world': 'World & Environment'
+                    };
+                    
+                    analysisCategory.textContent = categoryMap[analysis.category] || analysis.category;
+                    
+                    // Auto-select category in dropdown
+                    beliefCategorySelect.value = analysis.category;
+                }
+                
+                // Patterns
+                analysisPatterns.innerHTML = '';
+                if (analysis.patterns && analysis.patterns.length > 0) {
+                    analysis.patterns.forEach(pattern => {
+                        const li = document.createElement('li');
+                        li.textContent = pattern;
+                        analysisPatterns.appendChild(li);
+                    });
+                }
+                
+                // Techniques
+                analysisTechniques.innerHTML = '';
+                if (analysis.suggested_techniques && analysis.suggested_techniques.length > 0) {
+                    const techniqueMap = {
+                        'reframing': 'Cognitive Reframing',
+                        'pattern_interruption': 'Pattern Interruption',
+                        'future_pacing': 'Future Pacing',
+                        'anchoring': 'Anchoring',
+                        'meta_model': 'Meta Model Questioning'
+                    };
+                    
+                    analysis.suggested_techniques.forEach(technique => {
+                        const li = document.createElement('li');
+                        li.textContent = techniqueMap[technique] || technique;
+                        analysisTechniques.appendChild(li);
+                    });
+                }
+                
+                // Origin
+                if (analysis.potential_origin) {
+                    analysisOrigin.textContent = analysis.potential_origin;
+                }
+                
+                // Impact areas
+                analysisImpact.innerHTML = '';
+                if (analysis.impact_areas && analysis.impact_areas.length > 0) {
+                    analysis.impact_areas.forEach(area => {
+                        const li = document.createElement('li');
+                        li.textContent = area;
+                        analysisImpact.appendChild(li);
+                    });
+                }
+                
+                // Show results and create button
+                beliefAnalysisResults.style.display = 'block';
+                analyzeBeliefBtn.style.display = 'none';
+                createSessionBtn.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error analyzing belief:', error);
+                beliefAnalysisLoading.style.display = 'none';
+                alert('Failed to analyze belief. Please try again.');
+                analyzeBeliefBtn.disabled = false;
+            });
+        }
+        
+        function resetAnalysisUI() {
+            beliefAnalysisLoading.style.display = 'none';
+            beliefAnalysisResults.style.display = 'none';
+            analyzeBeliefBtn.style.display = 'block';
+            createSessionBtn.style.display = 'none';
+            
+            analysisCategory.textContent = '';
+            analysisPatterns.innerHTML = '';
+            analysisTechniques.innerHTML = '';
+            analysisOrigin.textContent = '';
+            analysisImpact.innerHTML = '';
+        }
+        
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+        
+        // Event listeners
+        previousBtn.addEventListener('click', goToPreviousStep);
+        nextBtn.addEventListener('click', goToNextStep);
+        
+        reframeToolBtn.addEventListener('click', useReframeTool);
+        metaModelToolBtn.addEventListener('click', useMetaModelTool);
+        actionStepsToolBtn.addEventListener('click', useActionStepsTool);
+        
+        stepResponse.addEventListener('input', function() {
+            // Enable next button if there is text
+            nextBtn.disabled = this.value.trim() === '';
+        });
+        
+        startNewSessionBtn.addEventListener('click', function() {
+            // Reset form
+            limitingBeliefTextarea.value = '';
+            beliefCategorySelect.value = '';
+            analyzeBeliefCheck.checked = true;
+            resetAnalysisUI();
+            
+            // Show modal
+            newSessionModal.show();
+        });
+        
+        analyzeBeliefBtn.addEventListener('click', function() {
+            const beliefText = limitingBeliefTextarea.value.trim();
+            
+            if (beliefText.length < 5) {
+                alert('Please enter a meaningful belief statement (at least 5 characters).');
+                return;
+            }
+            
+            analyzeBeliefText(beliefText);
+        });
+        
+        createSessionBtn.addEventListener('click', createNewSession);
+        
+        limitingBeliefTextarea.addEventListener('input', function() {
+            if (this.value.trim().length > 0) {
+                analyzeBeliefBtn.disabled = false;
+            } else {
+                analyzeBeliefBtn.disabled = true;
+                resetAnalysisUI();
+            }
+        });
+        
+        analyzeBeliefCheck.addEventListener('change', function() {
+            if (this.checked && limitingBeliefTextarea.value.trim().length > 0) {
+                analyzeBeliefBtn.style.display = 'block';
+            } else {
+                analyzeBeliefBtn.style.display = beliefAnalysisResults.style.display === 'none' ? 'block' : 'none';
+                createSessionBtn.style.display = 'block';
+            }
+        });
+        
+        // Initialize - load session data
+        loadSession();
+        
+        // Initialize UI - analyze button disabled until there is text
+        analyzeBeliefBtn.disabled = true;
+    });
+</script>
+{% endblock %}
