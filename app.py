@@ -749,6 +749,9 @@ def chat():
     Endpoint for AI interaction.
     Receives user message, processes it through OpenAI,
     and returns the AI response.
+    
+    Enforces usage quotas based on the user's subscription tier.
+    Returns error response when quota is exceeded with quota_exceeded flag set to true.
     """
     # Get the user message, mood, and NLP technique from the request
     data = request.json
@@ -761,29 +764,50 @@ def chat():
     if not session_id:
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
+        logging.info(f"Created new session ID: {session_id}")
     
     # Check usage quotas based on subscription tier
     user_id = None
     if current_user.is_authenticated:
         user_id = current_user.id
+        logging.info(f"Chat request from authenticated user: {user_id}")
+    else:
+        logging.info(f"Chat request from anonymous user with session: {session_id}")
     
     # Import subscription manager functions for quota management
-    from subscription_manager import check_quota_available, increment_usage_quota
+    from subscription_manager import check_quota_available, increment_usage_quota, get_subscription_details
+    
+    # Get subscription details for logging/debugging
+    subscription_tier = "free"
+    if user_id:
+        try:
+            subscription = get_subscription_details(user_id)
+            subscription_tier = subscription.get('plan_name', 'free')
+            logging.info(f"User subscription tier: {subscription_tier}")
+        except Exception as e:
+            logging.error(f"Error retrieving subscription details: {str(e)}")
     
     # Check if user has reached their daily message limit
-    quota_available, quota_message = check_quota_available(
-        user_id=user_id, 
-        browser_session_id=session_id,
-        quota_type='daily_messages',
-        amount=1
-    )
-    
-    if not quota_available:
-        return jsonify({
-            'response': "You've reached your daily message limit. Please upgrade your subscription for unlimited conversations or wait until tomorrow.",
-            'quota_exceeded': True,
-            'error': quota_message
-        })
+    try:
+        quota_available, quota_message = check_quota_available(
+            user_id=user_id, 
+            browser_session_id=session_id,
+            quota_type='daily_messages',
+            amount=1
+        )
+        
+        if not quota_available:
+            logging.warning(f"Quota exceeded for {'user '+user_id if user_id else 'session '+session_id}")
+            return jsonify({
+                'response': g.translate('quota_exceeded_message',
+                    "You've reached your daily message limit. Please upgrade your subscription for unlimited conversations or wait until tomorrow."),
+                'quota_exceeded': True,
+                'error': quota_message,
+                'subscription_tier': subscription_tier
+            })
+    except Exception as e:
+        logging.error(f"Error checking quota: {str(e)}")
+        # Continue processing the request even if quota check fails
     
     # Log the received message for debugging
     logging.debug(f"Received message: {message} (Mood: {mood}, Technique: {technique}, Session: {session_id})")
@@ -853,12 +877,20 @@ def chat():
             logging.info(f"Chat history saved with ID: {chat_entry.id}")
             
             # Increment usage quota counter for user
-            success, _ = increment_usage_quota(
-                user_id=user_id,
-                browser_session_id=session_id,
-                quota_type='daily_messages',
-                amount=1
-            )
+            try:
+                success, quota_message = increment_usage_quota(
+                    user_id=user_id,
+                    browser_session_id=session_id,
+                    quota_type='daily_messages',
+                    amount=1
+                )
+                if success:
+                    logging.info(f"Usage quota incremented for {'user '+user_id if user_id else 'session '+session_id}")
+                else:
+                    logging.warning(f"Failed to increment usage quota: {quota_message}")
+            except Exception as quota_error:
+                # Log the error but don't interrupt user experience
+                logging.error(f"Error incrementing usage quota: {str(quota_error)}")
             
         except Exception as db_error:
             # Log the error but don't interrupt user experience
