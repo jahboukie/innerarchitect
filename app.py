@@ -443,84 +443,40 @@ def create_checkout(plan):
     Args:
         plan (str): The subscription plan ('premium' or 'professional')
     """
-    if plan not in SUBSCRIPTION_PLANS:
-        flash(f"Invalid plan: {plan}", "danger")
-        return redirect(url_for('landing'))
-        
-    plan_data = SUBSCRIPTION_PLANS[plan]
+    from subscription_manager import create_stripe_checkout_session
     
-    # Get the domain for the success/cancel URLs
-    domain_url = request.host_url.rstrip('/')
+    # Validate plan
+    valid_plans = ['premium', 'professional']
+    if plan not in valid_plans:
+        logging.warning(f"Invalid subscription plan requested: {plan}")
+        flash(g.translate('invalid_plan', f"Invalid plan: {plan}"), "danger")
+        return redirect(url_for('landing'))
     
     try:
-        # Check if user already has a customer ID
-        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+        # Log checkout attempt
+        logging.info(f"User {current_user.id} initiating checkout for plan: {plan}")
         
-        if subscription and subscription.stripe_customer_id:
-            # Existing customer
-            customer_id = subscription.stripe_customer_id
+        # Use the subscription manager to create a checkout session
+        checkout_url = create_stripe_checkout_session(current_user.id, plan)
+        
+        if checkout_url:
+            # Redirect to Stripe checkout page
+            logging.info(f"Redirecting user {current_user.id} to Stripe checkout for {plan} plan")
+            return redirect(checkout_url)
         else:
-            # Create a new customer in Stripe
-            customer = stripe.Customer.create(
-                email=current_user.email,
-                name=f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or None,
-                metadata={
-                    'user_id': current_user.id
-                }
-            )
-            customer_id = customer.id
+            # Handle failure to create checkout session
+            logging.error(f"Failed to create checkout session for user {current_user.id}, plan {plan}")
+            flash(g.translate('checkout_error', 
+                "An error occurred while setting up your subscription. Please try again later."), 
+                "danger")
+            return redirect(url_for('manage_subscription'))
             
-            # Create or update subscription record
-            if not subscription:
-                subscription = Subscription(
-                    user_id=current_user.id,
-                    stripe_customer_id=customer_id,
-                    plan_name='free',
-                    status='active'
-                )
-                db.session.add(subscription)
-            else:
-                subscription.stripe_customer_id = customer_id
-            
-            db.session.commit()
-        
-        # Create a checkout session
-        checkout_session = stripe.checkout.Session.create(
-            customer=customer_id,
-            payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': plan_data['currency'],
-                        'product_data': {
-                            'name': plan_data['name'],
-                            'description': f"The Inner Architect {plan.capitalize()} Plan",
-                            'metadata': {
-                                'plan': plan
-                            }
-                        },
-                        'unit_amount': plan_data['amount'],
-                        'recurring': {
-                            'interval': plan_data['interval'],
-                        },
-                    },
-                    'quantity': 1,
-                }
-            ],
-            metadata={
-                'user_id': current_user.id,
-                'plan': plan
-            },
-            mode='subscription',
-            success_url=f"{domain_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{domain_url}/subscription/cancel",
-        )
-        
-        # Redirect to Stripe checkout
-        return redirect(checkout_session.url)
     except Exception as e:
-        logging.error(f"Error creating checkout session: {str(e)}")
-        flash("An error occurred while processing your request. Please try again later.", "danger")
+        # Handle unexpected errors
+        logging.error(f"Error creating checkout session for user {current_user.id}, plan {plan}: {str(e)}")
+        flash(g.translate('checkout_error', 
+            "An error occurred while processing your request. Please try again later."), 
+            "danger")
         return redirect(url_for('landing'))
 
 
@@ -530,62 +486,51 @@ def create_checkout(plan):
 def subscription_success():
     """
     Handle successful subscription checkout.
+    Updates the user's subscription record after successful payment.
     """
+    from subscription_manager import handle_checkout_success
+    
+    # Get the Stripe session ID from URL query parameters
     session_id = request.args.get('session_id')
     if not session_id:
-        flash("Invalid checkout session.", "danger")
-        return redirect(url_for('profile'))
+        logging.warning(f"Missing session_id in subscription success callback for user {current_user.id}")
+        flash(g.translate('invalid_session', "Invalid checkout session."), "danger")
+        return redirect(url_for('manage_subscription'))
         
     try:
-        # Retrieve checkout session from Stripe
-        checkout_session = stripe.checkout.Session.retrieve(session_id)
+        # Log the checkout success attempt
+        logging.info(f"Processing successful checkout for session {session_id}, user {current_user.id}")
         
-        # Ensure this session belongs to the current user
-        if checkout_session.metadata.get('user_id') != current_user.id:
-            flash("Invalid checkout session.", "danger")
-            return redirect(url_for('profile'))
+        # Use subscription manager to handle the checkout success
+        result = handle_checkout_success(session_id)
+        
+        if result:
+            # Successfully processed the subscription
+            # Fetch subscription details to display the correct plan name
+            from subscription_manager import get_subscription_details
+            subscription_details = get_subscription_details(current_user.id)
+            plan_name = subscription_details.get('plan_name', 'premium').capitalize()
             
-        # Get the subscription ID
-        subscription_id = checkout_session.subscription
-        
-        # Retrieve the subscription details
-        stripe_subscription = stripe.Subscription.retrieve(subscription_id)
-        
-        # Update the user's subscription in the database
-        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
-        
-        if not subscription:
-            # Create a new subscription record
-            subscription = Subscription(
-                user_id=current_user.id,
-                stripe_customer_id=checkout_session.customer,
-                stripe_subscription_id=subscription_id,
-                plan_name=checkout_session.metadata.get('plan', 'premium'),
-                status='active',
-                current_period_start=datetime.fromtimestamp(stripe_subscription.current_period_start),
-                current_period_end=datetime.fromtimestamp(stripe_subscription.current_period_end)
-            )
-            db.session.add(subscription)
+            # Show success message
+            logging.info(f"Subscription activated successfully for user {current_user.id}, plan: {plan_name}")
+            flash(g.translate('subscription_activated', 
+                f"Thank you! Your {plan_name} subscription has been activated."), "success")
+            
+            # Redirect to subscription management page
+            return redirect(url_for('manage_subscription'))
         else:
-            # Update existing subscription
-            subscription.stripe_subscription_id = subscription_id
-            subscription.plan_name = checkout_session.metadata.get('plan', 'premium')
-            subscription.status = 'active'
-            subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start)
-            subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end)
+            # Failed to process the subscription
+            logging.error(f"Failed to activate subscription for session {session_id}, user {current_user.id}")
+            flash(g.translate('subscription_error', 
+                "An error occurred while activating your subscription. Please try again or contact support."), "danger")
+            return redirect(url_for('manage_subscription'))
             
-        db.session.commit()
-        
-        # Show success message
-        plan_name = subscription.plan_name.capitalize()
-        flash(f"Thank you! Your {plan_name} subscription has been activated.", "success")
-        
-        return redirect(url_for('profile'))
-        
     except Exception as e:
-        logging.error(f"Error processing subscription: {str(e)}")
-        flash("An error occurred while processing your subscription. Please contact support.", "danger")
-        return redirect(url_for('profile'))
+        # Handle unexpected errors
+        logging.error(f"Error processing subscription success for user {current_user.id}: {str(e)}")
+        flash(g.translate('subscription_error', 
+            "An error occurred while processing your subscription. Please contact support."), "danger")
+        return redirect(url_for('manage_subscription'))
 
 
 # Subscription cancel route
@@ -594,9 +539,17 @@ def subscription_success():
 def subscription_cancel():
     """
     Handle canceled subscription checkout.
+    User canceled the checkout process before completing payment.
     """
-    flash("Your subscription checkout was canceled. You can try again anytime.", "info")
-    return redirect(url_for('landing'))
+    # Log the cancellation
+    logging.info(f"Subscription checkout canceled by user {current_user.id}")
+    
+    # Show informational message
+    flash(g.translate('checkout_canceled', 
+        "Your subscription checkout was canceled. You can try again anytime."), "info")
+    
+    # Redirect to subscription management page
+    return redirect(url_for('manage_subscription'))
 
 
 # Stripe webhook handler
