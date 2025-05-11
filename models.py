@@ -12,6 +12,9 @@ class User(db.Model):
     # Relationship with ChatHistory
     chats = db.relationship('ChatHistory', backref='user', lazy='dynamic')
     
+    # Relationship with NLPExerciseProgress
+    exercise_progress = db.relationship('NLPExerciseProgress', backref='user', lazy='dynamic')
+    
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -41,3 +44,38 @@ class JournalEntry(db.Model):
     
     def __repr__(self):
         return f'<JournalEntry {self.id}>'
+
+
+class NLPExercise(db.Model):
+    """Model for NLP technique exercises."""
+    id = db.Column(db.Integer, primary_key=True)
+    technique = db.Column(db.String(30), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    steps = db.Column(db.Text, nullable=False)  # JSON-formatted steps
+    difficulty = db.Column(db.String(20), nullable=False, default='beginner')  # beginner, intermediate, advanced
+    estimated_time = db.Column(db.Integer, nullable=False, default=5)  # in minutes
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship with user progress
+    progress = db.relationship('NLPExerciseProgress', backref='exercise', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<NLPExercise {self.technique}: {self.title}>'
+
+
+class NLPExerciseProgress(db.Model):
+    """Model to track user progress with NLP exercises."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('nlp_exercise.id'), nullable=False)
+    session_id = db.Column(db.String(64), nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+    current_step = db.Column(db.Integer, default=0)
+    notes = db.Column(db.Text, nullable=True)
+    started_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    
+    def __repr__(self):
+        status = "completed" if self.completed else f"step {self.current_step}"
+        return f'<NLPExerciseProgress {self.exercise_id} - {status}>'

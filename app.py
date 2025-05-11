@@ -35,8 +35,20 @@ with app.app_context():
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-# Import NLP analyzer
+# Import NLP analyzer and exercises
 from nlp_analyzer import recommend_technique, get_technique_description
+from nlp_exercises import (
+    initialize_default_exercises,
+    get_exercises_by_technique,
+    get_exercise_by_id,
+    start_exercise,
+    update_exercise_progress,
+    get_exercise_progress
+)
+
+# Initialize default NLP exercises
+with app.app_context():
+    initialize_default_exercises()
 
 # Home route
 @app.route('/')
@@ -163,6 +175,112 @@ def chat():
         return jsonify({
             'response': "I'm sorry, I encountered an error while processing your message. Please try again later."
         })
+
+# NLP Exercise routes
+@app.route('/exercises/<technique>', methods=['GET'])
+def get_technique_exercises(technique):
+    """
+    Get exercises for a specific NLP technique.
+    """
+    exercises = get_exercises_by_technique(technique)
+    return jsonify([{
+        'id': ex.id,
+        'title': ex.title,
+        'description': ex.description,
+        'difficulty': ex.difficulty,
+        'estimated_time': ex.estimated_time
+    } for ex in exercises])
+
+@app.route('/exercise/<int:exercise_id>', methods=['GET'])
+def get_exercise(exercise_id):
+    """
+    Get details for a specific exercise.
+    """
+    exercise = get_exercise_by_id(exercise_id)
+    if not exercise:
+        return jsonify({'error': 'Exercise not found'}), 404
+    
+    # Parse the steps JSON
+    steps = json.loads(exercise.steps)
+    
+    return jsonify({
+        'id': exercise.id,
+        'technique': exercise.technique,
+        'title': exercise.title,
+        'description': exercise.description,
+        'difficulty': exercise.difficulty,
+        'estimated_time': exercise.estimated_time,
+        'steps': steps
+    })
+
+@app.route('/exercise/<int:exercise_id>/start', methods=['POST'])
+def start_exercise_route(exercise_id):
+    """
+    Start a new exercise session.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+    
+    # Get user ID if logged in (for future auth)
+    user_id = None
+    
+    # Start the exercise
+    progress = start_exercise(exercise_id, session_id, user_id)
+    if not progress:
+        return jsonify({'error': 'Could not start exercise'}), 500
+    
+    return jsonify({
+        'progress_id': progress.id,
+        'exercise_id': progress.exercise_id,
+        'current_step': progress.current_step,
+        'completed': progress.completed
+    })
+
+@app.route('/exercise/progress/<int:progress_id>', methods=['PUT'])
+def update_progress(progress_id):
+    """
+    Update the progress of an exercise.
+    """
+    data = request.json
+    current_step = data.get('current_step', 0)
+    notes = data.get('notes')
+    completed = data.get('completed', False)
+    
+    success = update_exercise_progress(progress_id, current_step, notes, completed)
+    if not success:
+        return jsonify({'error': 'Could not update progress'}), 500
+    
+    return jsonify({'success': True})
+
+@app.route('/exercise/progress', methods=['GET'])
+def get_progress():
+    """
+    Get exercise progress for the current session.
+    """
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+    
+    exercise_id = request.args.get('exercise_id')
+    if exercise_id:
+        try:
+            exercise_id = int(exercise_id)
+        except ValueError:
+            return jsonify({'error': 'Invalid exercise ID'}), 400
+    
+    progress_records = get_exercise_progress(session_id, exercise_id)
+    
+    return jsonify([{
+        'id': p.id,
+        'exercise_id': p.exercise_id,
+        'current_step': p.current_step,
+        'completed': p.completed,
+        'started_at': p.started_at.isoformat(),
+        'completed_at': p.completed_at.isoformat() if p.completed_at else None
+    } for p in progress_records])
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

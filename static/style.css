@@ -303,6 +303,95 @@ footer p {
     font-size: 0.85rem;
 }
 
+/* NLP Exercise Styles */
+.exercise-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 8px;
+    background: var(--input-bg);
+    box-shadow: var(--shadow-soft);
+}
+
+.exercise-list .list-group-item {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.exercise-list .list-group-item:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.exercise-list .list-group-item:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.exercise-list .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#exerciseStepContainer {
+    min-height: 200px;
+}
+
+.multiple-choice-step .list-group-item {
+    background: var(--input-bg);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.multiple-choice-step .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.instruction-step .alert-info {
+    background-color: rgba(13, 202, 240, 0.15);
+    border-color: rgba(13, 202, 240, 0.2);
+    color: var(--text-primary);
+}
+
+.reflection-step .card {
+    background-color: rgba(255, 193, 7, 0.08);
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.reflection-step .card-title {
+    color: rgba(255, 193, 7, 0.8);
+}
+
+/* Customize form inputs */
+#exerciseModal .form-control {
+    background-color: var(--input-bg);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+#exerciseModal .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.25);
+}
+
+#exerciseModal .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+#exerciseModal .form-check-input {
+    background-color: var(--input-bg);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+#exerciseModal .progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    height: 8px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .chat-message.user .message-content,
@@ -317,5 +406,9 @@ footer p {
     
     .card-body {
         padding: 15px;
+    }
+    
+    .exercise-list {
+        max-height: 250px;
     }
 }
