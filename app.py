@@ -331,31 +331,25 @@ def profile():
         user_id=current_user.id
     ).with_entities(TechniqueEffectiveness.technique).distinct().count()
     
-    # Get subscription info
-    subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+    # Get subscription info using the subscription manager
+    from subscription_manager import get_subscription_details
     
-    # Default to free plan if no subscription exists
+    # Get detailed subscription information
+    subscription_details = get_subscription_details(current_user.id)
+    
+    # Format for template display
     subscription_info = {
-        'plan_name': 'Free',
-        'status': 'active',
-        'current_period_end': None,
-        'features': ['Basic cognitive reframing techniques', 'Limited AI chat interactions (10/day)', 'Access to basic dashboard']
+        'plan_name': subscription_details['plan_name'].capitalize(),
+        'status': subscription_details['status'],
+        'current_period_end': subscription_details.get('current_period_end'),
+        'features': []
     }
     
-    if subscription and subscription.is_active:
-        # Set subscription info based on active subscription
-        plan_features = []
-        if subscription.plan_name == 'premium':
-            plan_features = SUBSCRIPTION_PLANS['premium']['features']
-        elif subscription.plan_name == 'professional':
-            plan_features = SUBSCRIPTION_PLANS['professional']['features']
-            
-        subscription_info = {
-            'plan_name': subscription.plan_name.capitalize(),
-            'status': subscription.status,
-            'current_period_end': subscription.current_period_end,
-            'features': plan_features
-        }
+    # Format features for display
+    for feature in subscription_details['features']:
+        # Convert snake_case to readable text
+        readable_feature = feature.replace('_', ' ').title()
+        subscription_info['features'].append(readable_feature)
     
     # Get recent activity (last 5 items)
     recent_chats = ChatHistory.query.filter_by(
@@ -707,6 +701,22 @@ def chat():
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
     
+    # Check usage quotas based on subscription tier
+    user_id = None
+    if current_user.is_authenticated:
+        user_id = current_user.id
+    
+    # Import subscription manager functions
+    from subscription_manager import check_usage_quota, increment_usage_quota
+    
+    # Check if user has reached their daily message limit
+    has_quota = check_usage_quota(user_id, 'messages_per_day')
+    if not has_quota:
+        return jsonify({
+            'response': "You've reached your daily message limit. Please upgrade your subscription for unlimited conversations or wait until tomorrow.",
+            'quota_exceeded': True
+        })
+    
     # Log the received message for debugging
     logging.debug(f"Received message: {message} (Mood: {mood}, Technique: {technique}, Session: {session_id})")
     
@@ -757,7 +767,13 @@ def chat():
         
         # Save the chat history to the database
         try:
+            # Associate with user if authenticated
+            user_id_for_chat = None
+            if current_user.is_authenticated:
+                user_id_for_chat = current_user.id
+                
             chat_entry = ChatHistory(
+                user_id=user_id_for_chat,
                 session_id=session_id,
                 user_message=message,
                 ai_response=ai_response,
@@ -767,6 +783,10 @@ def chat():
             db.session.add(chat_entry)
             db.session.commit()
             logging.info(f"Chat history saved with ID: {chat_entry.id}")
+            
+            # Increment usage quota counter for user
+            increment_usage_quota(user_id, 'messages_per_day')
+            
         except Exception as db_error:
             # Log the error but don't interrupt user experience
             logging.error(f"Error saving chat history: {str(db_error)}")
