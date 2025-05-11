@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ technique.name }} - NLP Technique Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/techniques">Techniques</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ technique.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h1 class="card-title mb-4">{{ technique.name }}</h1>
+            <p class="lead mb-4">{{ technique.short_description }}</p>
+            
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h3 class="mb-3">What is {{ technique.name }}?</h3>
+                    <div class="mb-4">
+                        {{ technique.description | safe }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">Key Concepts</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                {% for concept in technique.key_concepts %}
+                                <li class="list-group-item">{{ concept }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h3 class="mb-3">Benefits</h3>
+                    <ul class="list-group list-group-flush mb-4">
+                        {% for benefit in technique.benefits %}
+                        <li class="list-group-item d-flex">
+                            <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                            <span>{{ benefit }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h3 class="mb-3">Common Pitfalls</h3>
+                    <ul class="list-group list-group-flush mb-4">
+                        {% for pitfall in technique.common_pitfalls %}
+                        <li class="list-group-item d-flex">
+                            <i class="fas fa-exclamation-triangle text-warning me-2 mt-1"></i>
+                            <span>{{ pitfall }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <h3 class="mb-3">Examples</h3>
+            <div class="row mb-4">
+                {% for example in technique.examples %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">{{ example.situation }}</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if example.negative_frame %}
+                            <p><strong>Before:</strong> <span class="text-danger">{{ example.negative_frame }}</span></p>
+                            <p><strong>After:</strong> <span class="text-success">{{ example.positive_reframe }}</span></p>
+                            {% elif example.pattern %}
+                            <p><strong>Pattern:</strong> {{ example.pattern }}</p>
+                            <p><strong>Interruption:</strong> {{ example.interruption }}</p>
+                            <p><strong>New Pattern:</strong> {{ example.new_pattern }}</p>
+                            {% elif example.desired_state %}
+                            <p><strong>Desired State:</strong> {{ example.desired_state }}</p>
+                            <p><strong>How to Create:</strong> {{ example.anchor_creation }}</p>
+                            <p><strong>How to Use:</strong> {{ example.anchor_use }}</p>
+                            {% elif example.process %}
+                            <p><strong>Process:</strong> {{ example.process }}</p>
+                            <p><strong>Sensory Elements:</strong> {{ example.sensory_elements }}</p>
+                            <p><strong>Outcome:</strong> {{ example.outcome }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <h3 class="mb-3">Practice Tips</h3>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        {% for tip in technique.practice_tips %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex">
+                                <i class="fas fa-lightbulb text-primary me-2 mt-1"></i>
+                                <p class="mb-0">{{ tip }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="mb-3">Scientific Basis</h3>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <p>{{ technique.scientific_basis | safe }}</p>
+                </div>
+            </div>
+            
+            <div class="d-flex flex-wrap mt-4">
+                <a href="/techniques/{{ technique_id }}/exercises" class="btn btn-primary me-2 mb-2">
+                    <i class="fas fa-dumbbell me-1"></i> Practice Exercises
+                </a>
+                <a href="/chat?technique={{ technique_id }}" class="btn btn-success me-2 mb-2">
+                    <i class="fas fa-comment-alt me-1"></i> Try in Chat
+                </a>
+                <a href="/techniques" class="btn btn-outline-secondary mb-2">
+                    <i class="fas fa-arrow-left me-1"></i> Back to All Techniques
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

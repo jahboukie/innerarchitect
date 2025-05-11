@@ -56,6 +56,14 @@ from progress_tracker import (
     get_progress_summary
 )
 
+# Import technique details
+from nlp_techniques import (
+    get_technique_details,
+    get_all_technique_names,
+    get_example_for_technique,
+    get_practice_tips
+)
+
 # Initialize default NLP exercises
 with app.app_context():
     initialize_default_exercises()
@@ -450,6 +458,78 @@ def update_chat_effectiveness():
         'usage_count': stats.usage_count,
         'avg_rating': round(stats.avg_rating, 1)
     })
+
+# Technique Details Routes - API Endpoints
+@app.route('/api/techniques', methods=['GET'])
+def get_technique_list_api():
+    """
+    Get a list of all available NLP techniques (API).
+    """
+    techniques = get_all_technique_names()
+    return jsonify(techniques)
+
+@app.route('/api/techniques/<technique>', methods=['GET'])
+def get_technique_info_api(technique):
+    """
+    Get detailed information about a specific NLP technique (API).
+    """
+    details = get_technique_details(technique)
+    
+    if not details:
+        return jsonify({'error': 'Technique not found'}), 404
+        
+    return jsonify(details)
+
+@app.route('/api/techniques/<technique>/example', methods=['GET'])
+def get_technique_example_api(technique):
+    """
+    Get a practical example of a specific NLP technique (API).
+    """
+    example = get_example_for_technique(technique)
+    
+    if not example:
+        return jsonify({'error': 'Example not found for this technique'}), 404
+        
+    return jsonify(example)
+
+@app.route('/api/techniques/<technique>/tips', methods=['GET'])
+def get_technique_tips_api(technique):
+    """
+    Get practice tips for a specific NLP technique (API).
+    """
+    tips = get_practice_tips(technique)
+    
+    if not tips:
+        return jsonify({'error': 'No tips found for this technique'}), 404
+        
+    return jsonify({'tips': tips})
+
+# Technique Details Routes - Web Pages
+@app.route('/techniques', methods=['GET'])
+def techniques_page():
+    """
+    Render the techniques list page.
+    """
+    techniques = {}
+    for technique_id, name in get_all_technique_names().items():
+        details = get_technique_details(technique_id)
+        if details:
+            techniques[technique_id] = details
+    
+    return render_template('techniques.html', techniques=techniques)
+
+@app.route('/techniques/<technique_id>', methods=['GET'])
+def technique_details_page(technique_id):
+    """
+    Render the technique details page.
+    """
+    technique = get_technique_details(technique_id)
+    
+    if not technique:
+        flash('Technique not found', 'danger')
+        return redirect(url_for('techniques_page'))
+    
+    return render_template('technique_details.html', technique=technique, technique_id=technique_id)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

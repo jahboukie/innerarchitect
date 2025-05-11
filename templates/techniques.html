@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}NLP Techniques - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Techniques</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <h1 class="mb-4">NLP Techniques</h1>
+            <p class="lead mb-4">
+                Explore the different Neuro-Linguistic Programming techniques that can help reshape your thinking patterns and improve your mental wellbeing.
+            </p>
+            
+            <div class="row">
+                {% for id, technique in techniques.items() %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title mb-2">{{ technique.name }}</h5>
+                            <p class="card-text">{{ technique.short_description }}</p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0">
+                            <a href="/techniques/{{ id }}" class="btn btn-primary">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
