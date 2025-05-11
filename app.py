@@ -64,6 +64,13 @@ from nlp_techniques import (
     get_practice_tips
 )
 
+# Import communication analyzer
+from communication_analyzer import (
+    analyze_communication_style,
+    get_improvement_suggestions,
+    get_all_communication_styles
+)
+
 # Initialize default NLP exercises
 with app.app_context():
     initialize_default_exercises()
@@ -530,6 +537,60 @@ def technique_details_page(technique_id):
         return redirect(url_for('techniques_page'))
     
     return render_template('technique_details.html', technique=technique, technique_id=technique_id)
+
+# ===== Communication Analysis Routes =====
+
+@app.route('/api/communication/analyze', methods=['POST'])
+def analyze_communication():
+    """
+    Analyze the user's communication style from provided text.
+    """
+    data = request.json
+    message = data.get('message', '')
+    
+    if not message or len(message.strip()) < 20:
+        return jsonify({
+            'error': 'Message too short for analysis. Please provide at least 20 characters.'
+        }), 400
+    
+    # Get session history for context
+    session_id = session.get('session_id', str(uuid.uuid4()))
+    # Limit to last 5 entries for context
+    history = []  # We can extend this to use actual chat history
+    
+    # Use OpenAI if available, otherwise fallback to rule-based
+    use_gpt = openai_client is not None
+    
+    # Perform analysis
+    analysis = analyze_communication_style(message, history, use_gpt)
+    
+    return jsonify(analysis)
+
+@app.route('/api/communication/styles')
+def get_all_styles():
+    """
+    Get a list of all communication style definitions.
+    """
+    styles = get_all_communication_styles()
+    return jsonify({'styles': styles})
+
+@app.route('/api/communication/improvements/<style_id>')
+def get_improvements_for_style(style_id):
+    """
+    Get improvement suggestions for a specific communication style.
+    """
+    suggestions = get_improvement_suggestions(style_id)
+    return jsonify({
+        'style_id': style_id,
+        'improvement_suggestions': suggestions
+    })
+
+@app.route('/communication-analysis')
+def communication_analysis_page():
+    """
+    Render the communication analysis page.
+    """
+    return render_template('communication_analysis.html')
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

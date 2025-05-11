@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+
+{% block title %}Communication Style Analysis - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h2 class="card-title mb-4">Communication Style Analysis</h2>
+                    
+                    <p class="lead">
+                        Understand your unique communication style and discover ways to become a more effective communicator.
+                    </p>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Type or paste a text sample (at least 20 words) to analyze your communication style.
+                        For best results, use actual messages you've sent or conversations you've had.
+                    </div>
+                    
+                    <form id="analysis-form" class="mb-4">
+                        <div class="mb-3">
+                            <label for="message-input" class="form-label">Your message:</label>
+                            <textarea 
+                                id="message-input" 
+                                class="form-control" 
+                                rows="6" 
+                                placeholder="Enter a message you've written or a typical example of how you communicate with others (minimum 20 words)..."
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button 
+                                type="submit" 
+                                id="analyze-btn" 
+                                class="btn btn-primary py-2"
+                            >
+                                <i class="fas fa-microscope me-2"></i>
+                                Analyze Communication Style
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="analysis-result" class="d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="mb-0">Analysis Results</h3>
+                            <button id="new-analysis-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i> New Analysis
+                            </button>
+                        </div>
+                        
+                        <div class="card mb-4 bg-dark-subtle border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <h4 class="primary-style-name fs-5 mb-1">Primary Style: <span></span></h4>
+                                <p class="primary-style-description mb-0"></p>
+                                
+                                <div class="d-flex align-items-center mt-3">
+                                    <div class="me-2">Confidence:</div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div 
+                                            class="progress-bar bg-primary confidence-bar" 
+                                            role="progressbar" 
+                                            style="width: 0%;" 
+                                            aria-valuenow="0" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100"
+                                        ></div>
+                                    </div>
+                                    <div class="ms-2 confidence-value">0%</div>
+                                </div>
+                                
+                                <div class="secondary-style-section mt-3 d-none">
+                                    <h5 class="fs-6 mb-1">Secondary Style: <span class="secondary-style-name"></span></h5>
+                                    <p class="secondary-style-description mb-0 small"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card h-100 bg-dark-subtle border-0 rounded-3 mb-3">
+                                    <div class="card-header bg-transparent border-0">
+                                        <h4 class="fs-5 mb-0">
+                                            <i class="fas fa-clipboard-check me-2 text-success"></i>
+                                            Signs
+                                        </h4>
+                                    </div>
+                                    <div class="card-body pt-0">
+                                        <ul class="style-signs list-group list-group-flush bg-transparent"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 bg-dark-subtle border-0 rounded-3 mb-3">
+                                    <div class="card-header bg-transparent border-0">
+                                        <h4 class="fs-5 mb-0">
+                                            <i class="fas fa-star me-2 text-warning"></i>
+                                            Strengths
+                                        </h4>
+                                    </div>
+                                    <div class="card-body pt-0">
+                                        <ul class="style-strengths list-group list-group-flush bg-transparent"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-dark-subtle border-0 rounded-3 mt-3 mb-4">
+                            <div class="card-header bg-transparent border-0">
+                                <h4 class="fs-5 mb-0">
+                                    <i class="fas fa-lightbulb me-2 text-info"></i>
+                                    Improvement Tips
+                                </h4>
+                            </div>
+                            <div class="card-body pt-0">
+                                <ul class="style-tips list-group list-group-flush bg-transparent"></ul>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-dark-subtle border-0 rounded-3">
+                            <div class="card-header bg-transparent border-0">
+                                <h4 class="fs-5 mb-0">
+                                    <i class="fas fa-chart-line me-2 text-primary"></i>
+                                    Pattern Details
+                                </h4>
+                            </div>
+                            <div class="card-body pt-0">
+                                <div class="mb-3">
+                                    <h5 class="fs-6">Sentence Structure</h5>
+                                    <p class="sentence-length-analysis mb-0"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <h5 class="fs-6">Word Choice</h5>
+                                    <p class="word-choice-analysis mb-0"></p>
+                                </div>
+                                <div>
+                                    <h5 class="fs-6">Listening Indicators</h5>
+                                    <p class="listening-indicators-analysis mb-0"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-dark shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-3">About Communication Styles</h3>
+                    <p>
+                        Understanding your communication style can help you become more effective in your interactions
+                        with others, both personally and professionally.
+                    </p>
+                    
+                    <div class="accordion" id="stylesAccordion">
+                        <!-- Styles will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load all available communication styles
+        fetch('/api/communication/styles')
+            .then(response => response.json())
+            .then(data => {
+                const stylesAccordion = document.getElementById('stylesAccordion');
+                let count = 0;
+                
+                for (const [styleId, style] of Object.entries(data.styles)) {
+                    count++;
+                    const accordionItem = document.createElement('div');
+                    accordionItem.className = 'accordion-item border-0 mb-2 bg-dark-subtle rounded';
+                    
+                    accordionItem.innerHTML = `
+                        <h2 class="accordion-header" id="heading${count}">
+                            <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapse${count}" 
+                                aria-expanded="false" aria-controls="collapse${count}">
+                                ${style.name}
+                            </button>
+                        </h2>
+                        <div id="collapse${count}" class="accordion-collapse collapse" 
+                            aria-labelledby="heading${count}" data-bs-parent="#stylesAccordion">
+                            <div class="accordion-body">
+                                <p>${style.description}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    stylesAccordion.appendChild(accordionItem);
+                }
+            })
+            .catch(error => console.error('Error loading communication styles:', error));
+        
+        // Handle form submission
+        const form = document.getElementById('analysis-form');
+        const messageInput = document.getElementById('message-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const newAnalysisBtn = document.getElementById('new-analysis-btn');
+        const analysisResult = document.getElementById('analysis-result');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const message = messageInput.value.trim();
+            
+            if (message.length < 20) {
+                alert('Please enter at least 20 characters for accurate analysis.');
+                return;
+            }
+            
+            // Show loading state
+            analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Analyzing...';
+            analyzeBtn.disabled = true;
+            
+            // Send API request
+            fetch('/api/communication/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(result => {
+                // Hide form, show results
+                form.classList.add('d-none');
+                analysisResult.classList.remove('d-none');
+                
+                // Update primary style info
+                document.querySelector('.primary-style-name span').textContent = result.primary_style.name;
+                document.querySelector('.primary-style-description').textContent = result.primary_style.description;
+                
+                // Update confidence
+                const confidencePercent = Math.round(result.confidence * 100);
+                document.querySelector('.confidence-bar').style.width = `${confidencePercent}%`;
+                document.querySelector('.confidence-bar').setAttribute('aria-valuenow', confidencePercent);
+                document.querySelector('.confidence-value').textContent = `${confidencePercent}%`;
+                
+                // Secondary style (if available)
+                const secondaryStyleSection = document.querySelector('.secondary-style-section');
+                if (result.secondary_style) {
+                    secondaryStyleSection.classList.remove('d-none');
+                    document.querySelector('.secondary-style-name').textContent = result.secondary_style.name;
+                    document.querySelector('.secondary-style-description').textContent = result.secondary_style.description;
+                } else {
+                    secondaryStyleSection.classList.add('d-none');
+                }
+                
+                // Signs, strengths, and tips
+                const signsList = document.querySelector('.style-signs');
+                const strengthsList = document.querySelector('.style-strengths');
+                const tipsList = document.querySelector('.style-tips');
+                
+                // Clear previous results
+                signsList.innerHTML = '';
+                strengthsList.innerHTML = '';
+                tipsList.innerHTML = '';
+                
+                // Populate lists
+                result.primary_style.signs.forEach(sign => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item bg-transparent border-0 py-1';
+                    listItem.innerHTML = `<i class="fas fa-check-circle me-2 text-success"></i> ${sign}`;
+                    signsList.appendChild(listItem);
+                });
+                
+                result.primary_style.strengths.forEach(strength => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item bg-transparent border-0 py-1';
+                    listItem.innerHTML = `<i class="fas fa-star me-2 text-warning"></i> ${strength}`;
+                    strengthsList.appendChild(listItem);
+                });
+                
+                result.primary_style.improvement_tips.forEach(tip => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item bg-transparent border-0 py-1';
+                    listItem.innerHTML = `<i class="fas fa-lightbulb me-2 text-info"></i> ${tip}`;
+                    tipsList.appendChild(listItem);
+                });
+                
+                // Pattern details
+                document.querySelector('.sentence-length-analysis').textContent = result.pattern_details.sentence_length;
+                document.querySelector('.word-choice-analysis').textContent = result.pattern_details.word_choice;
+                document.querySelector('.listening-indicators-analysis').textContent = result.pattern_details.listening_indicators;
+            })
+            .catch(error => {
+                console.error('Error analyzing communication:', error);
+                alert('An error occurred while analyzing your message. Please try again.');
+                analyzeBtn.innerHTML = '<i class="fas fa-microscope me-2"></i>Analyze Communication Style';
+                analyzeBtn.disabled = false;
+            });
+        });
+        
+        // New analysis button
+        newAnalysisBtn.addEventListener('click', function() {
+            messageInput.value = '';
+            form.classList.remove('d-none');
+            analysisResult.classList.add('d-none');
+            analyzeBtn.innerHTML = '<i class="fas fa-microscope me-2"></i>Analyze Communication Style';
+            analyzeBtn.disabled = false;
+        });
+    });
+</script>
+{% endblock %}
