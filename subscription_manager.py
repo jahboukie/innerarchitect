@@ -232,14 +232,38 @@ def check_feature_access(user_id, feature):
     Returns:
         bool: True if the user has access, False otherwise
     """
-    subscription = get_subscription(user_id)
-    if not subscription:
+    try:
+        # Log the feature access check attempt for debugging
+        logging.info(f"Checking feature access for user {user_id}, feature: {feature}")
+        
+        # Get the subscription details
+        subscription = get_subscription(user_id)
+        if not subscription:
+            logging.warning(f"No subscription found for user {user_id}")
+            return False
+        
+        # Get the plan name from the subscription
+        plan_name = subscription.plan_name
+        if not plan_name:
+            logging.warning(f"Subscription found for user {user_id} but plan_name is empty")
+            return False
+            
+        # Get the list of plans that have access to this feature
+        allowed_plans = FEATURE_ACCESS.get(feature, [])
+        if not allowed_plans:
+            logging.warning(f"No plans have access to feature: {feature}")
+            return False
+        
+        # Check if the user's plan has access to this feature
+        has_access = plan_name in allowed_plans
+        logging.info(f"Feature access check result: user {user_id} with plan '{plan_name}' {'has' if has_access else 'does not have'} access to {feature}")
+        
+        return has_access
+        
+    except Exception as e:
+        logging.error(f"Error checking feature access for user {user_id}, feature {feature}: {str(e)}")
+        # Default to False on error to prevent unauthorized access
         return False
-    
-    plan_name = subscription.plan_name
-    allowed_plans = FEATURE_ACCESS.get(feature, [])
-    
-    return plan_name in allowed_plans
 
 def get_usage_quota(user_id=None, browser_session_id=None):
     """
@@ -366,34 +390,77 @@ def check_quota_available(user_id=None, browser_session_id=None, quota_type='dai
     Returns:
         tuple: (available, message) indicating if the quota is available
     """
-    # Get the usage quota
-    usage = get_usage_quota(user_id, browser_session_id)
-    
-    # Get subscription details to check quota limits
-    subscription_details = None
-    if user_id:
-        subscription_details = get_subscription_details(user_id)
-    else:
-        # For anonymous users, use free plan limits
-        subscription_details = {
-            'plan_name': 'free',
-            'quotas': SUBSCRIPTION_PLANS['free']['quotas']
-        }
-    
-    # Get the quota limit and current usage
-    quota_limit = subscription_details['quotas'].get(quota_type, 0)
-    quota_field = QUOTA_FIELDS.get(quota_type)
-    
-    if not quota_field:
-        return False, f"Unknown quota type: {quota_type}"
-    
-    current_usage = getattr(usage, quota_field, 0)
-    
-    # Check if quota would be exceeded
-    if quota_limit != float('inf') and current_usage + amount > quota_limit:
-        return False, f"Quota exceeded for {quota_type}. Upgrade your subscription for higher limits."
-    
-    return True, "Quota available."
+    try:
+        # Log the quota check for debugging
+        user_identifier = f"user {user_id}" if user_id else f"session {browser_session_id}"
+        logging.info(f"Checking quota availability for {user_identifier}, quota type: {quota_type}, amount: {amount}")
+        
+        # Get the usage quota
+        usage = get_usage_quota(user_id, browser_session_id)
+        if not usage:
+            logging.warning(f"No usage record found for {user_identifier}, creating new record")
+            
+        # Get subscription details to check quota limits
+        subscription_details = None
+        subscription_plan = "free"
+        
+        if user_id:
+            try:
+                subscription_details = get_subscription_details(user_id)
+                subscription_plan = subscription_details.get('plan_name', 'free')
+                logging.info(f"User {user_id} has subscription plan: {subscription_plan}")
+            except Exception as sub_error:
+                logging.error(f"Error retrieving subscription details for {user_id}: {str(sub_error)}")
+                # Default to free plan on error
+                subscription_details = {
+                    'plan_name': 'free',
+                    'quotas': SUBSCRIPTION_PLANS['free']['quotas']
+                }
+        else:
+            # For anonymous users, use free plan limits
+            subscription_details = {
+                'plan_name': 'free',
+                'quotas': SUBSCRIPTION_PLANS['free']['quotas']
+            }
+            logging.info(f"Anonymous session {browser_session_id} using free plan quotas")
+        
+        # Get the quota limit for this user's subscription plan
+        quota_limit = subscription_details.get('quotas', {}).get(quota_type, 0)
+        logging.info(f"Quota limit for {quota_type} on {subscription_plan} plan: {quota_limit}")
+        
+        # Get the corresponding database field for this quota type
+        quota_field = QUOTA_FIELDS.get(quota_type)
+        if not quota_field:
+            error_msg = f"Unknown quota type: {quota_type}"
+            logging.error(error_msg)
+            return False, error_msg
+        
+        # Get current usage from the usage object
+        current_usage = getattr(usage, quota_field, 0) or 0  # Handle None values
+        logging.info(f"Current usage for {quota_type}: {current_usage}/{quota_limit}")
+        
+        # Check if unlimited quota (infinity)
+        if quota_limit == float('inf'):
+            logging.info(f"Unlimited quota for {quota_type} on {subscription_plan} plan")
+            return True, "Unlimited quota available."
+        
+        # Check if quota would be exceeded
+        if current_usage + amount > quota_limit:
+            message = f"Quota exceeded for {quota_type}. Current usage: {current_usage}/{quota_limit}. Upgrade your subscription for higher limits."
+            logging.warning(f"Quota check failed: {message}")
+            return False, message
+        
+        # Quota is available
+        remaining = quota_limit - current_usage
+        message = f"Quota available. Current usage: {current_usage}/{quota_limit}. Remaining: {remaining}."
+        logging.info(f"Quota check passed: {message}")
+        return True, message
+        
+    except Exception as e:
+        error_msg = f"Error checking quota availability: {str(e)}"
+        logging.error(error_msg)
+        # Default to False on error to prevent abuse
+        return False, error_msg
 
 def create_stripe_checkout_session(user_id, plan_name):
     """

@@ -81,60 +81,122 @@ from replit_auth import make_replit_blueprint, require_login
 def require_premium(f):
     """
     Decorator to require premium or professional subscription.
+    
+    This decorator checks if the current user has access to premium features
+    before allowing access to the decorated route.
+    
+    If the user is not authenticated, they will be redirected to login.
+    If the user is authenticated but doesn't have premium access, they
+    will be redirected to the landing page with subscription options.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # Check if user is authenticated
         if not current_user.is_authenticated:
+            logging.info(f"Unauthenticated user attempted to access premium feature: {request.path}")
             session["next_url"] = request.url
-            return redirect(url_for('login_check'))
+            flash("Please log in to access this feature.", "info")
+            return redirect(url_for('replit_auth.login'))
             
         # Import subscription manager
-        from subscription_manager import check_feature_access
+        from subscription_manager import check_feature_access, get_subscription_details
+        
+        user_id = current_user.id
+        feature_name = 'advanced_nlp'  # Key feature that determines premium access
+        
+        # Log the access attempt
+        logging.info(f"User {user_id} attempting to access premium feature: {request.path}")
+        
+        # Get subscription details for better error messages
+        try:
+            subscription = get_subscription_details(user_id)
+            current_plan = subscription.get('plan_name', 'free')
+            logging.info(f"User {user_id} has '{current_plan}' subscription")
+        except Exception as e:
+            logging.error(f"Error retrieving subscription details: {str(e)}")
+            current_plan = 'unknown'
         
         # Check if user has premium or professional subscription
         has_access = False
         try:
             # Check if user has access to premium features
-            has_access = check_feature_access(current_user.id, 'advanced_nlp')
+            has_access = check_feature_access(user_id, feature_name)
+            logging.info(f"Feature access check for {feature_name}: {has_access}")
         except Exception as e:
-            logging.error(f"Error checking premium access: {str(e)}")
+            logging.error(f"Error checking premium access for user {user_id}: {str(e)}")
             
         if not has_access:
-            flash("This feature requires a Premium subscription. Please upgrade your plan.", "warning")
+            logging.warning(f"User {user_id} with {current_plan} plan denied access to premium feature: {request.path}")
+            message = g.translate('premium_required', 
+                "This feature requires a Premium subscription. Please upgrade your plan to access advanced features.")
+            flash(message, "warning")
             return redirect(url_for('landing'))
-            
+        
+        # User has access, proceed with the route    
+        logging.info(f"User {user_id} granted access to premium feature: {request.path}")
         return f(*args, **kwargs)
+    
     return decorated_function
 
 
 def require_professional(f):
     """
     Decorator to require professional subscription.
+    
+    This decorator checks if the current user has access to professional features
+    before allowing access to the decorated route.
+    
+    If the user is not authenticated, they will be redirected to login.
+    If the user is authenticated but doesn't have professional access, they
+    will be redirected to the landing page with subscription options.
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # Check if user is authenticated
         if not current_user.is_authenticated:
+            logging.info(f"Unauthenticated user attempted to access professional feature: {request.path}")
             session["next_url"] = request.url
-            return redirect(url_for('login_check'))
+            flash("Please log in to access this feature.", "info")
+            return redirect(url_for('replit_auth.login'))
             
         # Import subscription manager
-        from subscription_manager import check_feature_access
+        from subscription_manager import check_feature_access, get_subscription_details
+        
+        user_id = current_user.id
+        feature_name = 'personalized_journeys'  # Key feature that determines professional access
+        
+        # Log the access attempt
+        logging.info(f"User {user_id} attempting to access professional feature: {request.path}")
+        
+        # Get subscription details for better error messages
+        try:
+            subscription = get_subscription_details(user_id)
+            current_plan = subscription.get('plan_name', 'free')
+            logging.info(f"User {user_id} has '{current_plan}' subscription")
+        except Exception as e:
+            logging.error(f"Error retrieving subscription details: {str(e)}")
+            current_plan = 'unknown'
         
         # Check if user has professional subscription
         has_access = False
         try:
             # Check if user has access to professional features
-            has_access = check_feature_access(current_user.id, 'personalized_journeys')
+            has_access = check_feature_access(user_id, feature_name)
+            logging.info(f"Feature access check for {feature_name}: {has_access}")
         except Exception as e:
-            logging.error(f"Error checking professional access: {str(e)}")
+            logging.error(f"Error checking professional access for user {user_id}: {str(e)}")
             
         if not has_access:
-            flash("This feature requires a Professional subscription. Please upgrade your plan.", "warning")
+            logging.warning(f"User {user_id} with {current_plan} plan denied access to professional feature: {request.path}")
+            message = g.translate('professional_required', 
+                "This feature requires a Professional subscription. Please upgrade your plan to access our most advanced features.")
+            flash(message, "warning")
             return redirect(url_for('landing'))
-            
+        
+        # User has access, proceed with the route    
+        logging.info(f"User {user_id} granted access to professional feature: {request.path}")
         return f(*args, **kwargs)
+    
     return decorated_function
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
