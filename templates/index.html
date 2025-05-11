@@ -1,61 +1,8 @@
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Inner Architect</title>
-    
-    <!-- Bootstrap CSS (Replit Theme) -->
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <!-- Header -->
-    <header>
-        <div class="container">
-            <div class="d-flex align-items-center justify-content-between">
-                <h1 class="mb-0">
-                    <i class="fas fa-brain me-2"></i>The Inner Architect
-                </h1>
-                <div>
-                    <a href="/techniques" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-book me-1"></i> Techniques
-                    </a>
-                    <a href="/progress/dashboard" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-chart-line me-1"></i> Progress Dashboard
-                    </a>
-                    <a href="/communication-analysis" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-comments me-1"></i> Communication Analysis
-                    </a>
-                    <a href="/personalized-journeys" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-map-signs me-1"></i> Personalized Journeys
-                    </a>
-                    <a href="/voice-practice" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-microphone me-1"></i> Voice Practice
-                    </a>
-                    <a href="/practice-reminders" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-bell me-1"></i> Practice Reminders
-                    </a>
-                    <a href="/belief-change" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-sync-alt me-1"></i> Belief Change Protocol
-                    </a>
-                    <div class="badge bg-dark-subtle text-primary-emphasis px-3 py-2">
-                        <i class="fas fa-code me-1"></i> MVP Version
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+{% extends "base.html" %}
+
+{% block title %}{{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block content %}
 
     <!-- Main Content -->
     <main class="container my-4">
@@ -66,10 +13,9 @@
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col-md-8">
-                                <h2 class="h4 mb-3">Welcome to Your Mental Wellness Journey</h2>
+                                <h2 class="h4 mb-3">{{ g.translate('welcome', 'Welcome to Your Mental Wellness Journey') }}</h2>
                                 <p class="text-secondary mb-0">
-                                    The Inner Architect helps you build healthier thought patterns through guided conversation. 
-                                    Share your thoughts and feelings, and receive personalized insights to help reframe negative thinking.
+                                    {{ g.translate('welcome_subtitle', 'The Inner Architect helps you build healthier thought patterns through guided conversation. Share your thoughts and feelings, and receive personalized insights to help reframe negative thinking.') }}
                                 </p>
                             </div>
                             <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
@@ -85,27 +31,27 @@
                 <div class="card h-100">
                     <div class="card-header d-flex align-items-center">
                         <i class="fas fa-heart me-2 text-danger"></i>
-                        <h5 class="mb-0">Mood Check-in</h5>
+                        <h5 class="mb-0">{{ g.translate('mood_check', 'Mood Check-in') }}</h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-secondary mb-3">How are you feeling today?</p>
+                        <p class="text-secondary mb-3">{{ g.translate('how_feeling', 'How are you feeling today?') }}</p>
                         
                         <!-- Mood selection interface -->
                         <div class="d-grid gap-2">
                             <button class="btn btn-outline-secondary mood-btn" data-mood="happy">
-                                <i class="fas fa-smile me-2"></i>Happy
+                                <i class="fas fa-smile me-2"></i>{{ g.translate('happy', 'Happy') }}
                             </button>
                             <button class="btn btn-outline-secondary mood-btn" data-mood="neutral">
-                                <i class="fas fa-meh me-2"></i>Neutral
+                                <i class="fas fa-meh me-2"></i>{{ g.translate('neutral', 'Neutral') }}
                             </button>
                             <button class="btn btn-outline-secondary mood-btn" data-mood="sad">
-                                <i class="fas fa-frown me-2"></i>Sad
+                                <i class="fas fa-frown me-2"></i>{{ g.translate('sad', 'Sad') }}
                             </button>
                             <button class="btn btn-outline-secondary mood-btn" data-mood="frustrated">
-                                <i class="fas fa-angry me-2"></i>Frustrated
+                                <i class="fas fa-angry me-2"></i>{{ g.translate('frustrated', 'Frustrated') }}
                             </button>
                             <button class="btn btn-outline-secondary mood-btn" data-mood="exhausted">
-                                <i class="fas fa-tired me-2"></i>Exhausted
+                                <i class="fas fa-tired me-2"></i>{{ g.translate('exhausted', 'Exhausted') }}
                             </button>
                         </div>
                         
@@ -113,26 +59,26 @@
                         
                         <!-- NLP Techniques Section -->
                         <h6 class="mb-3">
-                            <i class="fas fa-brain me-2"></i>NLP Techniques
+                            <i class="fas fa-brain me-2"></i>{{ g.translate('nlp_techniques', 'NLP Techniques') }}
                         </h6>
                         <p class="text-secondary small mb-3">
-                            Select a technique to focus on in your conversation:
+                            {{ g.translate('select_technique', 'Select a technique to focus on in your conversation:') }}
                         </p>
                         <!-- Recommendation Button -->
                         <button id="recommendButton" class="btn btn-sm btn-outline-primary w-100 mb-3">
-                            <i class="fas fa-magic me-1"></i> Recommend Technique
+                            <i class="fas fa-magic me-1"></i> {{ g.translate('recommended_technique', 'Recommend Technique') }}
                         </button>
                         
                         <select class="form-select mb-3" id="nlpTechniqueSelect">
-                            <option value="reframing">Reframing</option>
-                            <option value="pattern_interruption">Pattern Interruption</option>
-                            <option value="anchoring">Anchoring</option>
-                            <option value="future_pacing">Future Pacing</option>
-                            <option value="sensory_language">Sensory Language</option>
-                            <option value="meta_model">Meta Model Questions</option>
+                            <option value="reframing">{{ g.translate('reframing', 'Reframing') }}</option>
+                            <option value="pattern_interruption">{{ g.translate('pattern_interruption', 'Pattern Interruption') }}</option>
+                            <option value="anchoring">{{ g.translate('anchoring', 'Anchoring') }}</option>
+                            <option value="future_pacing">{{ g.translate('future_pacing', 'Future Pacing') }}</option>
+                            <option value="sensory_language">{{ g.translate('sensory_language', 'Sensory Language') }}</option>
+                            <option value="meta_model">{{ g.translate('meta_model', 'Meta Model Questions') }}</option>
                         </select>
                         <div id="techniqueDescription" class="text-secondary small mb-3 p-2 bg-dark rounded">
-                            <p class="mb-0"><strong>Reframing</strong>: See situations from new perspectives and find positive aspects in challenges.</p>
+                            <p class="mb-0"><strong>{{ g.translate('reframing', 'Reframing') }}</strong>: {{ g.translate('reframing_description', 'See situations from new perspectives and find positive aspects in challenges.') }}</p>
                         </div>
                         
                         <!-- Recommendation Explanation (hidden by default) -->
@@ -183,10 +129,10 @@
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-comments me-2 text-primary"></i>
-                            <h5 class="mb-0">Chat with Your Inner Architect</h5>
+                            <h5 class="mb-0">{{ g.translate('chat_with_ai', 'Chat with Your Inner Architect') }}</h5>
                         </div>
                         <div id="selectedMood" class="badge bg-secondary px-2 py-1 d-none">
-                            <i class="fas fa-meh me-1"></i> Neutral
+                            <i class="fas fa-meh me-1"></i> {{ g.translate('neutral', 'Neutral') }}
                         </div>
                     </div>
                     
@@ -196,8 +142,8 @@
                             <!-- Welcome message -->
                             <div class="chat-message assistant">
                                 <div class="message-content">
-                                    <p>Welcome to The Inner Architect! I'm here to help you reframe thoughts and build more positive mental patterns.</p>
-                                    <p class="mb-0">How can I assist you today?</p>
+                                    <p>{{ g.translate('welcome_message', 'Welcome to The Inner Architect! I\'m here to help you reframe thoughts and build more positive mental patterns.') }}</p>
+                                    <p class="mb-0">{{ g.translate('how_assist', 'How can I assist you today?') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -208,13 +154,13 @@
                                 type="text" 
                                 id="messageInput" 
                                 class="form-control" 
-                                placeholder="Type your message here..."
-                                aria-label="Message">
+                                placeholder="{{ g.translate('your_message', 'Type your message here...') }}"
+                                aria-label="{{ g.translate('message', 'Message') }}">
                             <button 
                                 class="btn btn-secondary" 
                                 type="button" 
                                 id="sendButton">
-                                Send <i class="fas fa-paper-plane ms-1"></i>
+                                {{ g.translate('submit', 'Send') }} <i class="fas fa-paper-plane ms-1"></i>
                             </button>
                         </div>
                     </div>
@@ -265,27 +211,48 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="text-center py-4 mt-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <p class="mb-3">
-                        <i class="fas fa-brain me-2" style="color: var(--accent-color);"></i>
-                        <span class="fw-bold">The Inner Architect</span>
-                    </p>
-                    <p class="small text-muted mb-0">
-                        &copy; 2025 The Inner Architect | A self-help chat application for mental wellness
-                    </p>
+    <!-- NLP Exercise Modal -->
+    <div class="modal fade" id="exerciseModal" tabindex="-1" aria-labelledby="exerciseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exerciseModalLabel">{{ g.translate('nlp_exercise', 'NLP Exercise') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="exerciseContainer">
+                        <!-- Exercise content will be dynamically loaded here -->
+                        <div class="exercise-loading text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{{ g.translate('loading', 'Loading...') }}</span>
+                            </div>
+                            <p class="mt-3">{{ g.translate('loading_exercise', 'Loading exercise...') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div id="exerciseStepContainer" class="d-none">
+                        <!-- Current step will be shown here -->
+                    </div>
+                    
+                    <div id="exerciseProgress" class="mt-4 d-none">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-secondary">{{ g.translate('step', 'Step') }} <span id="currentStepNumber">0</span> {{ g.translate('of', 'of') }} <span id="totalSteps">0</span></small>
+                            <small class="text-secondary"><span id="estimatedTimeRemaining">0</span> {{ g.translate('min_remaining', 'min remaining') }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ g.translate('close', 'Close') }}</button>
+                    <button type="button" class="btn btn-outline-secondary" id="prevStepBtn" disabled>{{ g.translate('previous_step', 'Previous') }}</button>
+                    <button type="button" class="btn btn-primary" id="nextStepBtn">{{ g.translate('next_step', 'Next') }}</button>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
-</html>
+{% endblock %}
