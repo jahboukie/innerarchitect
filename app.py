@@ -658,13 +658,43 @@ def stripe_webhook():
 def manage_subscription():
     """
     Render the subscription management page.
+    Shows the current subscription status, usage limits, and available plans.
     """
-    from subscription_manager import get_subscription_details
+    from subscription_manager import get_subscription_details, get_usage_quota
     
-    # Get subscription details
-    subscription_details = get_subscription_details(current_user.id)
+    try:
+        # Get subscription details
+        subscription_details = get_subscription_details(current_user.id)
+        
+        # Get current usage quotas
+        usage = get_usage_quota(user_id=current_user.id)
+        
+        # Prepare subscription context for template
+        subscription_context = {
+            'plan_name': subscription_details.get('plan_name', 'free'),
+            'status': subscription_details.get('status', 'active'),
+            'current_period_start': subscription_details.get('current_period_start'),
+            'current_period_end': subscription_details.get('current_period_end'),
+            'cancel_at_period_end': subscription_details.get('cancel_at_period_end', False),
+            'quotas': {
+                'daily_messages': subscription_details.get('quotas', {}).get('daily_messages', 10),
+                'daily_exercises': subscription_details.get('quotas', {}).get('daily_exercises', 3),
+                'monthly_analyses': subscription_details.get('quotas', {}).get('monthly_analyses', 1),
+            },
+            'usage': {
+                'messages_used_today': usage.messages_used_today if usage else 0,
+                'exercises_used_today': usage.exercises_used_today if usage else 0,
+                'analyses_used_this_month': usage.analyses_used_this_month if usage else 0,
+            }
+        }
+        
+        logging.info(f"Rendering subscription page for user: {current_user.id}")
+        return render_template('subscription_manage.html', subscription=subscription_context)
     
-    return render_template('subscription_manage.html', subscription=subscription_details)
+    except Exception as e:
+        logging.error(f"Error retrieving subscription information: {str(e)}")
+        flash("An error occurred while retrieving your subscription information. Please try again later.", "danger")
+        return redirect(url_for('index'))
 
 
 # Cancel subscription
@@ -673,17 +703,35 @@ def manage_subscription():
 def cancel_user_subscription():
     """
     Cancel the user's subscription.
+    This doesn't immediately end the subscription, but prevents renewal at the end of the current period.
     """
     from subscription_manager import cancel_subscription
     
     try:
-        if cancel_subscription(current_user.id):
-            flash("Your subscription has been canceled. You will still have access until the end of your billing period.", "success")
+        # Log the cancellation attempt
+        logging.info(f"Cancellation request received for user: {current_user.id}")
+        
+        # Attempt to cancel the subscription
+        result = cancel_subscription(current_user.id)
+        
+        if result:
+            # Successful cancellation
+            logging.info(f"Subscription successfully canceled for user: {current_user.id}")
+            flash(g.translate('subscription_canceled_message', 
+                "Your subscription has been canceled. You will still have access until the end of your billing period."), 
+                "success")
         else:
-            flash("Unable to cancel subscription. Please try again later.", "danger")
+            # Cancellation failed for some reason
+            logging.warning(f"Subscription cancellation failed for user: {current_user.id}")
+            flash(g.translate('cancellation_failed', 
+                "Unable to cancel subscription. Please try again later."), 
+                "danger")
     except Exception as e:
-        logging.error(f"Error canceling subscription: {str(e)}")
-        flash("An error occurred while processing your request. Please try again later.", "danger")
+        # Exception occurred during cancellation
+        logging.error(f"Error canceling subscription for user {current_user.id}: {str(e)}")
+        flash(g.translate('cancellation_error', 
+            "An error occurred while processing your request. Please try again later."), 
+            "danger")
     
     return redirect(url_for('manage_subscription'))
 
