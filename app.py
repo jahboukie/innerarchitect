@@ -725,15 +725,22 @@ def chat():
     if current_user.is_authenticated:
         user_id = current_user.id
     
-    # Import subscription manager functions
-    from subscription_manager import check_usage_quota, increment_usage_quota
+    # Import subscription manager functions for quota management
+    from subscription_manager import check_quota_available, increment_usage_quota
     
     # Check if user has reached their daily message limit
-    has_quota = check_usage_quota(user_id, 'messages_per_day')
-    if not has_quota:
+    quota_available, quota_message = check_quota_available(
+        user_id=user_id, 
+        browser_session_id=session_id,
+        quota_type='daily_messages',
+        amount=1
+    )
+    
+    if not quota_available:
         return jsonify({
             'response': "You've reached your daily message limit. Please upgrade your subscription for unlimited conversations or wait until tomorrow.",
-            'quota_exceeded': True
+            'quota_exceeded': True,
+            'error': quota_message
         })
     
     # Log the received message for debugging
@@ -804,7 +811,12 @@ def chat():
             logging.info(f"Chat history saved with ID: {chat_entry.id}")
             
             # Increment usage quota counter for user
-            increment_usage_quota(user_id, 'messages_per_day')
+            success, _ = increment_usage_quota(
+                user_id=user_id,
+                browser_session_id=session_id,
+                quota_type='daily_messages',
+                amount=1
+            )
             
         except Exception as db_error:
             # Log the error but don't interrupt user experience
@@ -895,7 +907,14 @@ def start_exercise_route(exercise_id):
     # Increment usage quota counter for exercises if user is authenticated
     if current_user.is_authenticated:
         try:
-            increment_usage_quota(user_id, 'exercises_per_week')
+            success, message = increment_usage_quota(
+                user_id=user_id,
+                browser_session_id=session_id,
+                quota_type='daily_exercises',
+                amount=1
+            )
+            if not success:
+                logging.warning(f"Failed to increment exercise quota: {message}")
         except Exception as e:
             # Log but don't interrupt experience
             logging.error(f"Error incrementing exercise quota: {str(e)}")
