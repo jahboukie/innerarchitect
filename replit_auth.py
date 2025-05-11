@@ -1,10 +1,11 @@
 import jwt
 import os
 import uuid
+import logging
 from functools import wraps
 from urllib.parse import urlencode
 
-from flask import g, session, redirect, request, render_template, url_for
+from flask import g, session, redirect, request, render_template, url_for, flash
 from flask_dance.consumer import (
     OAuth2ConsumerBlueprint,
     oauth_authorized,
@@ -121,6 +122,7 @@ def make_replit_blueprint():
 
     @replit_bp.route("/error")
     def error():
+        flash("There was an error during authentication. Please try again.", "danger")
         return render_template("403.html"), 403
 
     return replit_bp
@@ -159,7 +161,10 @@ def require_login(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
+            # Store the full URL for better redirection
             session["next_url"] = get_next_navigation_url(request)
+            
+            # Redirect to login page
             return redirect(url_for('replit_auth.login'))
 
         # Check if token needs refresh
@@ -172,12 +177,16 @@ def require_login(f):
                     token = replit.refresh_token(token_url=refresh_token_url,
                                             client_id=os.environ['REPL_ID'])
                 except InvalidGrantError:
-                    # If the refresh token is invalid, the users needs to re-login.
+                    # If the refresh token is invalid, re-login is needed
+                    flash("Your session has expired. Please log in again.", "info")
                     session["next_url"] = get_next_navigation_url(request)
                     return redirect(url_for('replit_auth.login'))
+                
+                # Update token if successfully refreshed
                 replit.token_updater(token)
-        except:
-            # If there's any issue with the token refresh, continue with the request
+        except Exception as e:
+            # Log the error but continue with the request
+            logging.error(f"Error refreshing token: {str(e)}")
             pass
 
         return f(*args, **kwargs)
