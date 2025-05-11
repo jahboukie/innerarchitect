@@ -11,4 +11,8 @@ dependencies = [
     "gunicorn>=23.0.0",
     "psycopg2-binary>=2.9.10",
     "openai>=1.77.0",
+    "flask-dance>=7.1.0",
+    "oauthlib>=3.2.2",
+    "pyjwt>=2.10.1",
+    "sqlalchemy>=2.0.40",
 ]
