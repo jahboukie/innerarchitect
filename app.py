@@ -73,6 +73,40 @@ db.init_app(app)
 
 # Initialize login manager and replit auth after db init
 from replit_auth import make_replit_blueprint, require_login
+
+# Subscription access decorators
+def require_premium(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            session["next_url"] = request.url
+            return redirect(url_for('login_check'))
+            
+        # Check if user has premium or better subscription
+        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+        if not (subscription and subscription.has_premium_access):
+            flash("This feature requires a Premium subscription. Please upgrade your plan.", "warning")
+            return redirect(url_for('landing'))
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def require_professional(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            session["next_url"] = request.url
+            return redirect(url_for('login_check'))
+            
+        # Check if user has professional subscription
+        subscription = Subscription.query.filter_by(user_id=current_user.id).first()
+        if not (subscription and subscription.has_professional_access):
+            flash("This feature requires a Professional subscription. Please upgrade your plan.", "warning")
+            return redirect(url_for('landing'))
+            
+        return f(*args, **kwargs)
+    return decorated_function
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
 # Import models
@@ -1255,6 +1289,7 @@ def complete_milestone_api(journey_id, milestone_number):
     })
 
 @app.route('/personalized-journeys')
+@require_professional
 def personalized_journeys_page():
     """
     Render the personalized journeys page.
@@ -1470,6 +1505,7 @@ def get_voice_submissions_api():
     })
 
 @app.route('/voice-practice')
+@require_professional
 def voice_practice_page():
     """
     Render the voice practice page.
@@ -2046,6 +2082,7 @@ def go_back_session_step_api(session_id):
     })
 
 @app.route('/belief-change')
+@require_professional
 def belief_change_page():
     """
     Render the belief change protocol page.
