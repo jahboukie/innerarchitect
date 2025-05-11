@@ -1,0 +1,731 @@
+{% extends 'base.html' %}
+
+{% block title %}Personalized NLP Journeys - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Introduction -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h2 class="card-title mb-3">Personalized NLP Journeys</h2>
+                    
+                    <p class="lead">
+                        Embark on a guided learning experience tailored to your unique communication style and personal goals.
+                    </p>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Personalized Journeys combine specific NLP techniques, exercises, and milestones designed to help you
+                        achieve your communication goals through a structured learning path.
+                    </div>
+                    
+                    <div id="journey-controls" class="d-flex justify-content-between align-items-center mt-4">
+                        <button id="create-journey-btn" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Create New Journey
+                        </button>
+                        
+                        <div class="btn-group" role="group">
+                            <button id="refresh-journeys-btn" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync me-2"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Journey List -->
+            <div id="journey-list-container" class="mb-4">
+                <h3 class="mb-3">Your Active Journeys</h3>
+                
+                <div id="empty-journeys-message" class="alert alert-secondary">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You don't have any active journeys yet. Create a new one to get started!
+                </div>
+                
+                <div id="journeys-list" class="row g-4">
+                    <!-- Journey cards will be added here by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Journey Create Form Modal -->
+            <div class="modal fade" id="createJourneyModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content bg-dark">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title">Create a Personalized Journey</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="create-journey-form">
+                                <!-- Step 1: Journey Type -->
+                                <div class="journey-step" id="step-type">
+                                    <h4 class="mb-3">Step 1: Choose a Journey Type</h4>
+                                    <p class="text-muted mb-4">Select the type of journey that aligns with your goals.</p>
+                                    
+                                    <div class="row g-3 mb-3" id="journey-types-container">
+                                        <!-- Journey type options will be added here by JavaScript -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 2: Communication Style -->
+                                <div class="journey-step d-none" id="step-style">
+                                    <h4 class="mb-3">Step 2: Your Communication Style</h4>
+                                    <p class="text-muted mb-4">Knowing your communication style helps personalize your journey.</p>
+                                    
+                                    <div class="alert alert-info" id="comm-style-alert">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <span>If you're not sure about your communication style, try the <a href="/communication-analysis" class="alert-link">Communication Analysis</a> tool first.</span>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="comm-style-select" class="form-label">Select your primary communication style:</label>
+                                        <select class="form-select" id="comm-style-select">
+                                            <option value="">I'm not sure / Skip this step</option>
+                                            <!-- Style options will be added here by JavaScript -->
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 3: Focus Areas -->
+                                <div class="journey-step d-none" id="step-focus">
+                                    <h4 class="mb-3">Step 3: Focus Areas</h4>
+                                    <p class="text-muted mb-4">Select up to 3 focus areas for your journey.</p>
+                                    
+                                    <div class="row" id="focus-areas-container">
+                                        <!-- Focus area options will be added here by JavaScript -->
+                                    </div>
+                                    
+                                    <div class="alert alert-warning mt-3 d-none" id="focus-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Please select at least one focus area.
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 4: Intensity -->
+                                <div class="journey-step d-none" id="step-intensity">
+                                    <h4 class="mb-3">Step 4: Journey Intensity</h4>
+                                    <p class="text-muted mb-4">Choose how intensive your journey should be.</p>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <div class="form-check card bg-dark-subtle p-3 h-100">
+                                                <input class="form-check-input" type="radio" name="intensity" id="intensity-light" value="light">
+                                                <label class="form-check-label d-block" for="intensity-light">
+                                                    <div class="fw-bold mb-2">Light</div>
+                                                    <div class="text-muted small">
+                                                        10 minutes daily
+                                                        <br>Fewer exercises
+                                                        <br>Longer duration
+                                                        <br>Best for beginners
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check card bg-dark-subtle p-3 h-100">
+                                                <input class="form-check-input" type="radio" name="intensity" id="intensity-moderate" value="moderate" checked>
+                                                <label class="form-check-label d-block" for="intensity-moderate">
+                                                    <div class="fw-bold mb-2">Moderate</div>
+                                                    <div class="text-muted small">
+                                                        20 minutes daily
+                                                        <br>Balanced approach
+                                                        <br>Standard duration
+                                                        <br>Best for most people
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check card bg-dark-subtle p-3 h-100">
+                                                <input class="form-check-input" type="radio" name="intensity" id="intensity-intensive" value="intensive">
+                                                <label class="form-check-label d-block" for="intensity-intensive">
+                                                    <div class="fw-bold mb-2">Intensive</div>
+                                                    <div class="text-muted small">
+                                                        30 minutes daily
+                                                        <br>More exercises
+                                                        <br>Shorter duration
+                                                        <br>Best for committed learners
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Step 5: Review & Create -->
+                                <div class="journey-step d-none" id="step-review">
+                                    <h4 class="mb-3">Step 5: Review & Create</h4>
+                                    <p class="text-muted mb-4">Review your journey details before creating it.</p>
+                                    
+                                    <div class="card bg-dark-subtle mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title" id="review-journey-name">Journey Name</h5>
+                                            <p class="card-text" id="review-journey-description">Journey description will appear here.</p>
+                                            
+                                            <div class="row mt-3">
+                                                <div class="col-md-6">
+                                                    <h6>Focus Areas:</h6>
+                                                    <ul id="review-focus-areas" class="list-unstyled">
+                                                        <!-- Focus areas will be listed here -->
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Journey Details:</h6>
+                                                    <ul class="list-unstyled">
+                                                        <li><strong>Intensity:</strong> <span id="review-intensity">Moderate</span></li>
+                                                        <li><strong>Practice Time:</strong> <span id="review-practice-time">20 minutes daily</span></li>
+                                                        <li><strong>Communication Style:</strong> <span id="review-comm-style">Not specified</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Navigation Buttons -->
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" id="prev-step-btn" class="btn btn-outline-secondary d-none">
+                                        <i class="fas fa-arrow-left me-2"></i>Previous
+                                    </button>
+                                    <button type="button" id="next-step-btn" class="btn btn-primary">
+                                        Next<i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                    <button type="submit" id="create-btn" class="btn btn-success d-none">
+                                        <i class="fas fa-check-circle me-2"></i>Create Journey
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journey Types Information -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-3">About NLP Journeys</h3>
+                    <p>
+                        NLP Journeys combine specific techniques and exercises into a structured learning path to help you
+                        achieve your communication goals. Each journey focuses on different aspects of communication and 
+                        personal development.
+                    </p>
+                    
+                    <div class="accordion" id="journeyTypesAccordion">
+                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#collapseOne" 
+                                    aria-expanded="false" aria-controls="collapseOne">
+                                    Communication Improvement
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#journeyTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Enhance your general communication effectiveness through techniques focused on clarity, persuasion, 
+                                    listening, and empathy. Great for anyone looking to improve their overall communication skills.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#collapseTwo" 
+                                    aria-expanded="false" aria-controls="collapseTwo">
+                                    Confidence Building
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#journeyTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Develop greater self-assurance in your interactions by working on self-expression, assertiveness, and 
+                                    resilience. Perfect for those who want to speak up more, express themselves clearly, and handle 
+                                    challenging situations with confidence.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#collapseThree" 
+                                    aria-expanded="false" aria-controls="collapseThree">
+                                    Relationship Enhancement
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#journeyTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Improve personal and professional relationships through techniques focused on empathy, understanding, 
+                                    and conflict resolution. This journey is ideal for anyone looking to build stronger, more authentic 
+                                    connections with others.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#collapseFour" 
+                                    aria-expanded="false" aria-controls="collapseFour">
+                                    Professional Growth
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#journeyTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Develop communication skills for workplace success through techniques focused on leadership, negotiation, 
+                                    clarity, and persuasion. Designed for professionals looking to advance their careers through more effective 
+                                    communication.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item bg-dark-subtle border-0 rounded">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#collapseFive" 
+                                    aria-expanded="false" aria-controls="collapseFive">
+                                    Emotional Regulation
+                                </button>
+                            </h2>
+                            <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#journeyTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Manage emotions effectively in your communications through techniques focused on self-awareness, resilience, 
+                                    and mindfulness. Perfect for those who want to handle difficult conversations more calmly and respond rather 
+                                    than react in emotionally charged situations.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Global variables
+        let journeyTypeData = {};
+        let focusAreasData = {};
+        let communicationStyles = {};
+        let selectedJourneyType = null;
+        let selectedFocusAreas = [];
+        let selectedIntensity = 'moderate';
+        let currentStep = 1;
+        const totalSteps = 5;
+        
+        // Elements
+        const createJourneyBtn = document.getElementById('create-journey-btn');
+        const refreshJourneysBtn = document.getElementById('refresh-journeys-btn');
+        const createJourneyModal = new bootstrap.Modal(document.getElementById('createJourneyModal'));
+        const journeyForm = document.getElementById('create-journey-form');
+        const prevStepBtn = document.getElementById('prev-step-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const createBtn = document.getElementById('create-btn');
+        const journeySteps = document.querySelectorAll('.journey-step');
+        const journeyTypesContainer = document.getElementById('journey-types-container');
+        const focusAreasContainer = document.getElementById('focus-areas-container');
+        const commStyleSelect = document.getElementById('comm-style-select');
+        const journeysList = document.getElementById('journeys-list');
+        const emptyJourneysMessage = document.getElementById('empty-journeys-message');
+        
+        // Update the review step
+        function updateReview() {
+            // Update journey name and description
+            document.getElementById('review-journey-name').textContent = 
+                journeyTypeData[selectedJourneyType]?.name || 'Custom Journey';
+            document.getElementById('review-journey-description').textContent = 
+                journeyTypeData[selectedJourneyType]?.description || '';
+            
+            // Update focus areas list
+            const focusAreasList = document.getElementById('review-focus-areas');
+            focusAreasList.innerHTML = '';
+            
+            if (selectedFocusAreas.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Using default focus areas';
+                focusAreasList.appendChild(li);
+            } else {
+                selectedFocusAreas.forEach(focusArea => {
+                    const li = document.createElement('li');
+                    li.textContent = focusAreasData[focusArea] || focusArea;
+                    focusAreasList.appendChild(li);
+                });
+            }
+            
+            // Update intensity and practice time
+            document.getElementById('review-intensity').textContent = 
+                selectedIntensity.charAt(0).toUpperCase() + selectedIntensity.slice(1);
+            
+            let practiceTime = '20 minutes daily';
+            if (selectedIntensity === 'light') practiceTime = '10 minutes daily';
+            if (selectedIntensity === 'intensive') practiceTime = '30 minutes daily';
+            document.getElementById('review-practice-time').textContent = practiceTime;
+            
+            // Update communication style
+            const selectedStyle = commStyleSelect.value;
+            document.getElementById('review-comm-style').textContent = 
+                selectedStyle ? (communicationStyles[selectedStyle]?.name || selectedStyle) : 'Not specified';
+        }
+        
+        // Show a specific step
+        function showStep(stepNumber) {
+            currentStep = stepNumber;
+            
+            // Hide all steps
+            journeySteps.forEach(step => step.classList.add('d-none'));
+            
+            // Show current step
+            const currentStepEl = document.getElementById(`step-${getStepId(stepNumber)}`);
+            currentStepEl.classList.remove('d-none');
+            
+            // Update navigation buttons
+            prevStepBtn.classList.toggle('d-none', stepNumber === 1);
+            nextStepBtn.classList.toggle('d-none', stepNumber === totalSteps);
+            createBtn.classList.toggle('d-none', stepNumber !== totalSteps);
+            
+            // Special handling for the review step
+            if (stepNumber === totalSteps) {
+                updateReview();
+            }
+        }
+        
+        // Get step ID from step number
+        function getStepId(stepNumber) {
+            const stepIds = ['type', 'style', 'focus', 'intensity', 'review'];
+            return stepIds[stepNumber - 1];
+        }
+        
+        // Move to the next step
+        function nextStep() {
+            // Validate current step
+            if (currentStep === 1 && !selectedJourneyType) {
+                alert('Please select a journey type');
+                return;
+            }
+            
+            if (currentStep === 3 && selectedFocusAreas.length === 0) {
+                document.getElementById('focus-warning').classList.remove('d-none');
+                return;
+            }
+            
+            if (currentStep < totalSteps) {
+                showStep(currentStep + 1);
+            }
+        }
+        
+        // Move to the previous step
+        function prevStep() {
+            if (currentStep > 1) {
+                showStep(currentStep - 1);
+            }
+        }
+        
+        // Load journey types from the API
+        function loadJourneyTypes() {
+            fetch('/api/journeys/types')
+                .then(response => response.json())
+                .then(data => {
+                    journeyTypeData = data.journey_types;
+                    renderJourneyTypes();
+                })
+                .catch(error => console.error('Error loading journey types:', error));
+        }
+        
+        // Load focus areas from the API
+        function loadFocusAreas() {
+            fetch('/api/journeys/focus-areas')
+                .then(response => response.json())
+                .then(data => {
+                    focusAreasData = data.focus_areas;
+                    renderFocusAreas();
+                })
+                .catch(error => console.error('Error loading focus areas:', error));
+        }
+        
+        // Load communication styles from the API
+        function loadCommunicationStyles() {
+            fetch('/api/communication/styles')
+                .then(response => response.json())
+                .then(data => {
+                    communicationStyles = data.styles;
+                    renderCommunicationStyles();
+                })
+                .catch(error => console.error('Error loading communication styles:', error));
+        }
+        
+        // Render journey types
+        function renderJourneyTypes() {
+            journeyTypesContainer.innerHTML = '';
+            
+            Object.entries(journeyTypeData).forEach(([typeId, typeData]) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                
+                col.innerHTML = `
+                    <div class="form-check card bg-dark-subtle p-3 h-100">
+                        <input class="form-check-input journey-type-radio" type="radio" 
+                            name="journeyType" id="journey-${typeId}" value="${typeId}"
+                            ${typeId === selectedJourneyType ? 'checked' : ''}>
+                        <label class="form-check-label d-block" for="journey-${typeId}">
+                            <div class="fw-bold mb-2">${typeData.name}</div>
+                            <div class="text-muted small">${typeData.description}</div>
+                        </label>
+                    </div>
+                `;
+                
+                journeyTypesContainer.appendChild(col);
+            });
+            
+            // Add event listeners to journey type radio buttons
+            document.querySelectorAll('.journey-type-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    selectedJourneyType = this.value;
+                });
+            });
+        }
+        
+        // Render focus areas
+        function renderFocusAreas() {
+            focusAreasContainer.innerHTML = '';
+            
+            Object.entries(focusAreasData).forEach(([areaId, description]) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 mb-3';
+                
+                col.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input focus-area-checkbox" type="checkbox" 
+                            id="focus-${areaId}" value="${areaId}"
+                            ${selectedFocusAreas.includes(areaId) ? 'checked' : ''}>
+                        <label class="form-check-label" for="focus-${areaId}">
+                            <span class="fw-medium">${areaId.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            <div class="text-muted small">${description}</div>
+                        </label>
+                    </div>
+                `;
+                
+                focusAreasContainer.appendChild(col);
+            });
+            
+            // Add event listeners to focus area checkboxes
+            document.querySelectorAll('.focus-area-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // Hide warning when user selects at least one area
+                    document.getElementById('focus-warning').classList.add('d-none');
+                    
+                    if (this.checked) {
+                        // Add to selected focus areas
+                        if (!selectedFocusAreas.includes(this.value)) {
+                            selectedFocusAreas.push(this.value);
+                        }
+                        
+                        // Limit to 3 focus areas
+                        if (selectedFocusAreas.length > 3) {
+                            const firstArea = selectedFocusAreas.shift();
+                            document.getElementById(`focus-${firstArea}`).checked = false;
+                        }
+                    } else {
+                        // Remove from selected focus areas
+                        const index = selectedFocusAreas.indexOf(this.value);
+                        if (index !== -1) {
+                            selectedFocusAreas.splice(index, 1);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Render communication styles
+        function renderCommunicationStyles() {
+            // Clear existing options, keeping the default option
+            const defaultOption = commStyleSelect.options[0];
+            commStyleSelect.innerHTML = '';
+            commStyleSelect.appendChild(defaultOption);
+            
+            // Add styles as options
+            Object.entries(communicationStyles).forEach(([styleId, style]) => {
+                const option = document.createElement('option');
+                option.value = styleId;
+                option.textContent = style.name;
+                commStyleSelect.appendChild(option);
+            });
+        }
+        
+        // Load user's journeys from the API
+        function loadJourneys() {
+            fetch('/api/journeys/list')
+                .then(response => response.json())
+                .then(data => {
+                    renderJourneys(data.journeys);
+                })
+                .catch(error => console.error('Error loading journeys:', error));
+        }
+        
+        // Render journeys
+        function renderJourneys(journeys) {
+            journeysList.innerHTML = '';
+            
+            if (journeys.length === 0) {
+                emptyJourneysMessage.classList.remove('d-none');
+                return;
+            }
+            
+            emptyJourneysMessage.classList.add('d-none');
+            
+            journeys.forEach(journey => {
+                const journeyCard = document.createElement('div');
+                journeyCard.className = 'col-md-6';
+                
+                // Format dates
+                const startDate = new Date(journey.start_date);
+                const endDate = new Date(journey.end_date);
+                const formattedStartDate = startDate.toLocaleDateString();
+                const formattedEndDate = endDate.toLocaleDateString();
+                
+                // Calculate progress
+                const totalMilestones = journey.milestones.length;
+                const completedMilestones = journey.milestones.filter(m => m.completed).length;
+                const progressPercent = totalMilestones > 0 
+                    ? Math.round((completedMilestones / totalMilestones) * 100) 
+                    : 0;
+                
+                journeyCard.innerHTML = `
+                    <div class="card bg-dark shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">${journey.name}</h5>
+                            <p class="card-text small text-muted">${journey.description}</p>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small>Progress</small>
+                                    <small>${progressPercent}%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                        style="width: ${progressPercent}%;" aria-valuenow="${progressPercent}" 
+                                        aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="badge bg-dark-subtle text-primary-emphasis">
+                                    <i class="fas fa-calendar-alt me-1"></i> 
+                                    ${formattedStartDate} - ${formattedEndDate}
+                                </span>
+                                <span class="badge bg-dark-subtle text-primary-emphasis">
+                                    <i class="fas fa-clock me-1"></i> 
+                                    ${journey.daily_practice_minutes} min/day
+                                </span>
+                                <span class="badge bg-dark-subtle text-primary-emphasis">
+                                    <i class="fas fa-trophy me-1"></i> 
+                                    ${journey.intensity.charAt(0).toUpperCase() + journey.intensity.slice(1)}
+                                </span>
+                            </div>
+                            
+                            <div class="text-end">
+                                <a href="/personalized-journeys/${journey.journey_id}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-arrow-right me-1"></i> View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                journeysList.appendChild(journeyCard);
+            });
+        }
+        
+        // Create a new journey
+        function createJourney() {
+            const journeyData = {
+                journey_type: selectedJourneyType,
+                communication_style: commStyleSelect.value || null,
+                focus_areas: selectedFocusAreas.length > 0 ? selectedFocusAreas : null,
+                intensity: selectedIntensity
+            };
+            
+            fetch('/api/journeys/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(journeyData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    createJourneyModal.hide();
+                    loadJourneys();
+                    
+                    // Reset form for next time
+                    resetJourneyForm();
+                } else {
+                    alert('Error creating journey: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error creating journey:', error);
+                alert('An error occurred while creating your journey.');
+            });
+        }
+        
+        // Reset journey form to initial state
+        function resetJourneyForm() {
+            selectedJourneyType = null;
+            selectedFocusAreas = [];
+            selectedIntensity = 'moderate';
+            
+            // Reset form elements
+            document.querySelectorAll('.journey-type-radio').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            document.querySelectorAll('.focus-area-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            document.getElementById('intensity-moderate').checked = true;
+            document.getElementById('comm-style-select').value = '';
+            
+            // Show first step
+            showStep(1);
+        }
+        
+        // Event listeners
+        createJourneyBtn.addEventListener('click', function() {
+            createJourneyModal.show();
+        });
+        
+        refreshJourneysBtn.addEventListener('click', loadJourneys);
+        
+        prevStepBtn.addEventListener('click', prevStep);
+        nextStepBtn.addEventListener('click', nextStep);
+        
+        // Event listeners for intensity radio buttons
+        document.querySelectorAll('input[name="intensity"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                selectedIntensity = this.value;
+            });
+        });
+        
+        // Handle form submission
+        journeyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            createJourney();
+        });
+        
+        // Load initial data
+        loadJourneyTypes();
+        loadFocusAreas();
+        loadCommunicationStyles();
+        loadJourneys();
+        
+        // Show first step
+        showStep(1);
+    });
+</script>
+{% endblock %}

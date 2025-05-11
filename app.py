@@ -2,6 +2,7 @@ import os
 import logging
 import uuid
 import json
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for
 from openai import OpenAI
 
@@ -69,6 +70,17 @@ from communication_analyzer import (
     analyze_communication_style,
     get_improvement_suggestions,
     get_all_communication_styles
+)
+
+# Import personalized journeys
+from personalized_journeys import (
+    create_personalized_journey,
+    get_journey_progress,
+    get_next_milestone,
+    update_milestone_status,
+    get_all_journey_types,
+    get_focus_areas,
+    get_techniques_by_communication_style
 )
 
 # Initialize default NLP exercises
@@ -591,6 +603,216 @@ def communication_analysis_page():
     Render the communication analysis page.
     """
     return render_template('communication_analysis.html')
+
+# ===== Personalized Journey Routes =====
+
+@app.route('/api/journeys/types')
+def get_journey_types_api():
+    """
+    Get all available journey types.
+    """
+    journey_types = get_all_journey_types()
+    return jsonify({'journey_types': journey_types})
+
+@app.route('/api/journeys/focus-areas')
+def get_focus_areas_api():
+    """
+    Get all available focus areas for personalized journeys.
+    """
+    focus_areas = get_focus_areas()
+    return jsonify({'focus_areas': focus_areas})
+
+@app.route('/api/journeys/create', methods=['POST'])
+def create_journey_api():
+    """
+    Create a new personalized journey.
+    """
+    data = request.json
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    journey_type = data.get('journey_type', 'communication_improvement')
+    comm_style = data.get('communication_style')
+    focus_areas = data.get('focus_areas', [])
+    intensity = data.get('intensity', 'moderate')
+    
+    # Get session ID
+    session_id = session.get('session_id', str(uuid.uuid4()))
+    if 'session_id' not in session:
+        session['session_id'] = session_id
+    
+    # Create the journey
+    journey = create_personalized_journey(
+        session_id=session_id,
+        journey_type=journey_type,
+        comm_style=comm_style,
+        focus_areas=focus_areas,
+        intensity=intensity
+    )
+    
+    if not journey:
+        return jsonify({'error': 'Failed to create journey'}), 500
+    
+    # Store journey in session
+    if 'journeys' not in session:
+        session['journeys'] = {}
+    
+    session['journeys'][journey.journey_id] = journey.to_dict()
+    session.modified = True
+    
+    return jsonify({
+        'success': True,
+        'journey': journey.to_dict()
+    })
+
+@app.route('/api/journeys/list')
+def list_journeys_api():
+    """
+    Get all journeys for the current session.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'journeys': []})
+    
+    # Get journeys from session
+    journeys = session.get('journeys', {})
+    
+    return jsonify({'journeys': list(journeys.values())})
+
+@app.route('/api/journeys/<journey_id>')
+def get_journey_api(journey_id):
+    """
+    Get a specific journey.
+    """
+    journeys = session.get('journeys', {})
+    
+    if journey_id not in journeys:
+        return jsonify({'error': 'Journey not found'}), 404
+    
+    return jsonify({'journey': journeys[journey_id]})
+
+@app.route('/api/journeys/<journey_id>/progress')
+def get_journey_progress_api(journey_id):
+    """
+    Get progress statistics for a journey.
+    """
+    journeys = session.get('journeys', {})
+    
+    if journey_id not in journeys:
+        return jsonify({'error': 'Journey not found'}), 404
+    
+    journey = journeys[journey_id]
+    
+    # Calculate progress
+    total_milestones = len(journey['milestones'])
+    completed_milestones = sum(1 for m in journey['milestones'] if m.get('completed', False))
+    
+    progress_percentage = 0
+    if total_milestones > 0:
+        progress_percentage = round((completed_milestones / total_milestones) * 100)
+    
+    progress = {
+        'journey_id': journey_id,
+        'total_milestones': total_milestones,
+        'completed_milestones': completed_milestones,
+        'progress_percentage': progress_percentage
+    }
+    
+    return jsonify({'progress': progress})
+
+@app.route('/api/journeys/<journey_id>/next-milestone')
+def get_next_milestone_api(journey_id):
+    """
+    Get the next milestone for a journey.
+    """
+    journeys = session.get('journeys', {})
+    
+    if journey_id not in journeys:
+        return jsonify({'error': 'Journey not found'}), 404
+    
+    journey = journeys[journey_id]
+    
+    # Find next incomplete milestone
+    next_milestone = None
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # First try to find any incomplete milestone on or before today
+    for milestone in journey['milestones']:
+        if not milestone.get('completed', False) and milestone['date'] <= today:
+            next_milestone = milestone
+            break
+    
+    # If none found, find the next upcoming milestone
+    if not next_milestone:
+        upcoming_milestones = [
+            m for m in journey['milestones'] 
+            if not m.get('completed', False) and m['date'] > today
+        ]
+        upcoming_milestones.sort(key=lambda m: m['date'])
+        
+        if upcoming_milestones:
+            next_milestone = upcoming_milestones[0]
+    
+    if not next_milestone:
+        return jsonify({'message': 'All milestones completed', 'milestone': None})
+    
+    return jsonify({'milestone': next_milestone})
+
+@app.route('/api/journeys/<journey_id>/milestones/<int:milestone_number>/complete', methods=['POST'])
+def complete_milestone_api(journey_id, milestone_number):
+    """
+    Mark a milestone as completed.
+    """
+    journeys = session.get('journeys', {})
+    
+    if journey_id not in journeys:
+        return jsonify({'error': 'Journey not found'}), 404
+    
+    journey = journeys[journey_id]
+    
+    # Find and update the milestone
+    milestone_found = False
+    for milestone in journey['milestones']:
+        if milestone['number'] == milestone_number:
+            milestone['completed'] = True
+            milestone_found = True
+            break
+    
+    if not milestone_found:
+        return jsonify({'error': 'Milestone not found'}), 404
+    
+    # Update the journey in session
+    journeys[journey_id] = journey
+    session['journeys'] = journeys
+    session.modified = True
+    
+    return jsonify({
+        'success': True,
+        'message': 'Milestone completed',
+        'milestone_number': milestone_number
+    })
+
+@app.route('/personalized-journeys')
+def personalized_journeys_page():
+    """
+    Render the personalized journeys page.
+    """
+    return render_template('personalized_journeys.html')
+
+@app.route('/personalized-journeys/<journey_id>')
+def journey_details_page(journey_id):
+    """
+    Render the journey details page.
+    """
+    journeys = session.get('journeys', {})
+    
+    if journey_id not in journeys:
+        flash('Journey not found', 'danger')
+        return redirect(url_for('personalized_journeys_page'))
+    
+    return render_template('journey_details.html', journey=journeys[journey_id])
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

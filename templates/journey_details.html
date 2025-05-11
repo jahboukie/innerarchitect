@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ journey.name }} Journey - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Journey Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="/personalized-journeys" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Journeys
+                </a>
+                <h2 class="mb-0">{{ journey.name }}</h2>
+            </div>
+            
+            <!-- Journey Overview -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h3 class="card-title">Journey Overview</h3>
+                            <p class="lead">{{ journey.description }}</p>
+                            
+                            <div class="mb-4">
+                                <h5>Focus Areas</h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for focus in journey.focus_areas %}
+                                    <span class="badge bg-primary-subtle text-primary-emphasis px-3 py-2">
+                                        {{ focus|replace('_', ' ')|title }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h5>Techniques</h5>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for technique in journey.techniques %}
+                                    <a href="/techniques/{{ technique }}" class="badge bg-secondary-subtle text-secondary-emphasis px-3 py-2 text-decoration-none">
+                                        {{ technique|replace('_', ' ')|title }}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="card bg-dark-subtle border-0 p-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-calendar-alt fs-3 text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-0">Duration</h6>
+                                                <div>{{ journey.duration_days }} days</div>
+                                                <small class="text-muted">
+                                                    {{ journey.start_date }} to {{ journey.end_date }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="card bg-dark-subtle border-0 p-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-clock fs-3 text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-0">Daily Practice</h6>
+                                                <div>{{ journey.daily_practice_minutes }} minutes per day</div>
+                                                <small class="text-muted">
+                                                    {{ journey.intensity|title }} intensity
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 bg-dark-subtle border-0 p-3">
+                                <h5 class="card-title">Progress</h5>
+                                
+                                <div id="progress-chart" class="position-relative mx-auto" style="width: 180px; height: 180px;">
+                                    <canvas id="progress-canvas" width="180" height="180"></canvas>
+                                    <div class="position-absolute top-50 start-50 translate-middle text-center">
+                                        <div id="progress-percentage" class="fs-2 fw-bold">0%</div>
+                                        <small>completed</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-3">
+                                    <div>
+                                        <div class="text-muted small">Milestones</div>
+                                        <div id="completed-milestones">0/{{ journey.milestones|length }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Days Remaining</div>
+                                        <div id="days-remaining">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Next Milestone -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-3">Current Milestone</h3>
+                    <div id="next-milestone-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Milestone Timeline -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4">Journey Timeline</h3>
+                    
+                    <div class="timeline">
+                        {% for milestone in journey.milestones %}
+                        <div class="timeline-item position-relative pb-4 ps-5" data-milestone-id="{{ milestone.number }}">
+                            <div class="timeline-marker position-absolute top-0 start-0 translate-middle-y bg-secondary">
+                                {% if milestone.completed %}
+                                <i class="fas fa-check text-success"></i>
+                                {% else %}
+                                <i class="fas fa-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="card bg-dark-subtle border-0 p-3">
+                                <h5 class="card-title d-flex justify-content-between">
+                                    <span>Milestone {{ milestone.number }}</span>
+                                    <small class="text-muted">{{ milestone.date }}</small>
+                                </h5>
+                                <p class="card-text">
+                                    Practice the <strong>{{ milestone.technique|replace('_', ' ')|title }}</strong> technique
+                                    {% if milestone.exercise_id %}
+                                    with the <span class="milestone-exercise-name">exercise #{{ milestone.exercise_id }}</span>
+                                    {% else %}
+                                    using any exercise of your choice
+                                    {% endif %}
+                                </p>
+                                
+                                {% if not milestone.completed %}
+                                <div class="text-end">
+                                    <button class="btn btn-sm btn-outline-success complete-milestone-btn" 
+                                        data-milestone-number="{{ milestone.number }}">
+                                        <i class="fas fa-check me-1"></i> Mark as Completed
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const journeyId = '{{ journey.journey_id }}';
+        let journeyData = {{ journey|tojson }};
+        
+        // Initialize progress chart
+        let progressChart = null;
+        
+        function initProgressChart(progressPercent) {
+            // Destroy existing chart if it exists
+            if (progressChart) {
+                progressChart.destroy();
+            }
+            
+            const ctx = document.getElementById('progress-canvas').getContext('2d');
+            
+            progressChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [progressPercent, 100 - progressPercent],
+                        backgroundColor: [
+                            'rgba(var(--bs-primary-rgb), 0.8)',
+                            'rgba(var(--bs-primary-rgb), 0.1)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load exercise names
+        function loadExerciseName(exerciseId, elementClass) {
+            if (!exerciseId) return;
+            
+            fetch(`/api/exercises/${exerciseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelectorAll(`.${elementClass}`).forEach(el => {
+                        el.textContent = data.title || `Exercise #${exerciseId}`;
+                    });
+                })
+                .catch(error => console.error(`Error loading exercise #${exerciseId}:`, error));
+        }
+        
+        // Format journey dates and setup timeline
+        function formatJourneyDates() {
+            // Format the dates nicely
+            const startDate = new Date(journeyData.start_date);
+            const endDate = new Date(journeyData.end_date);
+            
+            journeyData.start_date = startDate.toLocaleDateString();
+            journeyData.end_date = endDate.toLocaleDateString();
+            
+            // Calculate days remaining
+            const today = new Date();
+            const daysRemaining = Math.max(0, Math.ceil((endDate - today) / (1000 * 60 * 60 * 24)));
+            document.getElementById('days-remaining').textContent = daysRemaining;
+            
+            // Calculate progress
+            updateProgress();
+        }
+        
+        // Load the next milestone
+        function loadNextMilestone() {
+            fetch(`/api/journeys/${journeyId}/next-milestone`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.milestone) {
+                        renderNextMilestone(data.milestone);
+                    } else {
+                        renderCompletedJourney();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading next milestone:', error);
+                    document.getElementById('next-milestone-container').innerHTML = `
+                        <div class="alert alert-danger">
+                            Error loading milestone data. Please try refreshing the page.
+                        </div>
+                    `;
+                });
+        }
+        
+        // Render the next milestone card
+        function renderNextMilestone(milestone) {
+            const container = document.getElementById('next-milestone-container');
+            const date = new Date(milestone.date);
+            const formattedDate = date.toLocaleDateString();
+            const isToday = new Date().toDateString() === date.toDateString();
+            const isPast = date < new Date();
+            
+            const dateStatus = isToday ? 
+                '<span class="badge bg-success">Today</span>' : 
+                (isPast ? '<span class="badge bg-warning text-dark">Past Due</span>' : 
+                    `<span class="badge bg-primary">Coming Up: ${formattedDate}</span>`);
+            
+            container.innerHTML = `
+                <div class="card bg-primary-subtle border-0 rounded-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h4 class="card-title mb-0">Milestone ${milestone.number}</h4>
+                            ${dateStatus}
+                        </div>
+                        
+                        <p class="fs-5">
+                            Practice the <strong>${milestone.technique.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong> technique
+                            ${milestone.exercise_id ? `with the <span class="next-milestone-exercise-name">exercise #${milestone.exercise_id}</span>` : 'using any exercise of your choice'}
+                        </p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <a href="/techniques/${milestone.technique}" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-book me-2"></i>View Technique Details
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                ${milestone.exercise_id ? 
+                                    `<a href="/exercises/${milestone.exercise_id}" class="btn btn-info w-100 mb-2">
+                                        <i class="fas fa-dumbbell me-2"></i>Start Exercise
+                                    </a>` : 
+                                    `<a href="/techniques/${milestone.technique}#exercises" class="btn btn-info w-100 mb-2">
+                                        <i class="fas fa-list-alt me-2"></i>Choose an Exercise
+                                    </a>`
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button class="btn btn-success px-4" id="complete-next-milestone-btn" 
+                                data-milestone-number="${milestone.number}">
+                                <i class="fas fa-check-circle me-2"></i>Mark as Completed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Load exercise name if applicable
+            if (milestone.exercise_id) {
+                loadExerciseName(milestone.exercise_id, 'next-milestone-exercise-name');
+            }
+            
+            // Add event listener to complete button
+            document.getElementById('complete-next-milestone-btn').addEventListener('click', function() {
+                completeMilestone(milestone.number);
+            });
+        }
+        
+        // Render a completed journey message
+        function renderCompletedJourney() {
+            document.getElementById('next-milestone-container').innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-trophy me-2"></i>
+                    <strong>Congratulations!</strong> You've completed all milestones in this journey!
+                </div>
+                <div class="text-center mt-3">
+                    <a href="/personalized-journeys" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Start a New Journey
+                    </a>
+                </div>
+            `;
+        }
+        
+        // Mark a milestone as completed
+        function completeMilestone(milestoneNumber) {
+            fetch(`/api/journeys/${journeyId}/milestones/${milestoneNumber}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update timeline UI
+                    const timelineItem = document.querySelector(`.timeline-item[data-milestone-id="${milestoneNumber}"]`);
+                    const timelineMarker = timelineItem.querySelector('.timeline-marker i');
+                    timelineMarker.className = 'fas fa-check text-success';
+                    
+                    // Hide the complete button in timeline
+                    const completeBtn = timelineItem.querySelector('.complete-milestone-btn');
+                    if (completeBtn) completeBtn.remove();
+                    
+                    // Update progress
+                    updateProgress();
+                    
+                    // Reload next milestone
+                    loadNextMilestone();
+                } else {
+                    alert('Error completing milestone: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error completing milestone:', error);
+                alert('An error occurred while completing the milestone.');
+            });
+        }
+        
+        // Update progress display
+        function updateProgress() {
+            fetch(`/api/journeys/${journeyId}/progress`)
+                .then(response => response.json())
+                .then(data => {
+                    const progress = data.progress;
+                    
+                    // Update progress chart
+                    initProgressChart(progress.progress_percentage);
+                    
+                    // Update text displays
+                    document.getElementById('progress-percentage').textContent = `${progress.progress_percentage}%`;
+                    document.getElementById('completed-milestones').textContent = 
+                        `${progress.completed_milestones}/${progress.total_milestones}`;
+                })
+                .catch(error => console.error('Error loading progress:', error));
+        }
+        
+        // Add event listeners to timeline complete buttons
+        document.querySelectorAll('.complete-milestone-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const milestoneNumber = parseInt(this.dataset.milestoneNumber);
+                completeMilestone(milestoneNumber);
+            });
+        });
+        
+        // Load exercise names for all milestone exercises
+        journeyData.milestones.forEach(milestone => {
+            if (milestone.exercise_id) {
+                loadExerciseName(milestone.exercise_id, 'milestone-exercise-name');
+            }
+        });
+        
+        // Initialize everything
+        formatJourneyDates();
+        loadNextMilestone();
+    });
+</script>
+{% endblock %}
