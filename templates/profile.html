@@ -67,13 +67,16 @@
                                 {% endfor %}
                             </ul>
                             
-                            {% if subscription.plan_name == 'Free' %}
-                            <div class="d-grid mt-3">
+                            <div class="d-grid gap-2 mt-3">
+                                {% if subscription.plan_name == 'free' %}
                                 <a href="{{ url_for('landing') }}" class="btn btn-primary">
                                     <i class="fas fa-crown me-2"></i>{{ g.translate('upgrade_plan', 'Upgrade Your Plan') }}
                                 </a>
+                                {% endif %}
+                                <a href="{{ url_for('manage_subscription') }}" class="btn btn-outline-info">
+                                    <i class="fas fa-cog me-2"></i>{{ g.translate('manage_subscription', 'Manage Subscription') }}
+                                </a>
                             </div>
-                            {% endif %}
                         </div>
                     </div>
                     

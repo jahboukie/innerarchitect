@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ g.translate('Subscription Management') }}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary bg-gradient text-white">
+                    <h2 class="mb-0">{{ g.translate('Subscription Management') }}</h2>
+                </div>
+                <div class="card-body">
+                    <h3 class="mb-4">{{ g.translate('Current Subscription') }}</h3>
+                    
+                    <div class="subscription-details mb-5">
+                        <!-- Current Plan -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 fw-bold">{{ g.translate('Current Plan') }}</div>
+                            <div class="col-md-8">
+                                {% if subscription.plan_name == 'free' %}
+                                    <span class="badge bg-secondary">{{ g.translate('Free Tier') }}</span>
+                                {% elif subscription.plan_name == 'premium' %}
+                                    <span class="badge bg-info">{{ g.translate('Premium') }}</span>
+                                {% elif subscription.plan_name == 'professional' %}
+                                    <span class="badge bg-primary">{{ g.translate('Professional') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 fw-bold">{{ g.translate('Status') }}</div>
+                            <div class="col-md-8">
+                                {% if subscription.is_active %}
+                                    <span class="badge bg-success">{{ g.translate('Active') }}</span>
+                                {% elif subscription.status == 'past_due' %}
+                                    <span class="badge bg-warning">{{ g.translate('Payment Past Due') }}</span>
+                                {% elif subscription.status == 'canceled' %}
+                                    <span class="badge bg-danger">{{ g.translate('Canceled') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Period -->
+                        {% if subscription.current_period_end and subscription.plan_name != 'free' %}
+                        <div class="row mb-4">
+                            <div class="col-md-4 fw-bold">{{ g.translate('Current Period Ends') }}</div>
+                            <div class="col-md-8">
+                                {{ subscription.current_period_end.strftime('%B %d, %Y') }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Usage Limits -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 fw-bold">{{ g.translate('Usage Limits') }}</div>
+                            <div class="col-md-8">
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ g.translate('Messages per day') }}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ subscription.limits.messages_per_day }}
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ g.translate('Exercises per week') }}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ subscription.limits.exercises_per_week }}
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ g.translate('Techniques accessible') }}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ subscription.limits.techniques_accessible }}
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="subscription-actions">
+                        <h3 class="mb-4">{{ g.translate('Subscription Actions') }}</h3>
+                        
+                        <!-- Upgrade Options -->
+                        {% if subscription.plan_name == 'free' %}
+                        <div class="mb-4">
+                            <h4>{{ g.translate('Upgrade Your Plan') }}</h4>
+                            <p>{{ g.translate('Upgrade to access more features and increase your usage limits.') }}</p>
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('create_checkout', plan='premium') }}" class="btn btn-info">
+                                    {{ g.translate('Upgrade to Premium') }}
+                                </a>
+                                <a href="{{ url_for('create_checkout', plan='professional') }}" class="btn btn-primary">
+                                    {{ g.translate('Upgrade to Professional') }}
+                                </a>
+                            </div>
+                        </div>
+                        {% elif subscription.plan_name == 'premium' %}
+                        <div class="mb-4">
+                            <h4>{{ g.translate('Upgrade Your Plan') }}</h4>
+                            <p>{{ g.translate('Upgrade to Professional to access all features.') }}</p>
+                            <a href="{{ url_for('create_checkout', plan='professional') }}" class="btn btn-primary">
+                                {{ g.translate('Upgrade to Professional') }}
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Cancel Subscription -->
+                        {% if subscription.plan_name != 'free' and not subscription.canceled %}
+                        <div class="cancel-subscription mt-5">
+                            <h4 class="text-danger">{{ g.translate('Cancel Subscription') }}</h4>
+                            <p>{{ g.translate('If you cancel, you will still have access until the end of your current billing period.') }}</p>
+                            
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal">
+                                {{ g.translate('Cancel Subscription') }}
+                            </button>
+                            
+                            <!-- Cancel Modal -->
+                            <div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" aria-labelledby="cancelSubscriptionModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="cancelSubscriptionModalLabel">{{ g.translate('Confirm Cancellation') }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>{{ g.translate('Are you sure you want to cancel your subscription?') }}</p>
+                                            <p>{{ g.translate('You will lose access to premium features after your current billing period ends on {date}.').format(date=subscription.current_period_end.strftime('%B %d, %Y')) }}</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('Keep Subscription') }}</button>
+                                            <form action="{{ url_for('cancel_user_subscription') }}" method="post">
+                                                <button type="submit" class="btn btn-danger">{{ g.translate('Yes, Cancel Subscription') }}</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Section -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-success bg-gradient text-white">
+                    <h3 class="mb-0">{{ g.translate('Available Features') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for feature in subscription.features %}
+                            <div class="col-md-6 mb-3">
+                                <div class="feature-item d-flex align-items-center">
+                                    <div class="feature-icon me-2">
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    </div>
+                                    <div class="feature-name">
+                                        {{ g.translate(feature|replace('_', ' ')|title) }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

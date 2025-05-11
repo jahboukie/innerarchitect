@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from database import db
 from flask_login import UserMixin
 from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
@@ -169,3 +169,90 @@ class TechniqueUsageStats(db.Model):
     
     def __repr__(self):
         return f'<TechniqueUsageStats {self.technique} - Count: {self.usage_count}>'
+
+
+class UsageQuota(db.Model):
+    """Model to track usage quotas for subscription limits."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
+    session_id = db.Column(db.String(64), nullable=True)
+    quota_type = db.Column(db.String(30), nullable=False)  # e.g., 'messages_per_day', 'exercises_per_week'
+    usage_count = db.Column(db.Integer, default=0)
+    date = db.Column(db.Date, nullable=True, index=True)  # For daily quotas
+    week_start = db.Column(db.Date, nullable=True, index=True)  # For weekly quotas
+    month_start = db.Column(db.Date, nullable=True, index=True)  # For monthly quotas
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship with User
+    user = db.relationship('User', backref=db.backref('usage_quotas', lazy='dynamic'))
+    
+    def __repr__(self):
+        return f'<UsageQuota {self.quota_type} - {self.usage_count}>'
+        
+    @classmethod
+    def get_or_create_daily(cls, user_id, session_id, quota_type):
+        """Get or create a daily quota record."""
+        today = datetime.utcnow().date()
+        
+        # Try to find existing record
+        if user_id:
+            record = cls.query.filter_by(
+                user_id=user_id,
+                quota_type=quota_type,
+                date=today
+            ).first()
+        else:
+            record = cls.query.filter_by(
+                session_id=session_id,
+                quota_type=quota_type,
+                date=today
+            ).first()
+            
+        if not record:
+            # Create new record
+            record = cls(
+                user_id=user_id,
+                session_id=session_id,
+                quota_type=quota_type,
+                date=today,
+                usage_count=0
+            )
+            db.session.add(record)
+            db.session.commit()
+            
+        return record
+        
+    @classmethod
+    def get_or_create_weekly(cls, user_id, session_id, quota_type):
+        """Get or create a weekly quota record."""
+        today = datetime.utcnow().date()
+        week_start = today - timedelta(days=today.weekday())
+        
+        # Try to find existing record
+        if user_id:
+            record = cls.query.filter_by(
+                user_id=user_id,
+                quota_type=quota_type,
+                week_start=week_start
+            ).first()
+        else:
+            record = cls.query.filter_by(
+                session_id=session_id,
+                quota_type=quota_type,
+                week_start=week_start
+            ).first()
+            
+        if not record:
+            # Create new record
+            record = cls(
+                user_id=user_id,
+                session_id=session_id,
+                quota_type=quota_type,
+                week_start=week_start,
+                usage_count=0
+            )
+            db.session.add(record)
+            db.session.commit()
+            
+        return record

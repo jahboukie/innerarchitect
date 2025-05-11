@@ -575,6 +575,83 @@ def subscription_cancel():
     flash("Your subscription checkout was canceled. You can try again anytime.", "info")
     return redirect(url_for('landing'))
 
+
+# Stripe webhook handler
+@app.route('/webhooks/stripe', methods=['POST'])
+def stripe_webhook():
+    """
+    Handle Stripe webhook events.
+    """
+    from subscription_manager import process_webhook_event
+    
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+    
+    # Verify webhook signature
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    
+    try:
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, webhook_secret
+            )
+        else:
+            # For development, we can parse the payload directly
+            data = json.loads(payload)
+            event = data
+        
+        # Process the event
+        if process_webhook_event(event):
+            return jsonify({'status': 'success'}), 200
+        else:
+            return jsonify({'status': 'error', 'message': 'Event processing failed'}), 500
+            
+    except ValueError as e:
+        # Invalid payload
+        return jsonify({'status': 'error', 'message': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return jsonify({'status': 'error', 'message': 'Invalid signature'}), 400
+    except Exception as e:
+        logging.error(f"Error processing webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# User subscription management
+@app.route('/subscription/manage')
+@require_login
+def manage_subscription():
+    """
+    Render the subscription management page.
+    """
+    from subscription_manager import get_subscription_details
+    
+    # Get subscription details
+    subscription_details = get_subscription_details(current_user.id)
+    
+    return render_template('subscription_manage.html', subscription=subscription_details)
+
+
+# Cancel subscription
+@app.route('/subscription/cancel-subscription', methods=['POST'])
+@require_login
+def cancel_user_subscription():
+    """
+    Cancel the user's subscription.
+    """
+    from subscription_manager import cancel_subscription
+    
+    try:
+        if cancel_subscription(current_user.id):
+            flash("Your subscription has been canceled. You will still have access until the end of your billing period.", "success")
+        else:
+            flash("Unable to cancel subscription. Please try again later.", "danger")
+    except Exception as e:
+        logging.error(f"Error canceling subscription: {str(e)}")
+        flash("An error occurred while processing your request. Please try again later.", "danger")
+    
+    return redirect(url_for('manage_subscription'))
+
 @app.route('/')
 def index():
     """
