@@ -189,6 +189,105 @@ document.addEventListener('DOMContentLoaded', function() {
         systemMessage.innerHTML = `<div class="message-content system"><p class="mb-0"><i class="fas fa-lightbulb me-1"></i> Now focusing on <strong>${currentTechnique.replace('_', ' ')}</strong> technique.</p></div>`;
         chatbox.appendChild(systemMessage);
         chatbox.scrollTop = chatbox.scrollHeight;
+        
+        // Hide recommendation explanation when manually changing technique
+        document.getElementById('recommendationExplanation').classList.add('d-none');
+    });
+    
+    // Get the most recent user message from the chat
+    function getLastUserMessage() {
+        const userMessages = document.querySelectorAll('.chat-message.user .message-content');
+        if (userMessages.length === 0) {
+            return "";
+        }
+        // Return the text content of the last user message
+        const lastMessage = userMessages[userMessages.length - 1];
+        let messageText = "";
+        // Combine text from all paragraph elements
+        lastMessage.querySelectorAll('p').forEach(p => {
+            messageText += p.textContent + " ";
+        });
+        return messageText.trim();
+    }
+    
+    // Event listener for recommend button click
+    document.getElementById('recommendButton').addEventListener('click', function() {
+        const lastUserMessage = getLastUserMessage();
+        
+        // If no message has been sent yet, show a system message explaining that
+        if (!lastUserMessage) {
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'chat-message system';
+            systemMessage.innerHTML = `<div class="message-content system"><p class="mb-0"><i class="fas fa-info-circle me-1"></i> Please send a message first so I can recommend an appropriate technique.</p></div>`;
+            chatbox.appendChild(systemMessage);
+            chatbox.scrollTop = chatbox.scrollHeight;
+            return;
+        }
+        
+        // Show loading state for the recommendation button
+        const originalButtonText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Analyzing...';
+        this.disabled = true;
+        
+        // Make API call to the backend to get the recommendation
+        fetch('/recommend_technique', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                message: lastUserMessage,
+                mood: currentMood
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Technique recommendation:", data);
+            
+            // Update the select dropdown with the recommended technique
+            nlpTechniqueSelect.value = data.technique;
+            
+            // Trigger the change event on the select to update the description
+            const changeEvent = new Event('change');
+            nlpTechniqueSelect.dispatchEvent(changeEvent);
+            
+            // Update currentTechnique value
+            currentTechnique = data.technique;
+            
+            // Show the recommendation explanation
+            const recommendExplanation = document.getElementById('recommendationExplanation');
+            recommendExplanation.classList.remove('d-none');
+            recommendExplanation.querySelector('.recommendation-text').textContent = data.explanation;
+            
+            // Add a system message about the recommendation
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'chat-message system';
+            systemMessage.innerHTML = `
+                <div class="message-content system">
+                    <p class="mb-0">
+                        <i class="fas fa-magic me-1"></i> 
+                        Recommended technique: <strong>${data.technique.replace('_', ' ')}</strong>
+                        <span class="badge bg-info ms-1">Confidence: ${Math.round(data.confidence * 100)}%</span>
+                    </p>
+                </div>`;
+            chatbox.appendChild(systemMessage);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error getting technique recommendation:', error);
+            
+            // Show error message in chat
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'chat-message system';
+            systemMessage.innerHTML = `<div class="message-content system"><p class="mb-0"><i class="fas fa-exclamation-circle me-1"></i> Sorry, I couldn't generate a technique recommendation. Please try again later.</p></div>`;
+            chatbox.appendChild(systemMessage);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .finally(() => {
+            // Restore the button to its original state
+            this.innerHTML = originalButtonText;
+            this.disabled = false;
+        });
     });
 
     // Event listener for send button click
