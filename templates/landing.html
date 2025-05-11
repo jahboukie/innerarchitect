@@ -89,25 +89,45 @@
         <div class="row g-4 justify-content-center">
             <!-- Free Tier -->
             <div class="col-lg-4">
-                <div class="card bg-dark-subtle border-0 rounded-4 shadow-sm">
-                    <div class="card-header bg-transparent border-0 pt-4 pb-0 text-center">
-                        <h3 class="mb-0">{{ g.translate('pricing_free_title', 'Free') }}</h3>
-                        <div class="mt-3">
+                <div class="card bg-secondary bg-opacity-25 border-0 rounded-4 shadow-sm h-100">
+                    <div class="card-body p-4 text-center">
+                        <h3 class="mb-3 fw-bold">{{ g.translate('pricing_free_title', 'Free') }}</h3>
+                        <div class="mb-4">
                             <span class="display-5 fw-bold">$0</span>
                             <span class="text-muted">/{{ g.translate('pricing_month', 'month') }}</span>
                         </div>
-                    </div>
-                    <div class="card-body pt-3">
-                        <ul class="list-unstyled">
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_free_feature1', 'Basic cognitive reframing techniques') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_free_feature2', 'Limited AI chat interactions (10/day)') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_free_feature3', 'Access to basic dashboard') }}</li>
-                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_free_limit1', 'Advanced NLP techniques') }}</li>
-                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_free_limit2', 'Progress tracking') }}</li>
-                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_free_limit3', 'Personalized journeys') }}</li>
+                        
+                        <ul class="list-unstyled text-start">
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_free_feature1', 'Basic cognitive reframing techniques') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_free_feature2', 'Limited AI chat interactions (10/day)') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_free_feature3', 'Access to basic dashboard') }}</span>
+                            </li>
+                            <li class="mb-3 text-muted d-flex align-items-start">
+                                <i class="fas fa-times text-muted me-2"></i>
+                                <span>{{ g.translate('pricing_free_limit1', 'Advanced NLP techniques') }}</span>
+                            </li>
+                            <li class="mb-3 text-muted d-flex align-items-start">
+                                <i class="fas fa-times text-muted me-2"></i>
+                                <span>{{ g.translate('pricing_free_limit2', 'Progress tracking') }}</span>
+                            </li>
+                            <li class="mb-3 text-muted d-flex align-items-start">
+                                <i class="fas fa-times text-muted me-2"></i>
+                                <span>{{ g.translate('pricing_free_limit3', 'Personalized journeys') }}</span>
+                            </li>
                         </ul>
+                        
                         <div class="d-grid mt-4">
-                            <a href="{{ url_for('login_check') }}" class="btn btn-outline-primary btn-lg">{{ g.translate('pricing_free_cta', 'Start Free') }}</a>
+                            <a href="{{ url_for('login_check') }}" class="btn btn-outline-primary py-3">
+                                {{ g.translate('pricing_free_cta', 'Start Free') }}
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -115,30 +135,48 @@
             
             <!-- Premium Tier -->
             <div class="col-lg-4">
-                <div class="card bg-primary-subtle border-0 rounded-4 shadow position-relative">
+                <div class="card bg-primary bg-opacity-10 border-0 rounded-4 shadow position-relative h-100">
                     <div class="position-absolute top-0 start-50 translate-middle">
                         <span class="badge bg-primary px-3 py-2 rounded-pill">
                             {{ g.translate('pricing_popular', 'Most Popular') }}
                         </span>
                     </div>
-                    <div class="card-header bg-transparent border-0 pt-4 pb-0 text-center">
-                        <h3 class="mb-0">{{ g.translate('pricing_premium_title', 'Premium') }}</h3>
-                        <div class="mt-3">
+                    <div class="card-body p-4 text-center">
+                        <h3 class="mb-3 fw-bold">{{ g.translate('pricing_premium_title', 'Premium') }}</h3>
+                        <div class="mb-4">
                             <span class="display-5 fw-bold">$9.99</span>
                             <span class="text-muted">/{{ g.translate('pricing_month', 'month') }}</span>
                         </div>
-                    </div>
-                    <div class="card-body pt-3">
-                        <ul class="list-unstyled">
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature1', 'All NLP techniques') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature2', 'Unlimited AI chat interactions') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature3', 'Full progress tracking') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature4', 'Communication analysis') }}</li>
-                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_premium_limit1', 'Voice practice features') }}</li>
-                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_premium_limit2', 'Personalized journeys') }}</li>
+                        
+                        <ul class="list-unstyled text-start">
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-check text-primary me-2"></i>
+                                <span>{{ g.translate('pricing_premium_feature1', 'All NLP techniques') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-check text-primary me-2"></i>
+                                <span>{{ g.translate('pricing_premium_feature2', 'Unlimited AI chat interactions') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-check text-primary me-2"></i>
+                                <span>{{ g.translate('pricing_premium_feature3', 'Full progress tracking') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-check text-primary me-2"></i>
+                                <span>{{ g.translate('pricing_premium_feature4', 'Communication analysis') }}</span>
+                            </li>
+                            <li class="mb-3 text-muted d-flex align-items-start">
+                                <i class="fas fa-times text-muted me-2"></i>
+                                <span>{{ g.translate('pricing_premium_limit1', 'Voice practice features') }}</span>
+                            </li>
+                            <li class="mb-3 text-muted d-flex align-items-start">
+                                <i class="fas fa-times text-muted me-2"></i>
+                                <span>{{ g.translate('pricing_premium_limit2', 'Personalized journeys') }}</span>
+                            </li>
                         </ul>
+                        
                         <div class="d-grid mt-4">
-                            <button class="btn btn-primary btn-lg" type="button" id="premiumSubscribeBtn">
+                            <button class="btn btn-primary py-3" type="button" id="premiumSubscribeBtn">
                                 {{ g.translate('pricing_premium_cta', 'Subscribe Now') }}
                             </button>
                         </div>
@@ -148,25 +186,43 @@
             
             <!-- Professional Tier -->
             <div class="col-lg-4">
-                <div class="card bg-dark-subtle border-0 rounded-4 shadow-sm">
-                    <div class="card-header bg-transparent border-0 pt-4 pb-0 text-center">
-                        <h3 class="mb-0">{{ g.translate('pricing_pro_title', 'Professional') }}</h3>
-                        <div class="mt-3">
+                <div class="card bg-secondary bg-opacity-25 border-0 rounded-4 shadow-sm h-100">
+                    <div class="card-body p-4 text-center">
+                        <h3 class="mb-3 fw-bold">{{ g.translate('pricing_pro_title', 'Professional') }}</h3>
+                        <div class="mb-4">
                             <span class="display-5 fw-bold">$19.99</span>
                             <span class="text-muted">/{{ g.translate('pricing_month', 'month') }}</span>
                         </div>
-                    </div>
-                    <div class="card-body pt-3">
-                        <ul class="list-unstyled">
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature1', 'Everything in Premium') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature2', 'Voice practice features') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature3', 'Personalized journeys') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature4', 'Belief change protocol') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature5', 'Practice reminders') }}</li>
-                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature6', 'Priority support') }}</li>
+                        
+                        <ul class="list-unstyled text-start">
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_pro_feature1', 'Everything in Premium') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_pro_feature2', 'Voice practice features') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_pro_feature3', 'Personalized journeys') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_pro_feature4', 'Belief change protocol') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_pro_feature5', 'Practice reminders') }}</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-start">
+                                <i class="fas fa-circle text-info me-2 mt-1" style="font-size: 0.5rem;"></i>
+                                <span>{{ g.translate('pricing_pro_feature6', 'Priority support') }}</span>
+                            </li>
                         </ul>
+                        
                         <div class="d-grid mt-4">
-                            <button class="btn btn-outline-primary btn-lg" type="button" id="proSubscribeBtn">
+                            <button class="btn btn-outline-primary py-3" type="button" id="proSubscribeBtn">
                                 {{ g.translate('pricing_pro_cta', 'Go Professional') }}
                             </button>
                         </div>
