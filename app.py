@@ -815,6 +815,7 @@ def get_progress():
 
 # Progress Dashboard Routes
 @app.route('/progress/dashboard', methods=['GET'])
+@require_premium
 def progress_dashboard():
     """
     Render the progress dashboard page.
@@ -1032,6 +1033,7 @@ def techniques_page():
     return render_template('techniques.html', techniques=techniques)
 
 @app.route('/techniques/<technique_id>', methods=['GET'])
+@require_premium
 def technique_details_page(technique_id):
     """
     Render the technique details page.
@@ -1092,6 +1094,7 @@ def get_improvements_for_style(style_id):
     })
 
 @app.route('/communication-analysis')
+@require_premium
 def communication_analysis_page():
     """
     Render the communication analysis page.
@@ -1733,6 +1736,7 @@ def get_reminder_statistics_api():
     return jsonify(stats)
 
 @app.route('/practice-reminders')
+@require_professional
 def reminders_page():
     """
     Render the practice reminders page.
