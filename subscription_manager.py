@@ -19,7 +19,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, F
 from sqlalchemy.orm import relationship
 
 from app import db
-from models import User
+from models import User, Subscription
 
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -94,41 +94,7 @@ QUOTA_FIELDS = {
     'monthly_analyses': 'analyses_used_this_month'
 }
 
-class Subscription(db.Model):
-    """Model for storing user subscription details."""
-    __tablename__ = 'subscriptions'
-    
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey('users.id'), nullable=False)
-    stripe_customer_id = Column(String, nullable=True)
-    stripe_subscription_id = Column(String, nullable=True)
-    plan_name = Column(String, nullable=False, default='free')
-    status = Column(String, nullable=False, default='active')
-    current_period_start = Column(DateTime, nullable=True)
-    current_period_end = Column(DateTime, nullable=True)
-    cancel_at_period_end = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationship with User model
-    user = relationship('User', backref='subscription')
-    
-    def __repr__(self):
-        return f'<Subscription {self.id} - User: {self.user_id} - Plan: {self.plan_name}>'
-    
-    def to_dict(self):
-        """Convert subscription to dictionary for JSON serialization."""
-        return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'plan_name': self.plan_name,
-            'status': self.status,
-            'current_period_start': self.current_period_start.isoformat() if self.current_period_start else None,
-            'current_period_end': self.current_period_end.isoformat() if self.current_period_end else None,
-            'cancel_at_period_end': self.cancel_at_period_end,
-            'features': SUBSCRIPTION_PLANS.get(self.plan_name, {}).get('features', []),
-            'quotas': SUBSCRIPTION_PLANS.get(self.plan_name, {}).get('quotas', {})
-        }
+# Note: Subscription class is imported from models.py
 
 class UsageQuota(db.Model):
     """Model for tracking usage quotas."""
@@ -344,38 +310,94 @@ def increment_usage_quota(user_id=None, browser_session_id=None, quota_type='dai
     Returns:
         tuple: (success, message) indicating if the quota was successfully incremented
     """
-    # Get the usage quota
-    usage = get_usage_quota(user_id, browser_session_id)
-    
-    # Get subscription details to check quota limits
-    subscription_details = None
-    if user_id:
-        subscription_details = get_subscription_details(user_id)
-    else:
-        # For anonymous users, use free plan limits
-        subscription_details = {
-            'plan_name': 'free',
-            'quotas': SUBSCRIPTION_PLANS['free']['quotas']
-        }
-    
-    # Get the quota limit and current usage
-    quota_limit = subscription_details['quotas'].get(quota_type, 0)
-    quota_field = QUOTA_FIELDS.get(quota_type)
-    
-    if not quota_field:
-        return False, f"Unknown quota type: {quota_type}"
-    
-    current_usage = getattr(usage, quota_field, 0)
-    
-    # Check if quota would be exceeded
-    if quota_limit != float('inf') and current_usage + amount > quota_limit:
-        return False, f"Quota exceeded for {quota_type}. Upgrade your subscription for higher limits."
-    
-    # Increment the quota
-    setattr(usage, quota_field, current_usage + amount)
-    db.session.commit()
-    
-    return True, "Quota incremented successfully."
+    try:
+        # Log the quota increment attempt for debugging
+        user_identifier = f"user {user_id}" if user_id else f"session {browser_session_id}"
+        logging.info(f"Incrementing usage quota for {user_identifier}, quota type: {quota_type}, amount: {amount}")
+        
+        # Get the usage quota
+        usage = get_usage_quota(user_id, browser_session_id)
+        if not usage:
+            logging.warning(f"No usage record found for {user_identifier}, creating new record")
+            
+        # Get subscription details to check quota limits
+        subscription_details = None
+        subscription_plan = "free"
+        
+        if user_id:
+            try:
+                subscription_details = get_subscription_details(user_id)
+                subscription_plan = subscription_details.get('plan_name', 'free')
+                logging.info(f"User {user_id} has subscription plan: {subscription_plan}")
+            except Exception as sub_error:
+                logging.error(f"Error retrieving subscription details for {user_id}: {str(sub_error)}")
+                # Default to free plan on error
+                subscription_details = {
+                    'plan_name': 'free',
+                    'quotas': SUBSCRIPTION_PLANS['free']['quotas']
+                }
+        else:
+            # For anonymous users, use free plan limits
+            subscription_details = {
+                'plan_name': 'free',
+                'quotas': SUBSCRIPTION_PLANS['free']['quotas']
+            }
+            logging.info(f"Anonymous session {browser_session_id} using free plan quotas")
+        
+        # Get the quota limit for this user's subscription plan
+        quota_limit = subscription_details.get('quotas', {}).get(quota_type, 0)
+        logging.info(f"Quota limit for {quota_type} on {subscription_plan} plan: {quota_limit}")
+        
+        # Get the corresponding database field for this quota type
+        quota_field = QUOTA_FIELDS.get(quota_type)
+        if not quota_field:
+            error_msg = f"Unknown quota type: {quota_type}"
+            logging.error(error_msg)
+            return False, error_msg
+        
+        # Get current usage from the usage object
+        current_usage = getattr(usage, quota_field, 0) or 0  # Handle None values
+        logging.info(f"Current usage for {quota_type} before increment: {current_usage}/{quota_limit}")
+        
+        # Check if unlimited quota (infinity)
+        if quota_limit == float('inf'):
+            logging.info(f"Unlimited quota for {quota_type} on {subscription_plan} plan")
+            # Still increment the counter for tracking purposes
+            new_usage = current_usage + amount
+            setattr(usage, quota_field, new_usage)
+            db.session.commit()
+            logging.info(f"Unlimited quota incremented to {new_usage}")
+            return True, "Unlimited quota incremented successfully."
+        
+        # Check if quota would be exceeded
+        if current_usage + amount > quota_limit:
+            message = f"Quota exceeded for {quota_type}. Current usage: {current_usage}/{quota_limit}. Upgrade your subscription for higher limits."
+            logging.warning(f"Quota increment failed: {message}")
+            return False, message
+        
+        # Increment the quota in the database
+        new_usage = current_usage + amount
+        setattr(usage, quota_field, new_usage)
+        db.session.commit()
+        
+        # Success message
+        remaining = quota_limit - new_usage
+        message = f"Quota incremented successfully. New usage: {new_usage}/{quota_limit}. Remaining: {remaining}."
+        logging.info(f"Quota increment successful: {message}")
+        return True, message
+        
+    except Exception as e:
+        error_msg = f"Error incrementing usage quota: {str(e)}"
+        logging.error(error_msg)
+        
+        # Try to roll back any failed database changes
+        try:
+            db.session.rollback()
+        except Exception as rollback_error:
+            logging.error(f"Error rolling back database session: {str(rollback_error)}")
+            
+        # Default to False on error
+        return False, error_msg
 
 def check_quota_available(user_id=None, browser_session_id=None, quota_type='daily_messages', amount=1):
     """

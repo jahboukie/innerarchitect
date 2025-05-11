@@ -2,7 +2,8 @@ import os
 import logging
 import uuid
 import json
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
 from flask_login import current_user, login_required
@@ -619,52 +620,136 @@ def subscription_cancel():
 def stripe_webhook():
     """
     Handle Stripe webhook events.
+    
+    This endpoint receives and processes events from Stripe's webhook system.
+    It verifies the signature of incoming webhooks when a webhook secret is configured,
+    and routes the events to appropriate handlers in the subscription_manager module.
+    
+    Events handled include:
+    - checkout.session.completed: When a customer completes the checkout process
+    - invoice.paid: When an invoice is paid, activating or renewing a subscription
+    - customer.subscription.updated: When a subscription is modified
+    - customer.subscription.deleted: When a subscription is canceled or ends
+    
+    Returns:
+        JSON response indicating success or providing error details
     """
     from subscription_manager import handle_webhook_event
     
+    # Get request details
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
+    request_id = request.headers.get('X-Request-Id', 'unknown')
     
-    # Verify webhook signature
+    # Log the webhook receipt
+    logging.info(f"Received Stripe webhook - Request ID: {request_id}, Content Length: {len(payload)}")
+    
+    # Verify webhook signature if secret is available
     webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    if not webhook_secret:
+        logging.warning("STRIPE_WEBHOOK_SECRET not set. Webhook signature verification disabled.")
     
     try:
-        if webhook_secret:
-            # Verify the webhook signature using the secret
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, webhook_secret
-            )
-            logging.info(f"Webhook signature verified for event type: {event['type']}")
+        # Extract the event data
+        if webhook_secret and sig_header:
+            try:
+                # Verify the webhook signature using the secret
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, webhook_secret
+                )
+                logging.info(f"Webhook signature verified - Event ID: {event.get('id', 'unknown')}, Type: {event.get('type', 'unknown')}")
+            except stripe.error.SignatureVerificationError as sig_err:
+                # Invalid signature
+                logging.error(f"Invalid webhook signature: {str(sig_err)}")
+                return jsonify({
+                    'status': 'error', 
+                    'message': 'Invalid signature',
+                    'request_id': request_id
+                }), 400
         else:
             # For development, we can parse the payload directly
             # Note: In production, always use webhook signatures for security
-            data = json.loads(payload)
-            event = data
-            logging.warning("Processing webhook without signature verification (development mode)")
+            try:
+                data = json.loads(payload)
+                event = data
+                logging.warning(f"Processing webhook without signature verification (development mode) - Event type: {event.get('type', 'unknown')}")
+            except json.JSONDecodeError as json_err:
+                logging.error(f"Failed to parse webhook payload as JSON: {str(json_err)}")
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Invalid JSON payload',
+                    'request_id': request_id
+                }), 400
         
-        # Log the event type
-        event_type = event['type']
-        logging.info(f"Processing Stripe webhook: {event_type}")
+        # Log detailed event information
+        event_id = event.get('id', 'unknown')
+        event_type = event.get('type', 'unknown')
+        created_timestamp = event.get('created', 0)
+        created_time = datetime.fromtimestamp(created_timestamp).strftime('%Y-%m-%d %H:%M:%S') if created_timestamp else 'unknown'
         
-        # Process the event
-        if handle_webhook_event(event):
-            logging.info(f"Successfully processed webhook event: {event_type}")
-            return jsonify({'status': 'success'}), 200
+        logging.info(f"Processing Stripe webhook - ID: {event_id}, Type: {event_type}, Created: {created_time}")
+        
+        # Additional logging for specific event types
+        if event_type == 'checkout.session.completed':
+            session = event.get('data', {}).get('object', {})
+            customer_id = session.get('customer', 'unknown')
+            subscription_id = session.get('subscription', 'unknown')
+            logging.info(f"Checkout completed - Customer: {customer_id}, Subscription: {subscription_id}")
+        elif event_type.startswith('customer.subscription'):
+            subscription = event.get('data', {}).get('object', {})
+            customer_id = subscription.get('customer', 'unknown')
+            status = subscription.get('status', 'unknown')
+            plan = subscription.get('plan', {}).get('nickname', 'unknown')
+            logging.info(f"Subscription event - Customer: {customer_id}, Status: {status}, Plan: {plan}")
+            
+        # Process the event with detailed logging
+        processing_start_time = time.time()
+        success = handle_webhook_event(event)
+        processing_time = time.time() - processing_start_time
+        
+        if success:
+            logging.info(f"Successfully processed webhook event: {event_type} in {processing_time:.2f}s")
+            return jsonify({
+                'status': 'success',
+                'message': f'Processed {event_type} event',
+                'event_id': event_id,
+                'request_id': request_id
+            }), 200
         else:
             logging.error(f"Failed to process webhook event: {event_type}")
-            return jsonify({'status': 'error', 'message': 'Event processing failed'}), 500
+            return jsonify({
+                'status': 'error', 
+                'message': 'Event processing failed',
+                'event_id': event_id,
+                'request_id': request_id
+            }), 500
             
     except ValueError as e:
         # Invalid payload
         logging.error(f"Invalid webhook payload: {str(e)}")
-        return jsonify({'status': 'error', 'message': 'Invalid payload'}), 400
-    except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        logging.error(f"Invalid webhook signature: {str(e)}")
-        return jsonify({'status': 'error', 'message': 'Invalid signature'}), 400
+        return jsonify({
+            'status': 'error', 
+            'message': 'Invalid payload',
+            'error': str(e),
+            'request_id': request_id
+        }), 400
+        
     except Exception as e:
-        logging.error(f"Unexpected error processing webhook: {str(e)}")
-        return jsonify({'status': 'error', 'message': 'Internal server error'}), 500
+        # Catch-all for unexpected errors
+        error_details = str(e)
+        error_type = type(e).__name__
+        logging.error(f"Unexpected error processing webhook: {error_type}: {error_details}")
+        
+        # Log traceback for debugging
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
+        
+        return jsonify({
+            'status': 'error', 
+            'message': 'Internal server error',
+            'error_type': error_type,
+            'request_id': request_id
+        }), 500
 
 
 # User subscription management

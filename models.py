@@ -54,6 +54,7 @@ class Subscription(db.Model):
     status = db.Column(db.String, nullable=False, default='active')  # 'active', 'canceled', 'past_due'
     current_period_start = db.Column(db.DateTime, nullable=True)
     current_period_end = db.Column(db.DateTime, nullable=True)
+    cancel_at_period_end = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -77,6 +78,23 @@ class Subscription(db.Model):
     def has_professional_access(self):
         """Check if the user has professional access."""
         return self.is_active and self.plan_name == 'professional'
+        
+    def to_dict(self):
+        """Convert subscription to dictionary for JSON serialization."""
+        # Import here to avoid circular import
+        from subscription_manager import SUBSCRIPTION_PLANS
+        
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'plan_name': self.plan_name,
+            'status': self.status,
+            'current_period_start': self.current_period_start.isoformat() if self.current_period_start else None,
+            'current_period_end': self.current_period_end.isoformat() if self.current_period_end else None,
+            'cancel_at_period_end': getattr(self, 'cancel_at_period_end', False),
+            'features': SUBSCRIPTION_PLANS.get(self.plan_name, {}).get('features', []),
+            'quotas': SUBSCRIPTION_PLANS.get(self.plan_name, {}).get('quotas', {})
+        }
 
 
 class ChatHistory(db.Model):
