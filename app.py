@@ -100,6 +100,22 @@ from voice_interactions import (
     VoiceSubmission
 )
 
+# Import practice reminders
+from practice_reminders import (
+    create_reminder,
+    update_reminder,
+    delete_reminder,
+    get_reminder,
+    get_reminders,
+    mark_reminder_complete,
+    get_due_reminders,
+    get_reminder_streak,
+    get_reminder_statistics,
+    get_reminder_frequencies,
+    get_reminder_types,
+    PracticeReminder
+)
+
 # Initialize default NLP exercises
 with app.app_context():
     initialize_default_exercises()
@@ -1045,6 +1061,220 @@ def voice_exercise_page(exercise_id):
         return redirect(url_for('voice_practice_page'))
     
     return render_template('voice_exercise.html', exercise=exercise.to_dict())
+
+# ===== Practice Reminders Routes =====
+
+@app.route('/api/reminders/frequencies')
+def get_reminder_frequencies_api():
+    """
+    Get available reminder frequencies.
+    """
+    return jsonify({'frequencies': get_reminder_frequencies()})
+
+@app.route('/api/reminders/types')
+def get_reminder_types_api():
+    """
+    Get available reminder types.
+    """
+    return jsonify({'types': get_reminder_types()})
+
+@app.route('/api/reminders', methods=['GET'])
+def get_reminders_api():
+    """
+    Get reminders for the current session.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'reminders': []})
+    
+    active_only = request.args.get('active_only', 'true').lower() == 'true'
+    reminder_type = request.args.get('type')
+    
+    reminders = get_reminders(session_id, active_only, reminder_type)
+    
+    return jsonify({
+        'reminders': [r.to_dict() for r in reminders]
+    })
+
+@app.route('/api/reminders/<reminder_id>', methods=['GET'])
+def get_reminder_api(reminder_id):
+    """
+    Get a specific reminder.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+    
+    reminder = get_reminder(reminder_id, session_id)
+    
+    if not reminder:
+        return jsonify({'error': 'Reminder not found'}), 404
+    
+    return jsonify({'reminder': reminder.to_dict()})
+
+@app.route('/api/reminders', methods=['POST'])
+def create_reminder_api():
+    """
+    Create a new reminder.
+    """
+    data = request.json
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    # Get session ID
+    session_id = session.get('session_id', str(uuid.uuid4()))
+    if 'session_id' not in session:
+        session['session_id'] = session_id
+    
+    # Extract fields from request
+    title = data.get('title')
+    description = data.get('description', '')
+    reminder_type = data.get('reminder_type')
+    frequency = data.get('frequency')
+    time_preferences = data.get('time_preferences')
+    days_of_week = data.get('days_of_week')
+    linked_content_id = data.get('linked_content_id')
+    
+    # Validate required fields
+    if not title or not reminder_type or not frequency:
+        return jsonify({
+            'error': 'Missing required fields',
+            'required': ['title', 'reminder_type', 'frequency']
+        }), 400
+    
+    # Create the reminder
+    reminder = create_reminder(
+        user_id=None,  # No user ID for now
+        session_id=session_id,
+        title=title,
+        description=description,
+        reminder_type=reminder_type,
+        frequency=frequency,
+        time_preferences=time_preferences,
+        days_of_week=days_of_week,
+        linked_content_id=linked_content_id
+    )
+    
+    if not reminder:
+        return jsonify({'error': 'Failed to create reminder'}), 500
+    
+    return jsonify({
+        'success': True,
+        'reminder': reminder.to_dict()
+    })
+
+@app.route('/api/reminders/<reminder_id>', methods=['PUT'])
+def update_reminder_api(reminder_id):
+    """
+    Update an existing reminder.
+    """
+    data = request.json
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+    
+    # Update the reminder
+    reminder = update_reminder(reminder_id, session_id, data)
+    
+    if not reminder:
+        return jsonify({'error': 'Reminder not found or update failed'}), 404
+    
+    return jsonify({
+        'success': True,
+        'reminder': reminder.to_dict()
+    })
+
+@app.route('/api/reminders/<reminder_id>', methods=['DELETE'])
+def delete_reminder_api(reminder_id):
+    """
+    Delete a reminder.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+    
+    # Delete the reminder
+    success = delete_reminder(reminder_id, session_id)
+    
+    if not success:
+        return jsonify({'error': 'Reminder not found or deletion failed'}), 404
+    
+    return jsonify({
+        'success': True,
+        'message': 'Reminder deleted successfully'
+    })
+
+@app.route('/api/reminders/<reminder_id>/complete', methods=['POST'])
+def complete_reminder_api(reminder_id):
+    """
+    Mark a reminder as completed for today.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'error': 'No active session'}), 400
+    
+    # Mark the reminder as completed
+    reminder = mark_reminder_complete(reminder_id, session_id)
+    
+    if not reminder:
+        return jsonify({'error': 'Reminder not found or completion failed'}), 404
+    
+    return jsonify({
+        'success': True,
+        'reminder': reminder.to_dict()
+    })
+
+@app.route('/api/reminders/due')
+def get_due_reminders_api():
+    """
+    Get reminders that are due for notification.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({'reminders': []})
+    
+    reminders = get_due_reminders(session_id)
+    
+    return jsonify({
+        'reminders': [r.to_dict() for r in reminders]
+    })
+
+@app.route('/api/reminders/statistics')
+def get_reminder_statistics_api():
+    """
+    Get statistics about reminder completion.
+    """
+    session_id = session.get('session_id')
+    
+    if not session_id:
+        return jsonify({
+            'total_reminders': 0,
+            'active_reminders': 0,
+            'completion_rate': 0,
+            'longest_streak': 0
+        })
+    
+    stats = get_reminder_statistics(session_id)
+    
+    return jsonify(stats)
+
+@app.route('/practice-reminders')
+def reminders_page():
+    """
+    Render the practice reminders page.
+    """
+    return render_template('practice_reminders.html')
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
