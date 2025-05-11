@@ -36,7 +36,7 @@ from replit_auth import make_replit_blueprint, require_login
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
 # Import models
-from models import User, ChatHistory, JournalEntry, TechniqueEffectiveness, TechniqueUsageStats
+from models import User, ChatHistory, JournalEntry, NLPExercise, NLPExerciseProgress, TechniqueEffectiveness, TechniqueUsageStats
 
 # Create database tables
 with app.app_context():
@@ -50,6 +50,9 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 # Language middleware
 @app.before_request
 def before_request():
+    # Make session permanent
+    session.permanent = True
+    
     # Set default language if not in session
     if 'language' not in session:
         # Try to detect from Accept-Language header
@@ -220,6 +223,64 @@ def set_language(lang_code):
         return redirect(referrer)
     
     return redirect(url_for('index'))
+
+
+# User Profile route
+@app.route('/profile')
+@require_login
+def profile():
+    """
+    User profile page.
+    """
+    # Get user stats
+    exercise_count = NLPExerciseProgress.query.filter_by(
+        user_id=current_user.id, 
+        completed=True
+    ).count()
+    
+    # Get unique techniques used
+    techniques = TechniqueEffectiveness.query.filter_by(
+        user_id=current_user.id
+    ).with_entities(TechniqueEffectiveness.technique).distinct().count()
+    
+    # Get recent activity (last 5 items)
+    recent_chats = ChatHistory.query.filter_by(
+        user_id=current_user.id
+    ).order_by(ChatHistory.created_at.desc()).limit(3).all()
+    
+    recent_exercises = NLPExerciseProgress.query.filter_by(
+        user_id=current_user.id
+    ).order_by(NLPExerciseProgress.started_at.desc()).limit(2).all()
+    
+    # Format for display
+    activity = []
+    
+    for chat in recent_chats:
+        activity.append({
+            'title': 'Chat Interaction',
+            'description': f"Used technique: {chat.nlp_technique or 'None'}",
+            'date': chat.created_at.strftime('%b %d, %Y')
+        })
+    
+    for ex in recent_exercises:
+        status = "Completed" if ex.completed else f"In Progress (Step {ex.current_step})"
+        exercise = NLPExercise.query.get(ex.exercise_id)
+        if exercise:
+            activity.append({
+                'title': f"Exercise: {exercise.title}",
+                'description': f"Status: {status}",
+                'date': ex.started_at.strftime('%b %d, %Y')
+            })
+    
+    # Sort by date (newest first)
+    activity.sort(key=lambda x: x['date'], reverse=True)
+    
+    return render_template(
+        'profile.html',
+        exercise_count=exercise_count,
+        technique_count=techniques,
+        recent_activity=activity
+    )
 
 @app.route('/')
 def index():
