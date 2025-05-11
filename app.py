@@ -16,21 +16,22 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 # Subscription plan configuration
 SUBSCRIPTION_PLANS = {
     'premium': {
-        'name': 'Premium Plan',
-        'price_id': 'price_1234567890', # You can update this with actual price IDs from Stripe
+        'name': 'The Inner Architect Premium',
+        'price_id': None,  # Will be set dynamically or from Stripe Dashboard
         'amount': 999,  # $9.99 in cents
         'currency': 'usd',
         'interval': 'month',
         'features': [
-            'All NLP techniques',
-            'Unlimited AI chat interactions',
-            'Full progress tracking',
-            'Communication analysis'
+            'All NLP techniques', 
+            'Unlimited AI chat interactions', 
+            'Full progress tracking', 
+            'Communication analysis', 
+            'Priority support'
         ]
     },
     'professional': {
-        'name': 'Professional Plan',
-        'price_id': 'price_0987654321', # You can update this with actual price IDs from Stripe
+        'name': 'The Inner Architect Professional',
+        'price_id': None,  # Will be set dynamically or from Stripe Dashboard
         'amount': 1999,  # $19.99 in cents
         'currency': 'usd',
         'interval': 'month',
