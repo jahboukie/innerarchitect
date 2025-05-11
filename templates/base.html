@@ -24,41 +24,82 @@
 <body>
     <!-- Header -->
     <header>
-        <div class="container">
-            <div class="d-flex align-items-center justify-content-between">
-                <h1 class="mb-0">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <h1 class="navbar-brand mb-0">
                     <a href="/" class="text-decoration-none text-white">
                         <i class="fas fa-brain me-2"></i>{{ g.translate('app_name', 'The Inner Architect') }}
                     </a>
                 </h1>
-                <div class="d-flex align-items-center">
-                    <a href="/techniques" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-book me-1"></i> {{ g.translate('techniques', 'Techniques') }}
-                    </a>
-                    <a href="/progress/dashboard" class="btn btn-sm btn-outline-light me-2">
-                        <i class="fas fa-chart-line me-1"></i> {{ g.translate('dashboard', 'Dashboard') }}
-                    </a>
-                    <!-- Language Dropdown -->
-                    <div class="dropdown me-2">
-                        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe me-1"></i> {{ g.language|upper }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                            {% for code, name in g.languages.items() %}
-                            <li>
-                                <a class="dropdown-item {% if g.language == code %}active{% endif %}" href="{{ url_for('set_language', lang_code=code) }}">
-                                    {{ name }}
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="badge bg-dark-subtle text-primary-emphasis px-3 py-2">
-                        <i class="fas fa-code me-1"></i> MVP Version
+
+                <!-- Hamburger menu for mobile -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Navigation items -->
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/techniques">
+                                <i class="fas fa-book me-1"></i> {{ g.translate('techniques', 'Techniques') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/progress/dashboard">
+                                <i class="fas fa-chart-line me-1"></i> {{ g.translate('dashboard', 'Dashboard') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/communication-analysis">
+                                <i class="fas fa-comments me-1"></i> {{ g.translate('communications', 'Communication Analysis') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/personalized-journeys">
+                                <i class="fas fa-map-signs me-1"></i> {{ g.translate('journeys', 'Personalized Journeys') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/voice-practice">
+                                <i class="fas fa-microphone me-1"></i> {{ g.translate('voice_practice', 'Voice Practice') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/practice-reminders">
+                                <i class="fas fa-bell me-1"></i> {{ g.translate('practice_reminders', 'Practice Reminders') }}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/belief-change">
+                                <i class="fas fa-sync-alt me-1"></i> {{ g.translate('belief_change', 'Belief Change') }}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="d-flex align-items-center">
+                        <!-- Language Dropdown -->
+                        <div class="dropdown me-2">
+                            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i> {{ g.language|upper }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                                {% for code, name in g.languages.items() %}
+                                <li>
+                                    <a class="dropdown-item {% if g.language == code %}active{% endif %}" href="{{ url_for('set_language', lang_code=code) }}">
+                                        {{ name }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="badge bg-dark-subtle text-primary-emphasis px-3 py-2">
+                            <i class="fas fa-code me-1"></i> MVP Version
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </nav>
     </header>
 
     <!-- Flash Messages -->
