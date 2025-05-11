@@ -1,0 +1,687 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ exercise.type_name }} - Voice Practice - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Exercise Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="/voice-practice" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Voice Practice
+                </a>
+                <h2 class="mb-0">{{ exercise.type_name }}</h2>
+                {% if exercise.technique %}
+                <span class="badge bg-primary ms-3">{{ exercise.technique|replace('_', ' ')|title }}</span>
+                {% endif %}
+                {% if exercise.difficulty %}
+                <span class="badge bg-secondary ms-2">{{ exercise.difficulty|title }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Exercise Content -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-4">
+                                <h3 class="card-title">Instructions</h3>
+                                <p>{{ exercise.instructions }}</p>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h3 class="card-title">Exercise Prompt</h3>
+                                <div class="card bg-dark-subtle border-0 p-3 mb-3">
+                                    <p class="mb-0">{{ exercise.prompt }}</p>
+                                </div>
+                                
+                                {% if exercise.example_text %}
+                                <h5>Example:</h5>
+                                <div class="card bg-dark-subtle border-0 p-3">
+                                    <p class="mb-0">{{ exercise.example_text }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div id="recording-section">
+                                <h3 class="card-title mb-3">Your Response</h3>
+                                
+                                <div id="microphone-access-error" class="alert alert-warning d-none">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Microphone access is required for this exercise. Please grant permission and reload the page.
+                                </div>
+                                
+                                <div id="recording-controls" class="d-none">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <button id="start-recording" class="btn btn-primary me-3">
+                                            <i class="fas fa-microphone me-2"></i>Start Recording
+                                        </button>
+                                        <button id="stop-recording" class="btn btn-danger me-3 d-none">
+                                            <i class="fas fa-stop-circle me-2"></i>Stop Recording
+                                        </button>
+                                        <div id="recording-time" class="fs-5 d-none">00:00</div>
+                                    </div>
+                                    
+                                    <div id="recording-status" class="alert alert-info d-none">
+                                        <i class="fas fa-microphone-alt me-2"></i>
+                                        <span id="recording-status-text">Ready to record your response.</span>
+                                    </div>
+                                </div>
+                                
+                                <div id="response-preview" class="d-none">
+                                    <div class="card bg-dark-subtle border-0 p-3 mb-3">
+                                        <h5>Your Recording</h5>
+                                        <audio id="response-audio-player" controls class="w-100 mb-3"></audio>
+                                        
+                                        <div id="transcript-section" class="mb-3">
+                                            <h6>Transcript:</h6>
+                                            <p id="response-transcript" class="bg-dark-subtle p-2 rounded"></p>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-end">
+                                            <button id="retry-recording" class="btn btn-outline-secondary me-2">
+                                                <i class="fas fa-redo me-1"></i>Re-record
+                                            </button>
+                                            <button id="analyze-response" class="btn btn-primary">
+                                                <i class="fas fa-chart-bar me-1"></i>Analyze Response
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100 bg-dark-subtle border-0 p-3">
+                                <h3 class="card-title">Tips</h3>
+                                
+                                <div class="mb-4">
+                                    <h5>Voice Delivery</h5>
+                                    <ul>
+                                        <li>Speak clearly and at a comfortable pace</li>
+                                        <li>Vary your tone to maintain engagement</li>
+                                        <li>Use pauses for emphasis</li>
+                                        <li>Project confidence in your delivery</li>
+                                    </ul>
+                                </div>
+                                
+                                {% if exercise.technique %}
+                                <div>
+                                    <h5>{{ exercise.technique|replace('_', ' ')|title }} Technique</h5>
+                                    <ul id="technique-tips">
+                                        <li>Loading technique tips...</li>
+                                    </ul>
+                                    
+                                    <a href="/techniques/{{ exercise.technique }}" class="btn btn-sm btn-outline-primary mt-2 w-100">
+                                        <i class="fas fa-book me-1"></i>Learn More About This Technique
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Results (Initially Hidden) -->
+            <div id="analysis-section" class="d-none">
+                <h3 class="mb-3">Analysis Results</h3>
+                
+                <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <h4 class="card-title">Vocal Delivery Analysis</h4>
+                                <p class="text-muted">An assessment of how you delivered your response.</p>
+                            </div>
+                            <button id="delivery-info-btn" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-info-circle me-1"></i>What We Analyze
+                            </button>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-lg-7">
+                                <h5>Metrics</h5>
+                                <div id="metrics-container">
+                                    <!-- Metrics will be added here by JavaScript -->
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <h5>Feedback</h5>
+                                <div class="card bg-dark-subtle border-0 p-3 h-100">
+                                    <div id="strengths-section" class="mb-3">
+                                        <h6 class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>Strengths
+                                        </h6>
+                                        <ul id="strengths-list" class="mb-0">
+                                            <!-- Strengths will be added here by JavaScript -->
+                                        </ul>
+                                    </div>
+                                    <div id="improvement-section">
+                                        <h6 class="text-info">
+                                            <i class="fas fa-arrow-up me-1"></i>Areas for Improvement
+                                        </h6>
+                                        <ul id="improvement-list" class="mb-0">
+                                            <!-- Improvement areas will be added here by JavaScript -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="technique-analysis-section" class="d-none">
+                            <h4 class="card-title">Technique Application Analysis</h4>
+                            <p class="text-muted">An assessment of how effectively you applied the {{ exercise.technique|replace('_', ' ')|title }} technique.</p>
+                            
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="card bg-dark-subtle border-0 p-3 mb-3">
+                                        <h5 class="card-title">Application Score</h5>
+                                        <div class="text-center">
+                                            <div id="technique-score" class="display-4 fw-bold text-primary">0</div>
+                                            <p class="text-muted">out of 10</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-8">
+                                    <div class="card bg-dark-subtle border-0 p-3 mb-3">
+                                        <div id="technique-strengths-section" class="mb-3">
+                                            <h6 class="text-success">
+                                                <i class="fas fa-check-circle me-1"></i>Effective Elements
+                                            </h6>
+                                            <ul id="technique-strengths-list" class="mb-0">
+                                                <!-- Technique strengths will be added here by JavaScript -->
+                                            </ul>
+                                        </div>
+                                        <div id="technique-improvement-section">
+                                            <h6 class="text-info">
+                                                <i class="fas fa-arrow-up me-1"></i>Improvement Opportunities
+                                            </h6>
+                                            <ul id="technique-improvement-list" class="mb-0">
+                                                <!-- Technique improvement areas will be added here by JavaScript -->
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5>Practical Tips for Next Time</h5>
+                            <div class="card bg-dark-subtle border-0 p-3">
+                                <ul id="tips-list">
+                                    <!-- Tips will be added here by JavaScript -->
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <button id="try-again-btn" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-2"></i>Try Again
+                            </button>
+                            <a href="/voice-practice" class="btn btn-primary">
+                                <i class="fas fa-list me-2"></i>More Exercises
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Loading Overlay -->
+            <div id="analysis-loading" class="d-none">
+                <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body p-4 text-center">
+                        <div class="spinner-border text-primary my-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h4>Analyzing Your Response...</h4>
+                        <p class="text-muted">This may take a few moments. Please wait.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Error Overlay -->
+            <div id="analysis-error" class="d-none">
+                <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <div class="text-center my-3">
+                            <i class="fas fa-exclamation-triangle text-warning fs-1"></i>
+                        </div>
+                        <h4 class="text-center">Analysis Failed</h4>
+                        <p class="text-center text-muted" id="error-message">An error occurred while analyzing your response. Please try again.</p>
+                        
+                        <div class="text-center mt-4">
+                            <button id="error-retry-btn" class="btn btn-primary">
+                                <i class="fas fa-redo me-2"></i>Try Again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Info Modal -->
+<div class="modal fade" id="metricsInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">What We Analyze</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="metrics-info-container">
+                    <!-- Metric descriptions will be added here by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Global variables
+        const exerciseData = {{ exercise|tojson }};
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingTimer;
+        let recordingSeconds = 0;
+        let audioBlob = null;
+        let audioBase64 = null;
+        let transcription = null;
+        let stream;
+        
+        // Elements
+        const recordingSection = document.getElementById('recording-section');
+        const microphoneError = document.getElementById('microphone-access-error');
+        const recordingControls = document.getElementById('recording-controls');
+        const startRecordingBtn = document.getElementById('start-recording');
+        const stopRecordingBtn = document.getElementById('stop-recording');
+        const recordingStatus = document.getElementById('recording-status');
+        const recordingStatusText = document.getElementById('recording-status-text');
+        const recordingTime = document.getElementById('recording-time');
+        const responsePreview = document.getElementById('response-preview');
+        const responseAudioPlayer = document.getElementById('response-audio-player');
+        const responseTranscript = document.getElementById('response-transcript');
+        const retryRecordingBtn = document.getElementById('retry-recording');
+        const analyzeResponseBtn = document.getElementById('analyze-response');
+        const analysisSection = document.getElementById('analysis-section');
+        const analysisLoading = document.getElementById('analysis-loading');
+        const analysisError = document.getElementById('analysis-error');
+        const errorMessage = document.getElementById('error-message');
+        const errorRetryBtn = document.getElementById('error-retry-btn');
+        const tryAgainBtn = document.getElementById('try-again-btn');
+        const deliveryInfoBtn = document.getElementById('delivery-info-btn');
+        const metricsInfoModal = new bootstrap.Modal(document.getElementById('metricsInfoModal'));
+        const techniqueTips = document.getElementById('technique-tips');
+        
+        // Load technique tips if applicable
+        if (exerciseData.technique) {
+            fetch(`/api/techniques/tips/${exerciseData.technique}`)
+                .then(response => response.json())
+                .then(data => {
+                    techniqueTips.innerHTML = '';
+                    data.tips.forEach(tip => {
+                        const li = document.createElement('li');
+                        li.textContent = tip;
+                        techniqueTips.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading technique tips:', error);
+                    techniqueTips.innerHTML = '<li>Could not load technique tips.</li>';
+                });
+        }
+        
+        // Initialize microphone
+        function initializeMicrophone() {
+            // Request microphone access
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    recordingControls.classList.remove('d-none');
+                    recordingStatus.classList.remove('d-none');
+                    
+                    // Set up media recorder
+                    mediaRecorder = new MediaRecorder(mediaStream);
+                    
+                    mediaRecorder.onstart = function() {
+                        audioChunks = [];
+                        startRecordingTimer();
+                        recordingStatusText.textContent = 'Recording... Speak clearly and naturally.';
+                    };
+                    
+                    mediaRecorder.ondataavailable = function(e) {
+                        audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = function() {
+                        stopRecordingTimer();
+                        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        // Show audio preview
+                        responseAudioPlayer.src = audioUrl;
+                        
+                        // Convert to base64 for API
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = function() {
+                            // Get base64 data
+                            audioBase64 = reader.result.split(',')[1];
+                            
+                            // Hide recording UI
+                            recordingControls.classList.add('d-none');
+                            recordingStatus.classList.add('d-none');
+                            
+                            // Show response preview
+                            responsePreview.classList.remove('d-none');
+                            
+                            // Send to API for transcription
+                            transcribeAudio(audioBase64);
+                        };
+                    };
+                })
+                .catch(function(err) {
+                    console.error('Error accessing microphone:', err);
+                    microphoneError.classList.remove('d-none');
+                });
+        }
+        
+        // Start recording
+        startRecordingBtn.addEventListener('click', function() {
+            if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                mediaRecorder.start();
+                startRecordingBtn.classList.add('d-none');
+                stopRecordingBtn.classList.remove('d-none');
+                recordingTime.classList.remove('d-none');
+            }
+        });
+        
+        // Stop recording
+        stopRecordingBtn.addEventListener('click', function() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                startRecordingBtn.classList.remove('d-none');
+                stopRecordingBtn.classList.add('d-none');
+            }
+        });
+        
+        // Retry recording
+        retryRecordingBtn.addEventListener('click', function() {
+            responsePreview.classList.add('d-none');
+            recordingControls.classList.remove('d-none');
+            recordingStatus.classList.remove('d-none');
+            startRecordingBtn.classList.remove('d-none');
+            stopRecordingBtn.classList.add('d-none');
+            recordingTime.classList.add('d-none');
+            recordingStatusText.textContent = 'Ready to record your response.';
+            audioBlob = null;
+            audioBase64 = null;
+            transcription = null;
+        });
+        
+        // Start recording timer
+        function startRecordingTimer() {
+            recordingSeconds = 0;
+            updateRecordingTime();
+            recordingTimer = setInterval(function() {
+                recordingSeconds++;
+                updateRecordingTime();
+            }, 1000);
+        }
+        
+        // Stop recording timer
+        function stopRecordingTimer() {
+            clearInterval(recordingTimer);
+        }
+        
+        // Update recording time display
+        function updateRecordingTime() {
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Transcribe audio through API
+        function transcribeAudio(audioData) {
+            responseTranscript.textContent = 'Transcribing...';
+            
+            fetch('/api/voice/transcribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    audio_data: audioData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    transcription = data.transcript;
+                    responseTranscript.textContent = transcription;
+                } else {
+                    responseTranscript.textContent = 'Transcription failed. You can still analyze the audio.';
+                    console.error('Transcription error:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error transcribing audio:', error);
+                responseTranscript.textContent = 'An error occurred during transcription. You can still analyze the audio.';
+            });
+        }
+        
+        // Analyze response
+        analyzeResponseBtn.addEventListener('click', function() {
+            if (!audioBase64) {
+                alert('Please record your response first.');
+                return;
+            }
+            
+            // Show loading state
+            responsePreview.classList.add('d-none');
+            analysisLoading.classList.remove('d-none');
+            
+            // Send to API for analysis
+            fetch('/api/voice/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    audio_data: audioBase64,
+                    transcript: transcription,
+                    exercise_id: exerciseData.exercise_id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide loading
+                    analysisLoading.classList.add('d-none');
+                    
+                    // Render analysis results
+                    renderAnalysisResults(data.analysis);
+                    
+                    // Show analysis section
+                    analysisSection.classList.remove('d-none');
+                } else {
+                    // Show error
+                    analysisLoading.classList.add('d-none');
+                    errorMessage.textContent = data.error || 'An error occurred while analyzing your response.';
+                    analysisError.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error analyzing response:', error);
+                analysisLoading.classList.add('d-none');
+                errorMessage.textContent = 'An error occurred while analyzing your response. Please try again.';
+                analysisError.classList.remove('d-none');
+            });
+        });
+        
+        // Load metrics info
+        deliveryInfoBtn.addEventListener('click', function() {
+            const metricsInfoContainer = document.getElementById('metrics-info-container');
+            metricsInfoContainer.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+            
+            fetch('/api/voice/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    metricsInfoContainer.innerHTML = '';
+                    
+                    Object.entries(data.metrics).forEach(([metric, description]) => {
+                        const metricElem = document.createElement('div');
+                        metricElem.className = 'mb-3';
+                        metricElem.innerHTML = `
+                            <h6>${metric.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                            <p class="mb-0">${description}</p>
+                        `;
+                        metricsInfoContainer.appendChild(metricElem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading metrics info:', error);
+                    metricsInfoContainer.innerHTML = '<div class="alert alert-danger">Failed to load metrics info.</div>';
+                });
+            
+            metricsInfoModal.show();
+        });
+        
+        // Render analysis results
+        function renderAnalysisResults(analysis) {
+            // Vocal delivery metrics
+            const metricsContainer = document.getElementById('metrics-container');
+            metricsContainer.innerHTML = '';
+            
+            const metrics = analysis.vocal_delivery.metrics;
+            Object.entries(metrics).forEach(([metric, score]) => {
+                const metricElem = document.createElement('div');
+                metricElem.className = 'mb-3';
+                metricElem.innerHTML = `
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>${metric.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        <span>${score}/10</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: ${score * 10}%;" 
+                            aria-valuenow="${score}" aria-valuemin="0" aria-valuemax="10"></div>
+                    </div>
+                `;
+                metricsContainer.appendChild(metricElem);
+            });
+            
+            // Vocal delivery feedback
+            const strengthsList = document.getElementById('strengths-list');
+            strengthsList.innerHTML = '';
+            
+            const feedback = analysis.vocal_delivery.feedback;
+            if (feedback && feedback.strengths) {
+                feedback.strengths.forEach(strength => {
+                    const li = document.createElement('li');
+                    li.textContent = strength;
+                    strengthsList.appendChild(li);
+                });
+            }
+            
+            const improvementList = document.getElementById('improvement-list');
+            improvementList.innerHTML = '';
+            
+            if (feedback && feedback.areas_for_improvement) {
+                feedback.areas_for_improvement.forEach(area => {
+                    const li = document.createElement('li');
+                    li.textContent = area;
+                    improvementList.appendChild(li);
+                });
+            }
+            
+            // Practical tips
+            const tipsList = document.getElementById('tips-list');
+            tipsList.innerHTML = '';
+            
+            if (feedback && feedback.practical_tips) {
+                feedback.practical_tips.forEach(tip => {
+                    const li = document.createElement('li');
+                    li.textContent = tip;
+                    tipsList.appendChild(li);
+                });
+            }
+            
+            // Technique application analysis (if available)
+            if (analysis.technique_application && exerciseData.technique) {
+                document.getElementById('technique-analysis-section').classList.remove('d-none');
+                
+                // Score
+                const techniqueScore = document.getElementById('technique-score');
+                techniqueScore.textContent = analysis.technique_application.application_score || '0';
+                
+                // Strengths
+                const techniqueStrengthsList = document.getElementById('technique-strengths-list');
+                techniqueStrengthsList.innerHTML = '';
+                
+                if (analysis.technique_application.strengths) {
+                    analysis.technique_application.strengths.forEach(strength => {
+                        const li = document.createElement('li');
+                        li.textContent = strength;
+                        techniqueStrengthsList.appendChild(li);
+                    });
+                }
+                
+                // Improvement areas
+                const techniqueImprovementList = document.getElementById('technique-improvement-list');
+                techniqueImprovementList.innerHTML = '';
+                
+                if (analysis.technique_application.improvement_areas) {
+                    analysis.technique_application.improvement_areas.forEach(area => {
+                        const li = document.createElement('li');
+                        li.textContent = area;
+                        techniqueImprovementList.appendChild(li);
+                    });
+                }
+            }
+        }
+        
+        // Try again button
+        tryAgainBtn.addEventListener('click', function() {
+            analysisSection.classList.add('d-none');
+            recordingControls.classList.remove('d-none');
+            recordingStatus.classList.remove('d-none');
+            startRecordingBtn.classList.remove('d-none');
+            stopRecordingBtn.classList.add('d-none');
+            recordingTime.classList.add('d-none');
+            recordingStatusText.textContent = 'Ready to record your response.';
+            audioBlob = null;
+            audioBase64 = null;
+            transcription = null;
+        });
+        
+        // Error retry button
+        errorRetryBtn.addEventListener('click', function() {
+            analysisError.classList.add('d-none');
+            responsePreview.classList.remove('d-none');
+        });
+        
+        // Clean up when page is closed
+        window.addEventListener('beforeunload', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            if (recordingTimer) {
+                clearInterval(recordingTimer);
+            }
+        });
+        
+        // Initialize
+        initializeMicrophone();
+    });
+</script>
+{% endblock %}

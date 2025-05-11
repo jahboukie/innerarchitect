@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+
+{% block title %}Voice Practice - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Introduction -->
+            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h2 class="card-title mb-3">Voice-Based Practice</h2>
+                    
+                    <p class="lead">
+                        Practice NLP techniques with your voice to develop more effective verbal communication skills.
+                    </p>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-microphone-alt me-2"></i>
+                        Voice practice allows you to apply NLP techniques out loud, getting feedback on both your
+                        vocal delivery and your application of the techniques. You'll need a microphone for these exercises.
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-dark-subtle h-100 border-0 p-3">
+                                <h5 class="card-title">Benefits of Voice Practice</h5>
+                                <ul class="mb-0">
+                                    <li>Develop more natural delivery of NLP techniques</li>
+                                    <li>Improve vocal qualities like clarity and pacing</li>
+                                    <li>Build confidence in real-world application</li>
+                                    <li>Receive feedback on both delivery and content</li>
+                                    <li>Accelerate learning through active practice</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark-subtle h-100 border-0 p-3">
+                                <h5 class="card-title">How It Works</h5>
+                                <ol class="mb-0">
+                                    <li>Choose an exercise type below</li>
+                                    <li>Read the prompt and record your response</li>
+                                    <li>Our AI analyzes your vocal delivery</li>
+                                    <li>You receive feedback on both delivery and technique</li>
+                                    <li>Practice regularly to track improvement over time</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-outline-primary" id="microphone-test-btn">
+                            <i class="fas fa-microphone me-2"></i> Test Your Microphone
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Exercise Types -->
+            <h3 class="mb-3">Choose an Exercise Type</h3>
+            
+            <div class="row g-4 mb-5" id="exercise-types-container">
+                <div class="col-12">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Featured Exercises -->
+            <h3 class="mb-3">Featured Exercises</h3>
+            
+            <div class="row g-4" id="featured-exercises-container">
+                <div class="col-12">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Microphone Test Modal -->
+            <div class="modal fade" id="microphoneTestModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content bg-dark">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title">Microphone Test</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-4">
+                                <div id="mic-icon" class="fs-1 mb-3">
+                                    <i class="fas fa-microphone-slash text-danger"></i>
+                                </div>
+                                <p id="mic-status">Waiting for microphone access...</p>
+                            </div>
+                            
+                            <div id="recording-controls" class="text-center d-none">
+                                <button id="start-test-recording" class="btn btn-primary">
+                                    <i class="fas fa-microphone me-2"></i>Start Test Recording
+                                </button>
+                                <button id="stop-test-recording" class="btn btn-danger d-none">
+                                    <i class="fas fa-stop-circle me-2"></i>Stop Recording
+                                </button>
+                                
+                                <div id="recording-time" class="mt-3 fs-5 d-none">00:00</div>
+                                
+                                <div id="audio-preview" class="mt-3 d-none">
+                                    <audio id="test-audio-player" controls class="w-100"></audio>
+                                </div>
+                                
+                                <div id="transcription-result" class="mt-3 d-none">
+                                    <h6>Transcription:</h6>
+                                    <p id="test-transcript" class="p-2 bg-dark-subtle rounded"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Global variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordingTimer;
+        let recordingSeconds = 0;
+        let stream;
+        
+        // Elements
+        const microphoneTestBtn = document.getElementById('microphone-test-btn');
+        const microphoneTestModal = new bootstrap.Modal(document.getElementById('microphoneTestModal'));
+        const micIcon = document.getElementById('mic-icon');
+        const micStatus = document.getElementById('mic-status');
+        const recordingControls = document.getElementById('recording-controls');
+        const startTestRecordingBtn = document.getElementById('start-test-recording');
+        const stopTestRecordingBtn = document.getElementById('stop-test-recording');
+        const recordingTime = document.getElementById('recording-time');
+        const audioPreview = document.getElementById('audio-preview');
+        const testAudioPlayer = document.getElementById('test-audio-player');
+        const transcriptionResult = document.getElementById('transcription-result');
+        const testTranscript = document.getElementById('test-transcript');
+        const exerciseTypesContainer = document.getElementById('exercise-types-container');
+        const featuredExercisesContainer = document.getElementById('featured-exercises-container');
+        
+        // Load exercise types
+        function loadExerciseTypes() {
+            fetch('/api/voice/exercise-types')
+                .then(response => response.json())
+                .then(data => {
+                    renderExerciseTypes(data.exercise_types);
+                })
+                .catch(error => {
+                    console.error('Error loading exercise types:', error);
+                    exerciseTypesContainer.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                Failed to load exercise types. Please try refreshing the page.
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Render exercise types
+        function renderExerciseTypes(exerciseTypes) {
+            exerciseTypesContainer.innerHTML = '';
+            
+            Object.entries(exerciseTypes).forEach(([typeId, typeData]) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+                
+                col.innerHTML = `
+                    <div class="card h-100 bg-dark shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">${typeData.name}</h5>
+                            <p class="card-text">${typeData.description}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-end">
+                            <a href="/voice-practice?type=${typeId}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-microphone me-1"></i> Try Exercises
+                            </a>
+                        </div>
+                    </div>
+                `;
+                
+                exerciseTypesContainer.appendChild(col);
+            });
+        }
+        
+        // Load featured exercises
+        function loadFeaturedExercises() {
+            fetch('/api/voice/exercises?limit=3')
+                .then(response => response.json())
+                .then(data => {
+                    renderFeaturedExercises(data.exercises);
+                })
+                .catch(error => {
+                    console.error('Error loading featured exercises:', error);
+                    featuredExercisesContainer.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                Failed to load featured exercises. Please try refreshing the page.
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Render featured exercises
+        function renderFeaturedExercises(exercises) {
+            featuredExercisesContainer.innerHTML = '';
+            
+            exercises.forEach(exercise => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+                
+                col.innerHTML = `
+                    <div class="card h-100 bg-dark shadow-sm">
+                        <div class="card-body">
+                            <span class="badge bg-primary mb-2">${exercise.type_name}</span>
+                            <h5 class="card-title">${exercise.technique ? exercise.technique.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice'}</h5>
+                            <p class="card-text">${exercise.prompt}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 text-end">
+                            <a href="/voice-practice/${exercise.exercise_id}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-microphone me-1"></i> Start Exercise
+                            </a>
+                        </div>
+                    </div>
+                `;
+                
+                featuredExercisesContainer.appendChild(col);
+            });
+        }
+        
+        // Initialize microphone when test button is clicked
+        microphoneTestBtn.addEventListener('click', function() {
+            microphoneTestModal.show();
+            initializeMicrophone();
+        });
+        
+        // Initialize microphone
+        function initializeMicrophone() {
+            // Reset UI state
+            micIcon.innerHTML = '<i class="fas fa-microphone-slash text-danger"></i>';
+            micStatus.textContent = 'Waiting for microphone access...';
+            recordingControls.classList.add('d-none');
+            stopTestRecordingBtn.classList.add('d-none');
+            startTestRecordingBtn.classList.remove('d-none');
+            audioPreview.classList.add('d-none');
+            recordingTime.classList.add('d-none');
+            transcriptionResult.classList.add('d-none');
+            
+            // Request microphone access
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    micIcon.innerHTML = '<i class="fas fa-microphone text-success"></i>';
+                    micStatus.textContent = 'Microphone connected and ready!';
+                    recordingControls.classList.remove('d-none');
+                    
+                    // Set up media recorder
+                    mediaRecorder = new MediaRecorder(mediaStream);
+                    
+                    mediaRecorder.onstart = function() {
+                        audioChunks = [];
+                        startRecordingTimer();
+                    };
+                    
+                    mediaRecorder.ondataavailable = function(e) {
+                        audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = function() {
+                        stopRecordingTimer();
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        // Show audio preview
+                        testAudioPlayer.src = audioUrl;
+                        audioPreview.classList.remove('d-none');
+                        
+                        // Convert to base64 for API
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = function() {
+                            // Get base64 data
+                            const base64Audio = reader.result.split(',')[1];
+                            
+                            // Send to API for transcription
+                            transcribeAudio(base64Audio);
+                        };
+                    };
+                })
+                .catch(function(err) {
+                    micIcon.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>';
+                    micStatus.textContent = 'Error accessing microphone: ' + err.message;
+                });
+        }
+        
+        // Start recording
+        startTestRecordingBtn.addEventListener('click', function() {
+            if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                mediaRecorder.start();
+                startTestRecordingBtn.classList.add('d-none');
+                stopTestRecordingBtn.classList.remove('d-none');
+                recordingTime.classList.remove('d-none');
+                audioPreview.classList.add('d-none');
+                transcriptionResult.classList.add('d-none');
+            }
+        });
+        
+        // Stop recording
+        stopTestRecordingBtn.addEventListener('click', function() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                startTestRecordingBtn.classList.remove('d-none');
+                stopTestRecordingBtn.classList.add('d-none');
+            }
+        });
+        
+        // Start recording timer
+        function startRecordingTimer() {
+            recordingSeconds = 0;
+            updateRecordingTime();
+            recordingTimer = setInterval(function() {
+                recordingSeconds++;
+                updateRecordingTime();
+            }, 1000);
+        }
+        
+        // Stop recording timer
+        function stopRecordingTimer() {
+            clearInterval(recordingTimer);
+        }
+        
+        // Update recording time display
+        function updateRecordingTime() {
+            const minutes = Math.floor(recordingSeconds / 60);
+            const seconds = recordingSeconds % 60;
+            recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Transcribe audio through API
+        function transcribeAudio(audioData) {
+            transcriptionResult.classList.add('d-none');
+            testTranscript.textContent = 'Transcribing...';
+            
+            fetch('/api/voice/transcribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    audio_data: audioData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    testTranscript.textContent = data.transcript;
+                    transcriptionResult.classList.remove('d-none');
+                } else {
+                    testTranscript.textContent = 'Transcription failed. Please try again.';
+                    transcriptionResult.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error transcribing audio:', error);
+                testTranscript.textContent = 'An error occurred during transcription.';
+                transcriptionResult.classList.remove('d-none');
+            });
+        }
+        
+        // Clean up on modal close
+        document.getElementById('microphoneTestModal').addEventListener('hidden.bs.modal', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            if (recordingTimer) {
+                clearInterval(recordingTimer);
+            }
+        });
+        
+        // Load initial data
+        loadExerciseTypes();
+        loadFeaturedExercises();
+    });
+</script>
+{% endblock %}
