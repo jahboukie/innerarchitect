@@ -40,6 +40,60 @@ with app.app_context():
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
+# Language middleware
+@app.before_request
+def before_request():
+    # Set default language if not in session
+    if 'language' not in session:
+        # Try to detect from Accept-Language header
+        if request.accept_languages:
+            for lang_code, _ in request.accept_languages:
+                if lang_code in language_util.SUPPORTED_LANGUAGES:
+                    session['language'] = lang_code
+                    break
+                # Check if it's a locale with a region (e.g., en-US)
+                main_lang = lang_code.split('-')[0]
+                if main_lang in language_util.SUPPORTED_LANGUAGES:
+                    session['language'] = main_lang
+                    break
+            else:
+                session['language'] = language_util.DEFAULT_LANGUAGE
+        else:
+            session['language'] = language_util.DEFAULT_LANGUAGE
+    
+    # Store language in g for templates
+    g.language = session.get('language', language_util.DEFAULT_LANGUAGE)
+    g.languages = language_util.get_supported_languages()
+    g.is_rtl = language_util.is_rtl(g.language)
+    
+    # Helper function for templates
+    def translate(text_key, default=None):
+        return language_util.translate_ui_text(text_key, g.language, default)
+    
+    g.translate = translate
+
+
+# Decorator to translate API responses
+def translate_response(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        response = f(*args, **kwargs)
+        
+        # Only translate if we have a JSON response and a non-default language
+        if (isinstance(response, tuple) and len(response) > 0 and isinstance(response[0], dict)) or \
+           isinstance(response, dict):
+            target_lang = session.get('language', language_util.DEFAULT_LANGUAGE)
+            
+            if target_lang != language_util.DEFAULT_LANGUAGE:
+                if isinstance(response, tuple):
+                    translated_response = language_util.translate_content(response[0], target_lang)
+                    return (translated_response,) + response[1:]
+                else:
+                    return language_util.translate_content(response, target_lang)
+        
+        return response
+    return decorated_function
+
 # Import NLP analyzer and exercises
 from nlp_analyzer import recommend_technique, get_technique_description
 from nlp_exercises import (
@@ -143,6 +197,23 @@ with app.app_context():
     initialize_default_exercises()
 
 # Home route
+@app.route('/language/<lang_code>')
+def set_language(lang_code):
+    """
+    Set the user's preferred language.
+    """
+    # Validate language
+    if lang_code in language_util.SUPPORTED_LANGUAGES:
+        session['language'] = lang_code
+        session.modified = True
+    
+    # Redirect back to referrer or home
+    referrer = request.referrer
+    if referrer and referrer.startswith(request.host_url):
+        return redirect(referrer)
+    
+    return redirect(url_for('index'))
+
 @app.route('/')
 def index():
     # Generate a session ID if one doesn't exist
