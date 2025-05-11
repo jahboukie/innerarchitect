@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('app_name', 'The Inner Architect') }} - {{ g.translate('landing_tagline', 'Transform Your Thinking') }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="py-5 text-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <h1 class="display-4 fw-bold mb-4">{{ g.translate('landing_hero_title', 'Reshape Your Thoughts, Transform Your Life') }}</h1>
+                <p class="lead mb-4">{{ g.translate('landing_hero_subtitle', 'The Inner Architect uses AI-powered Neuro-Linguistic Programming techniques to help you recognize patterns, reframe negative thoughts, and build emotional resilience.') }}</p>
+                
+                <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-5">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg px-4 py-3">
+                        <i class="fas fa-brain me-2"></i> {{ g.translate('landing_cta_logged_in', 'Go to Dashboard') }}
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('login_check') }}" class="btn btn-primary btn-lg px-4 py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i> {{ g.translate('landing_cta_login', 'Get Started Now') }}
+                    </a>
+                    {% endif %}
+                    <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-info-circle me-2"></i> {{ g.translate('landing_cta_learn', 'Learn More') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Key Features -->
+<section id="features" class="py-5 bg-dark">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('landing_features_title', 'Powerful NLP Techniques') }}</h2>
+            <p class="lead text-muted">{{ g.translate('landing_features_subtitle', 'Leverage the power of Neuro-Linguistic Programming') }}</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-sync-alt text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h4 class="card-title mb-3">{{ g.translate('landing_feature1_title', 'Cognitive Reframing') }}</h4>
+                        <p class="card-text">{{ g.translate('landing_feature1_desc', 'Learn to view situations from different perspectives, turning challenges into opportunities for growth.') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-comments text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h4 class="card-title mb-3">{{ g.translate('landing_feature2_title', 'Communication Analysis') }}</h4>
+                        <p class="card-text">{{ g.translate('landing_feature2_desc', 'Understand your communication style and learn techniques to connect more effectively with others.') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-brain text-primary" style="font-size: 48px;"></i>
+                        </div>
+                        <h4 class="card-title mb-3">{{ g.translate('landing_feature3_title', 'Belief Change Protocol') }}</h4>
+                        <p class="card-text">{{ g.translate('landing_feature3_desc', 'Identify and transform limiting beliefs that hold you back from reaching your full potential.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('landing_pricing_title', 'Choose Your Path') }}</h2>
+            <p class="lead text-muted">{{ g.translate('landing_pricing_subtitle', 'Flexible plans designed to meet your needs') }}</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Free Tier -->
+            <div class="col-lg-4">
+                <div class="card bg-dark-subtle border-0 rounded-4 shadow-sm">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 text-center">
+                        <h3 class="mb-0">{{ g.translate('pricing_free_title', 'Free') }}</h3>
+                        <div class="mt-3">
+                            <span class="display-5 fw-bold">$0</span>
+                            <span class="text-muted">/{{ g.translate('pricing_month', 'month') }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body pt-3">
+                        <ul class="list-unstyled">
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_free_feature1', 'Basic cognitive reframing techniques') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_free_feature2', 'Limited AI chat interactions (10/day)') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_free_feature3', 'Access to basic dashboard') }}</li>
+                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_free_limit1', 'Advanced NLP techniques') }}</li>
+                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_free_limit2', 'Progress tracking') }}</li>
+                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_free_limit3', 'Personalized journeys') }}</li>
+                        </ul>
+                        <div class="d-grid mt-4">
+                            <a href="{{ url_for('login_check') }}" class="btn btn-outline-primary btn-lg">{{ g.translate('pricing_free_cta', 'Start Free') }}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Premium Tier -->
+            <div class="col-lg-4">
+                <div class="card bg-primary-subtle border-0 rounded-4 shadow position-relative">
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge bg-primary px-3 py-2 rounded-pill">
+                            {{ g.translate('pricing_popular', 'Most Popular') }}
+                        </span>
+                    </div>
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 text-center">
+                        <h3 class="mb-0">{{ g.translate('pricing_premium_title', 'Premium') }}</h3>
+                        <div class="mt-3">
+                            <span class="display-5 fw-bold">$9.99</span>
+                            <span class="text-muted">/{{ g.translate('pricing_month', 'month') }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body pt-3">
+                        <ul class="list-unstyled">
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature1', 'All NLP techniques') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature2', 'Unlimited AI chat interactions') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature3', 'Full progress tracking') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_premium_feature4', 'Communication analysis') }}</li>
+                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_premium_limit1', 'Voice practice features') }}</li>
+                            <li class="mb-3 text-muted"><i class="fas fa-times me-2"></i> {{ g.translate('pricing_premium_limit2', 'Personalized journeys') }}</li>
+                        </ul>
+                        <div class="d-grid mt-4">
+                            <button class="btn btn-primary btn-lg" type="button" id="premiumSubscribeBtn">
+                                {{ g.translate('pricing_premium_cta', 'Subscribe Now') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Professional Tier -->
+            <div class="col-lg-4">
+                <div class="card bg-dark-subtle border-0 rounded-4 shadow-sm">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 text-center">
+                        <h3 class="mb-0">{{ g.translate('pricing_pro_title', 'Professional') }}</h3>
+                        <div class="mt-3">
+                            <span class="display-5 fw-bold">$19.99</span>
+                            <span class="text-muted">/{{ g.translate('pricing_month', 'month') }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body pt-3">
+                        <ul class="list-unstyled">
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature1', 'Everything in Premium') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature2', 'Voice practice features') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature3', 'Personalized journeys') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature4', 'Belief change protocol') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature5', 'Practice reminders') }}</li>
+                            <li class="mb-3"><i class="fas fa-check text-primary me-2"></i> {{ g.translate('pricing_pro_feature6', 'Priority support') }}</li>
+                        </ul>
+                        <div class="d-grid mt-4">
+                            <button class="btn btn-outline-primary btn-lg" type="button" id="proSubscribeBtn">
+                                {{ g.translate('pricing_pro_cta', 'Go Professional') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5 bg-dark">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('landing_testimonials_title', 'What Our Users Say') }}</h2>
+            <p class="lead text-muted">{{ g.translate('landing_testimonials_subtitle', 'Real stories of transformation') }}</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <div class="text-primary">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="card-text mb-4">"{{ g.translate('landing_testimonial1', 'The cognitive reframing exercises completely changed how I approach challenges in my life. I feel like I\'ve gained a superpower.') }}"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                    <span class="fs-4 fw-bold text-white">S</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="mb-0">{{ g.translate('landing_testimonial1_name', 'Sarah L.') }}</h5>
+                                <small class="text-muted">{{ g.translate('landing_testimonial1_title', 'Teacher') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <div class="text-primary">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <p class="card-text mb-4">"{{ g.translate('landing_testimonial2', 'The personalized journey feature helped me work through anxiety in a structured way that made sense for my specific situation.') }}"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                    <span class="fs-4 fw-bold text-white">M</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="mb-0">{{ g.translate('landing_testimonial2_name', 'Michael T.') }}</h5>
+                                <small class="text-muted">{{ g.translate('landing_testimonial2_title', 'Software Developer') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card bg-dark-subtle h-100 border-0 rounded-4 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-3">
+                            <div class="text-primary">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                        </div>
+                        <p class="card-text mb-4">"{{ g.translate('landing_testimonial3', 'The belief change protocol helped me identify and transform a limiting belief that had been holding me back for years. Life-changing!') }}"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                    <span class="fs-4 fw-bold text-white">J</span>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="mb-0">{{ g.translate('landing_testimonial3_name', 'Jennifer K.') }}</h5>
+                                <small class="text-muted">{{ g.translate('landing_testimonial3_title', 'Marketing Director') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('landing_faq_title', 'Frequently Asked Questions') }}</h2>
+            <p class="lead text-muted">{{ g.translate('landing_faq_subtitle', 'Find answers to common questions') }}</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item bg-dark-subtle border-0 mb-3 rounded-4">
+                        <h2 class="accordion-header" id="faqHeading1">
+                            <button class="accordion-button bg-dark-subtle rounded-4 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="false" aria-controls="faqCollapse1">
+                                {{ g.translate('landing_faq1_question', 'What is Neuro-Linguistic Programming (NLP)?') }}
+                            </button>
+                        </h2>
+                        <div id="faqCollapse1" class="accordion-collapse collapse" aria-labelledby="faqHeading1" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ g.translate('landing_faq1_answer', 'Neuro-Linguistic Programming (NLP) is a psychological approach that involves analyzing strategies used by successful individuals and applying them to reach personal goals. It relates thoughts, language, and patterns of behavior learned through experience to specific outcomes.') }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item bg-dark-subtle border-0 mb-3 rounded-4">
+                        <h2 class="accordion-header" id="faqHeading2">
+                            <button class="accordion-button bg-dark-subtle rounded-4 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
+                                {{ g.translate('landing_faq2_question', 'Is my data private and secure?') }}
+                            </button>
+                        </h2>
+                        <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ g.translate('landing_faq2_answer', 'Yes, your privacy is our priority. All personal data is encrypted and securely stored. We do not share your information with third parties. Your conversation data is used only to improve your experience with the app.') }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item bg-dark-subtle border-0 mb-3 rounded-4">
+                        <h2 class="accordion-header" id="faqHeading3">
+                            <button class="accordion-button bg-dark-subtle rounded-4 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
+                                {{ g.translate('landing_faq3_question', 'Can I cancel my subscription at any time?') }}
+                            </button>
+                        </h2>
+                        <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ g.translate('landing_faq3_answer', 'Absolutely. You can cancel your subscription at any time. Your premium features will remain active until the end of your current billing period. No refunds are provided for partial subscription periods.') }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item bg-dark-subtle border-0 mb-3 rounded-4">
+                        <h2 class="accordion-header" id="faqHeading4">
+                            <button class="accordion-button bg-dark-subtle rounded-4 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
+                                {{ g.translate('landing_faq4_question', 'Is The Inner Architect a replacement for therapy?') }}
+                            </button>
+                        </h2>
+                        <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ g.translate('landing_faq4_answer', 'No, The Inner Architect is not a replacement for professional therapy or medical advice. It is a self-help tool that can complement professional care. If you are experiencing severe mental health issues, please consult with a qualified healthcare professional.') }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item bg-dark-subtle border-0 rounded-4">
+                        <h2 class="accordion-header" id="faqHeading5">
+                            <button class="accordion-button bg-dark-subtle rounded-4 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
+                                {{ g.translate('landing_faq5_question', 'How long does it take to see results?') }}
+                            </button>
+                        </h2>
+                        <div id="faqCollapse5" class="accordion-collapse collapse" aria-labelledby="faqHeading5" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ g.translate('landing_faq5_answer', 'Results vary by individual. Some users report noticing improvements in their thinking patterns within a few days of consistent use. However, meaningful cognitive change typically occurs over weeks or months of regular practice. The more you engage with the techniques, the more effective they become.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <p class="mb-4">{{ g.translate('landing_more_questions', 'Have more questions?') }}</p>
+            <a href="#" class="btn btn-outline-light">{{ g.translate('landing_contact_us', 'Contact Us') }}</a>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-4">{{ g.translate('landing_final_cta_title', 'Ready to Transform Your Thinking?') }}</h2>
+        <p class="lead mb-4">{{ g.translate('landing_final_cta_subtitle', 'Join thousands of users who are already experiencing the benefits of The Inner Architect.') }}</p>
+        <div class="d-flex justify-content-center">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('index') }}" class="btn btn-light btn-lg px-4">
+                <i class="fas fa-brain me-2"></i> {{ g.translate('landing_final_cta_logged_in', 'Go to Dashboard') }}
+            </a>
+            {% else %}
+            <a href="{{ url_for('login_check') }}" class="btn btn-light btn-lg px-4">
+                <i class="fas fa-sign-in-alt me-2"></i> {{ g.translate('landing_final_cta_login', 'Get Started Free') }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Premium subscription button
+    document.getElementById('premiumSubscribeBtn').addEventListener('click', function() {
+        // Check if user is logged in
+        {% if current_user.is_authenticated %}
+        // Redirect to checkout for premium plan
+        window.location.href = "{{ url_for('create_checkout', plan='premium') }}";
+        {% else %}
+        // Redirect to login first
+        window.location.href = "{{ url_for('login_check') }}";
+        {% endif %}
+    });
+    
+    // Professional subscription button
+    document.getElementById('proSubscribeBtn').addEventListener('click', function() {
+        // Check if user is logged in
+        {% if current_user.is_authenticated %}
+        // Redirect to checkout for professional plan
+        window.location.href = "{{ url_for('create_checkout', plan='professional') }}";
+        {% else %}
+        // Redirect to login first
+        window.location.href = "{{ url_for('login_check') }}";
+        {% endif %}
+    });
+});
+</script>
+{% endblock %}

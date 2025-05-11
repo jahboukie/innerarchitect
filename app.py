@@ -296,11 +296,30 @@ def profile():
         recent_activity=activity
     )
 
-@app.route('/')
-def index():
+# Landing page route
+@app.route('/landing')
+def landing():
+    """
+    Render the landing page with pricing information.
+    """
     # Generate a session ID if one doesn't exist
     if 'session_id' not in session:
         session['session_id'] = str(uuid.uuid4())
+        
+    return render_template('landing.html')
+
+@app.route('/')
+def index():
+    """
+    Render the index page for authenticated users, or redirect to landing for visitors.
+    """
+    # Generate a session ID if one doesn't exist
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+    
+    # For non-authenticated users, redirect to landing page
+    if not current_user.is_authenticated:
+        return redirect(url_for('landing'))
     
     return render_template('index.html')
 
