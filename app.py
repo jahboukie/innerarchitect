@@ -950,36 +950,68 @@ def get_exercise(exercise_id):
 def start_exercise_route(exercise_id):
     """
     Start a new exercise session.
+    
+    Enforces usage quotas based on the user's subscription tier.
+    Returns error response when quota is exceeded with quota_exceeded flag set to true.
     """
-    # Get session ID
+    # Get session ID for tracking
     session_id = session.get('session_id')
     if not session_id:
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
+        logging.info(f"Created new session ID: {session_id}")
     
     # Get user ID if logged in
     user_id = None
+    subscription_tier = "free"
     if current_user.is_authenticated:
         user_id = current_user.id
+        logging.info(f"Exercise start request from authenticated user: {user_id}")
+    else:
+        logging.info(f"Exercise start request from anonymous user with session: {session_id}")
+    
+    # Import subscription manager functions
+    from subscription_manager import check_quota_available, increment_usage_quota, get_subscription_details
+    
+    # Get subscription details for logging/debugging
+    if user_id:
+        try:
+            subscription = get_subscription_details(user_id)
+            subscription_tier = subscription.get('plan_name', 'free')
+            logging.info(f"User subscription tier: {subscription_tier}")
+        except Exception as e:
+            logging.error(f"Error retrieving subscription details: {str(e)}")
+    
+    # Check if user has reached their daily exercise limit
+    try:
+        quota_available, quota_message = check_quota_available(
+            user_id=user_id,
+            browser_session_id=session_id,
+            quota_type='daily_exercises',
+            amount=1
+        )
         
-        # Import subscription manager functions
-        from subscription_manager import check_usage_quota, increment_usage_quota
-        
-        # Check if user has reached their weekly exercise limit
-        has_quota = check_usage_quota(user_id, 'exercises_per_week')
-        if not has_quota:
+        if not quota_available:
+            logging.warning(f"Exercise quota exceeded for {'user '+user_id if user_id else 'session '+session_id}")
             return jsonify({
-                'error': 'You have reached your weekly exercise limit. Please upgrade your subscription for unlimited exercises.',
-                'quota_exceeded': True
+                'error': g.translate('exercise_quota_exceeded',
+                    "You've reached your daily exercise limit. Please upgrade your subscription for more exercises or wait until tomorrow."),
+                'quota_exceeded': True,
+                'subscription_tier': subscription_tier
             }), 403
+    except Exception as e:
+        logging.error(f"Error checking exercise quota: {str(e)}")
+        # Continue processing the request even if quota check fails
     
     # Start the exercise
-    progress = start_exercise(exercise_id, session_id, user_id)
-    if not progress:
-        return jsonify({'error': 'Could not start exercise'}), 500
-    
-    # Increment usage quota counter for exercises if user is authenticated
-    if current_user.is_authenticated:
+    try:
+        # Create exercise progress entry
+        progress = start_exercise(exercise_id, session_id, user_id)
+        if not progress:
+            logging.error(f"Failed to start exercise {exercise_id}")
+            return jsonify({'error': 'Could not start exercise. Please try again later.'}), 500
+        
+        # Increment usage quota counter for exercises
         try:
             success, message = increment_usage_quota(
                 user_id=user_id,
@@ -987,18 +1019,27 @@ def start_exercise_route(exercise_id):
                 quota_type='daily_exercises',
                 amount=1
             )
-            if not success:
+            if success:
+                logging.info(f"Exercise quota incremented for {'user '+user_id if user_id else 'session '+session_id}")
+            else:
                 logging.warning(f"Failed to increment exercise quota: {message}")
-        except Exception as e:
+        except Exception as quota_error:
             # Log but don't interrupt experience
-            logging.error(f"Error incrementing exercise quota: {str(e)}")
-    
-    return jsonify({
-        'progress_id': progress.id,
-        'exercise_id': progress.exercise_id,
-        'current_step': progress.current_step,
-        'completed': progress.completed
-    })
+            logging.error(f"Error incrementing exercise quota: {str(quota_error)}")
+        
+        # Return the exercise progress data
+        return jsonify({
+            'progress_id': progress.id,
+            'exercise_id': progress.exercise_id,
+            'current_step': progress.current_step,
+            'completed': progress.completed,
+            'message': g.translate('exercise_started', "Exercise started successfully.")
+        })
+        
+    except Exception as e:
+        # Log any errors
+        logging.error(f"Error starting exercise {exercise_id}: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred. Please try again later.'}), 500
 
 @app.route('/exercise/progress/<int:progress_id>', methods=['PUT'])
 def update_progress(progress_id):
