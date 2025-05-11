@@ -852,13 +852,34 @@ def start_exercise_route(exercise_id):
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
     
-    # Get user ID if logged in (for future auth)
+    # Get user ID if logged in
     user_id = None
+    if current_user.is_authenticated:
+        user_id = current_user.id
+        
+        # Import subscription manager functions
+        from subscription_manager import check_usage_quota, increment_usage_quota
+        
+        # Check if user has reached their weekly exercise limit
+        has_quota = check_usage_quota(user_id, 'exercises_per_week')
+        if not has_quota:
+            return jsonify({
+                'error': 'You have reached your weekly exercise limit. Please upgrade your subscription for unlimited exercises.',
+                'quota_exceeded': True
+            }), 403
     
     # Start the exercise
     progress = start_exercise(exercise_id, session_id, user_id)
     if not progress:
         return jsonify({'error': 'Could not start exercise'}), 500
+    
+    # Increment usage quota counter for exercises if user is authenticated
+    if current_user.is_authenticated:
+        try:
+            increment_usage_quota(user_id, 'exercises_per_week')
+        except Exception as e:
+            # Log but don't interrupt experience
+            logging.error(f"Error incrementing exercise quota: {str(e)}")
     
     return jsonify({
         'progress_id': progress.id,
