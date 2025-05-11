@@ -104,6 +104,8 @@ def make_replit_blueprint():
         g.browser_session_key = session['_browser_session_key']
         g.flask_dance_replit = replit_bp.session
 
+    # We'll use another approach to handle this issue
+    
     @replit_bp.route("/logout")
     def logout():
         del replit_bp.token
@@ -154,6 +156,15 @@ def logged_in(blueprint, token):
 
 @oauth_error.connect
 def handle_error(blueprint, error, error_description=None, error_uri=None):
+    # Log the error details
+    logging.error(f"OAuth error: {error}, Description: {error_description}, URI: {error_uri}")
+    
+    # Show a specific error message
+    if error_description:
+        flash(f"Authentication error: {error_description}", "danger")
+    else:
+        flash(f"Authentication error: {error}", "danger")
+    
     return redirect(url_for('replit_auth.error'))
 
 

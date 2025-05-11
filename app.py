@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
-from flask_login import current_user
+from flask_login import current_user, login_required
 from openai import OpenAI
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -223,6 +223,20 @@ def set_language(lang_code):
         return redirect(referrer)
     
     return redirect(url_for('index'))
+
+
+# Login check route
+@app.route('/auth/login-check')
+def login_check():
+    """
+    Check if user is already logged in and redirect accordingly.
+    """
+    if current_user.is_authenticated:
+        flash("You are already logged in.", "info") 
+        return redirect(url_for('profile'))
+    
+    # Not logged in, proceed to Replit auth
+    return redirect(url_for('replit_auth.login'))
 
 
 # User Profile route
