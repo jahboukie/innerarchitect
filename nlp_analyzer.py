@@ -78,23 +78,73 @@ def recommend_technique(message, mood):
             max_tokens=150
         )
         
-        # Parse the recommendation
-        recommendation = response.choices[0].message.content
+        # Extract the AI response with proper null checking
+        # This is a defensive implementation to handle unexpected response formats
+        if not response or not hasattr(response, 'choices') or not response.choices:
+            error("Invalid or empty response from OpenAI API")
+            raise ValueError("Empty or invalid API response")
+            
+        if not hasattr(response.choices[0], 'message') or not response.choices[0].message:
+            error("Missing message in API response")
+            raise ValueError("Message content missing in API response")
+            
+        recommendation = getattr(response.choices[0].message, 'content', None)
+        if not recommendation:
+            error("Empty content in API response message")
+            raise ValueError("Empty content in API response message")
+        
         debug(f"Technique recommendation: {recommendation}")
         
-        # Convert string to dictionary if needed
-        if isinstance(recommendation, str):
+        # Convert string to dictionary with error handling
+        try:
             import json
-            recommendation = json.loads(recommendation)
+            if isinstance(recommendation, str):
+                recommendation = json.loads(recommendation)
+                
+            # Validate required fields
+            if not isinstance(recommendation, dict):
+                raise ValueError("API response is not a valid JSON object")
+                
+            if 'technique' not in recommendation:
+                raise ValueError("API response missing 'technique' field")
+                
+            # Ensure technique is one of the valid options
+            if recommendation['technique'] not in NLP_TECHNIQUES:
+                warning(f"API returned invalid technique: {recommendation.get('technique')}")
+                recommendation['technique'] = 'reframing'  # Default to a safe option
+                
+            return recommendation
+        except json.JSONDecodeError as json_err:
+            error(f"Failed to parse API response as JSON: {json_err}")
+            raise
             
-        return recommendation
-        
-    except Exception as e:
-        error(f"Error recommending technique: {str(e)}")
+    except json.JSONDecodeError as json_err:
+        error(f"JSON parsing error in technique recommendation: {json_err}")
         return {
             "technique": "reframing",  # Default technique
             "confidence": 0.5,
-            "explanation": "Could not analyze message due to an error."
+            "explanation": "Could not parse the recommendation data. Using default technique."
+        }
+    except ValueError as value_err:
+        error(f"Value error in technique recommendation: {value_err}")
+        return {
+            "technique": "reframing",
+            "confidence": 0.5,
+            "explanation": "There was an issue with the recommendation format. Using default technique."
+        }
+    except Exception as e:
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) recommending technique: {str(e)}")
+        # Add more detailed logging for network-related errors
+        if "APIConnectionError" in error_type or "Timeout" in error_type:
+            error("Network connection issue with OpenAI API")
+        elif "RateLimitError" in error_type:
+            error("OpenAI API rate limit exceeded")
+        
+        return {
+            "technique": "reframing",  # Default technique
+            "confidence": 0.5,
+            "explanation": "Could not analyze message due to a technical issue."
         }
 
 def get_technique_description(technique):
