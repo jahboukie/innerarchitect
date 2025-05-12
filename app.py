@@ -924,7 +924,7 @@ def chat():
     Returns error response when quota is exceeded with quota_exceeded flag set to true.
     """
     # Get the user message, mood, and NLP technique from the request
-    data = request.json
+    data = get_request_json()
     message = data.get('message', '')
     mood = data.get('mood', 'neutral')
     technique = data.get('technique', 'reframing')
@@ -1216,7 +1216,7 @@ def update_progress(progress_id):
     """
     Update the progress of an exercise.
     """
-    data = request.json
+    data = get_request_json()
     current_step = data.get('current_step', 0)
     notes = data.get('notes')
     completed = data.get('completed', False)
@@ -1356,7 +1356,7 @@ def rate_technique():
         return jsonify({'error': 'No active session'}), 400
         
     # Get the request data
-    data = request.json
+    data = get_request_json()
     technique = data.get('technique')
     rating = data.get('rating')
     notes = data.get('notes')
@@ -1397,7 +1397,7 @@ def update_chat_effectiveness():
         return jsonify({'error': 'No active session'}), 400
         
     # Get the request data
-    data = request.json
+    data = get_request_json()
     technique = data.get('technique')
     rating = data.get('rating')
     
