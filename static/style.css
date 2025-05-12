@@ -383,50 +383,87 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 0;
 }
 
-.features-section {
+/* Pricing cards styling */
+.pricing-card {
+    transition: all 0.3s ease;
     position: relative;
-    background-color: var(--background);
     overflow: hidden;
+    border-radius: 16px;
 }
 
-.features-section::before {
+.pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-strong);
+}
+
+.pricing-card-popular {
+    border-width: 2px !important;
+    z-index: 1;
+    position: relative;
+}
+
+.pricing-card-popular::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 10% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-        radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.03) 0%, transparent 50%);
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    height: 6px;
+    background: var(--primary-gradient);
+    border-radius: 16px 16px 0 0;
+}
+
+.pricing-amount .display-5 {
+    letter-spacing: -0.03em;
+}
+
+#pricing {
+    position: relative;
+    background-color: var(--subtle-bg);
+    padding: 5rem 0;
+}
+
+#pricing::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    right: -10%;
+    width: 40%;
+    height: 40%;
+    background: var(--primary-gradient);
+    opacity: 0.03;
+    filter: blur(150px);
+    border-radius: 100%;
     z-index: 0;
 }
 
 /* Testimonials section styling */
 .testimonials-section {
     position: relative;
-    background-color: var(--background);
+    background-color: var(--body-bg);
     overflow: hidden;
+    padding: 5rem 0;
 }
 
 .testimonials-section::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.07) 0%, transparent 50%),
-        radial-gradient(circle at 20% 20%, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
+    top: -20%;
+    left: -10%;
+    width: 60%;
+    height: 60%;
+    background: var(--secondary-gradient);
+    opacity: 0.03;
+    filter: blur(150px);
+    border-radius: 100%;
     z-index: 0;
 }
 
 .testimonial-card {
-    border-radius: 20px;
-    background-color: rgba(24, 24, 27, 0.4);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-soft);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -434,8 +471,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .testimonial-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-    border-color: rgba(139, 92, 246, 0.2);
+    box-shadow: var(--shadow-strong);
+    border-color: var(--accent-color);
 }
 
 .testimonial-card::before {
