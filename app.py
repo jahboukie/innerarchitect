@@ -459,8 +459,8 @@ def login_check():
         flash("You are already logged in.", "info") 
         return redirect(url_for('profile'))
     
-    # Not logged in, proceed to Replit auth
-    return redirect(url_for('replit_auth.login'))
+    # Not logged in, proceed to email login by default
+    return redirect(url_for('email_login'))
 
 
 # User Profile route
