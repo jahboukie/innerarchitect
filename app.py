@@ -1054,7 +1054,9 @@ def chat():
             if current_user.is_authenticated:
                 user_id_for_chat = current_user.id
                 
-            # Create chat history entry with a dictionary to avoid LSP constructor errors
+            # Create chat history entry using the database helper function
+            from database import create_model
+            
             chat_data = {
                 'user_id': user_id_for_chat,
                 'session_id': session_id,
@@ -1063,10 +1065,12 @@ def chat():
                 'mood': mood,
                 'nlp_technique': technique
             }
-            chat_entry = ChatHistory(**chat_data)
-            db.session.add(chat_entry)
-            db.session.commit()
-            info(f"Chat history saved with ID: {chat_entry.id}")
+            chat_entry = create_model(ChatHistory, chat_data)
+            
+            if chat_entry:
+                info(f"Chat history saved with ID: {chat_entry.id}")
+            else:
+                warning("Failed to save chat history")
             
             # Increment usage quota counter for user
             try:

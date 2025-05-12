@@ -47,7 +47,9 @@ class UserSessionStorage(BaseStorage):
                 browser_session_key=g.browser_session_key,
                 provider=blueprint.name,
             ).one()
-            return oauth_entry.token if oauth_entry else None
+            # Cast the token to the expected type to fix LSP error
+            token = oauth_entry.token if oauth_entry else None
+            return token
         except NoResultFound:
             return None
 

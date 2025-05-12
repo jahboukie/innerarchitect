@@ -14,8 +14,8 @@ class Base(DeclarativeBase):
 # Create SQLAlchemy instance
 db = SQLAlchemy(model_class=Base)
 
-# Type variable for SQLAlchemy models
-T = TypeVar('T', bound=Base)
+# Type variable for SQLAlchemy models - generalized to accept any db.Model
+T = TypeVar('T')
 
 def safe_commit() -> bool:
     """

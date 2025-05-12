@@ -460,30 +460,37 @@ def start_exercise(exercise_id, session_id, user_id=None):
         NLPExerciseProgress: The progress tracking object or None
     """
     try:
+        # Import database helper function
+        from database import create_model
+        
         # Check if the exercise exists
         exercise = NLPExercise.query.get(exercise_id)
         if not exercise:
             error(f"Exercise {exercise_id} not found")
             return None
         
-        # Create a progress record
-        progress = NLPExerciseProgress(
-            exercise_id=exercise_id,
-            session_id=session_id,
-            user_id=user_id,
-            current_step=0,
-            completed=False,
-            started_at=datetime.utcnow()
-        )
+        # Prepare data for progress record
+        progress_data = {
+            'exercise_id': exercise_id,
+            'session_id': session_id,
+            'user_id': user_id,
+            'current_step': 0,
+            'completed': False,
+            'started_at': datetime.utcnow()
+        }
         
-        db.session.add(progress)
-        db.session.commit()
-        info(f"Started exercise {exercise_id} for session {session_id}")
+        # Create a progress record using helper function
+        progress = create_model(NLPExerciseProgress, progress_data)
         
+        if progress:
+            info(f"Started exercise {exercise_id} for session {session_id}")
+        else:
+            warning(f"Failed to start exercise {exercise_id}")
+            
         return progress
     except Exception as e:
-        db.session.rollback()
-        error(f"Error starting exercise {exercise_id}: {str(e)}")
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) starting exercise {exercise_id}: {str(e)}")
         return None
 
 def update_exercise_progress(progress_id, current_step, notes=None, completed=False):
@@ -500,25 +507,39 @@ def update_exercise_progress(progress_id, current_step, notes=None, completed=Fa
         bool: True if successful, False otherwise
     """
     try:
+        # Import database helper function
+        from database import update_model, safe_commit
+        
+        # Fetch the progress record
         progress = NLPExerciseProgress.query.get(progress_id)
         if not progress:
             error(f"Progress record {progress_id} not found")
             return False
         
-        progress.current_step = current_step
-        if notes:
-            progress.notes = notes
+        # Prepare update data
+        update_data = {
+            'current_step': current_step
+        }
+        
+        if notes is not None:
+            update_data['notes'] = notes
         
         if completed and not progress.completed:
-            progress.completed = True
-            progress.completed_at = datetime.utcnow()
+            update_data['completed'] = True
+            update_data['completed_at'] = datetime.utcnow()
         
-        db.session.commit()
-        info(f"Updated progress {progress_id} to step {current_step}, completed: {completed}")
-        return True
+        # Update the model using helper function
+        success = update_model(progress, update_data)
+        
+        if success:
+            info(f"Updated progress {progress_id} to step {current_step}, completed: {completed}")
+        else:
+            warning(f"Failed to update progress {progress_id}")
+            
+        return success
     except Exception as e:
-        db.session.rollback()
-        error(f"Error updating exercise progress {progress_id}: {str(e)}")
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) updating exercise progress {progress_id}: {str(e)}")
         return False
 
 def get_exercise_progress(session_id, exercise_id=None):
