@@ -22,8 +22,27 @@ from logging_config import get_logger, info, error, debug, warning, critical, ex
 # Get module-specific logger
 logger = get_logger('subscription_manager')
 
-from app import db
-from models import User, Subscription, UsageQuota
+# Import database object - we'll use a function to avoid circular imports
+# This will be called after app initialization
+db = None
+def init_db(app_db):
+    """Initialize database connection for subscription manager"""
+    global db
+    db = app_db
+    # Now that we have the db object, create tables
+    init_tables()
+
+# These imports will be used inside functions after db is initialized
+User = None
+Subscription = None
+UsageQuota = None
+
+def init_models(user_model, subscription_model, usage_quota_model):
+    """Initialize model classes"""
+    global User, Subscription, UsageQuota
+    User = user_model
+    Subscription = subscription_model
+    UsageQuota = usage_quota_model
 
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -777,12 +796,22 @@ def _handle_payment_failed(event):
 # Create tables if they don't exist
 def init_tables():
     """Create subscription-related tables if they don't exist."""
+    if db is None:
+        warning("Database not initialized yet - tables will be created later")
+        return
+        
     try:
-        with db.app.app_context():
-            db.create_all()
-            info("Created subscription management tables")
+        # Check if we're already inside an application context
+        if hasattr(db, 'app') and db.app:
+            # We're running within Flask, use the app context
+            with db.app.app_context():
+                db.create_all()
+                info("Created subscription management tables")
+        else:
+            # We're being imported directly, tables will be created when app starts
+            debug("Database available but no app context - tables will be created at app startup")
+    except AttributeError as ae:
+        warning(f"Database object not ready for creating tables: {str(ae)}")
     except Exception as e:
         error(f"Error creating subscription tables: {str(e)}")
-
-# Initialize tables when module is imported
-init_tables()
+        exception("Full traceback for subscription table creation error:")

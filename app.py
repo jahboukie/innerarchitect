@@ -210,6 +210,17 @@ from models import User, ChatHistory, JournalEntry, NLPExercise, NLPExerciseProg
 with app.app_context():
     db.create_all()
     info("Database tables created")
+    
+    # Initialize subscription manager
+    try:
+        import subscription_manager
+        # Initialize subscription manager with database and models
+        subscription_manager.init_db(db)
+        subscription_manager.init_models(User, Subscription, UsageQuota)
+        info("Subscription manager initialized")
+    except Exception as e:
+        error(f"Error initializing subscription manager: {str(e)}")
+        exception("Full traceback for subscription manager initialization error:")
 
 # Initialize OpenAI client
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
