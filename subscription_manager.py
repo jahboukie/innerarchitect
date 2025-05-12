@@ -631,8 +631,40 @@ def create_stripe_checkout_session(user_id, plan_name):
             if subscription:
                 subscription.stripe_customer_id = stripe_customer_id
                 db.session.commit()
+        except stripe.error.CardError as e:
+            # Since it's a POST request, a card error means the customer's card was declined
+            error(f"Card error creating Stripe customer: {e.error.message}")
+            flash(f"Payment error: {e.error.message}", "danger")
+            return None
+        except stripe.error.RateLimitError as e:
+            # Too many requests made to the API too quickly
+            error(f"Rate limit error creating Stripe customer: {str(e)}")
+            flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
+            return None
+        except stripe.error.InvalidRequestError as e:
+            # Invalid parameters were supplied to Stripe's API
+            error(f"Invalid request error creating Stripe customer: {str(e)}")
+            flash("There was an error with your payment information. Please try again.", "danger")
+            return None
+        except stripe.error.AuthenticationError as e:
+            # Authentication with Stripe's API failed
+            error(f"Authentication error with Stripe: {str(e)}")
+            flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
+            return None
+        except stripe.error.APIConnectionError as e:
+            # Network communication with Stripe failed
+            error(f"Network error connecting to Stripe: {str(e)}")
+            flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
+            return None
+        except stripe.error.StripeError as e:
+            # Generic error
+            error(f"Stripe error creating customer: {str(e)}")
+            flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
+            return None
         except Exception as e:
-            error(f"Error creating Stripe customer: {str(e)}")
+            # Non-Stripe error
+            error(f"Unexpected error creating Stripe customer: {str(e)}")
+            flash("An unexpected error occurred. Please try again later.", "danger")
             return None
     
     # Get the domain for success and cancel URLs
