@@ -13,10 +13,13 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import conversation context management
 from conversation_context import (
-    get_or_create_context, 
+    get_or_create_context,
+    create_new_context, 
     add_message_to_context, 
     enhance_prompt_with_context,
-    update_context_summary
+    update_context_summary,
+    consolidate_memories,
+    get_context_messages
 )
 
 # Import models
