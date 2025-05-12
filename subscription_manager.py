@@ -362,6 +362,7 @@ def get_usage_quota(user_id=None, browser_session_id=None):
     usage = UsageQuota()
     usage.user_id = user_id
     usage.browser_session_id = browser_session_id
+    usage.quota_type = 'default'  # Set a default quota type to prevent NULL constraint violation
     
     # Initialize with default values
     usage.messages_used_today = 0
