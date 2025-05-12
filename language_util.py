@@ -118,16 +118,44 @@ def safe_chat_completion(
         warning("OpenAI client not initialized - API key may be missing")
         return fallback_response
     
+    # Convert messages to properly typed message objects
+    typed_messages: List[ChatCompletionMessageParam] = []
+    
+    for msg in messages:
+        if 'role' in msg and 'content' in msg:
+            role = msg['role']
+            content = msg['content']
+            
+            if role == 'system':
+                typed_messages.append({"role": "system", "content": content})
+            elif role == 'user':
+                typed_messages.append({"role": "user", "content": content})
+            elif role == 'assistant':
+                typed_messages.append({"role": "assistant", "content": content})
+    
     # Define the closure function to be called by safe_openai_call
     def execute_chat_completion():
+        # Check if we have a valid client and messages
+        if not openai_client:
+            return fallback_response
+            
+        if not typed_messages:
+            warning("No valid messages for chat completion")
+            return fallback_response
+            
+        # Make the API call
         completion = openai_client.chat.completions.create(
             model=model,
-            messages=messages,
+            messages=typed_messages,
             max_tokens=max_tokens,
             temperature=temperature
         )
-        result = completion.choices[0].message.content
-        return result.strip() if result else fallback_response
+        
+        # Extract and return the response
+        if completion and completion.choices:
+            result = completion.choices[0].message.content
+            return result.strip() if result else fallback_response
+        return fallback_response
     
     result = safe_openai_call(
         execute_chat_completion,
