@@ -1,5 +1,4 @@
 import os
-import logging
 import uuid
 import json
 import time
@@ -11,8 +10,11 @@ from openai import OpenAI
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Import standardized logging
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+# Get module-specific logger
+logger = get_logger('app')
 
 # Set up Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -57,7 +59,7 @@ import language_util
 from models import User, OAuth, Subscription
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Logging is configured in logging_config.py
 
 # Create Flask app
 app = Flask(__name__)
@@ -94,7 +96,7 @@ def require_premium(f):
     def decorated_function(*args, **kwargs):
         # Check if user is authenticated
         if not current_user.is_authenticated:
-            logging.info(f"Unauthenticated user attempted to access premium feature: {request.path}")
+            info(f"Unauthenticated user attempted to access premium feature: {request.path}")
             session["next_url"] = request.url
             flash("Please log in to access this feature.", "info")
             return redirect(url_for('replit_auth.login'))
@@ -106,15 +108,15 @@ def require_premium(f):
         feature_name = 'advanced_nlp'  # Key feature that determines premium access
         
         # Log the access attempt
-        logging.info(f"User {user_id} attempting to access premium feature: {request.path}")
+        info(f"User {user_id} attempting to access premium feature: {request.path}")
         
         # Get subscription details for better error messages
         try:
             subscription = get_subscription_details(user_id)
             current_plan = subscription.get('plan_name', 'free')
-            logging.info(f"User {user_id} has '{current_plan}' subscription")
+            info(f"User {user_id} has '{current_plan}' subscription")
         except Exception as e:
-            logging.error(f"Error retrieving subscription details: {str(e)}")
+            error(f"Error retrieving subscription details: {str(e)}")
             current_plan = 'unknown'
         
         # Check if user has premium or professional subscription
@@ -122,19 +124,19 @@ def require_premium(f):
         try:
             # Check if user has access to premium features
             has_access = check_feature_access(user_id, feature_name)
-            logging.info(f"Feature access check for {feature_name}: {has_access}")
+            info(f"Feature access check for {feature_name}: {has_access}")
         except Exception as e:
-            logging.error(f"Error checking premium access for user {user_id}: {str(e)}")
+            error(f"Error checking premium access for user {user_id}: {str(e)}")
             
         if not has_access:
-            logging.warning(f"User {user_id} with {current_plan} plan denied access to premium feature: {request.path}")
+            warning(f"User {user_id} with {current_plan} plan denied access to premium feature: {request.path}")
             message = g.translate('premium_required', 
                 "This feature requires a Premium subscription. Please upgrade your plan to access advanced features.")
             flash(message, "warning")
             return redirect(url_for('landing'))
         
         # User has access, proceed with the route    
-        logging.info(f"User {user_id} granted access to premium feature: {request.path}")
+        info(f"User {user_id} granted access to premium feature: {request.path}")
         return f(*args, **kwargs)
     
     return decorated_function
@@ -155,7 +157,7 @@ def require_professional(f):
     def decorated_function(*args, **kwargs):
         # Check if user is authenticated
         if not current_user.is_authenticated:
-            logging.info(f"Unauthenticated user attempted to access professional feature: {request.path}")
+            info(f"Unauthenticated user attempted to access professional feature: {request.path}")
             session["next_url"] = request.url
             flash("Please log in to access this feature.", "info")
             return redirect(url_for('replit_auth.login'))
@@ -167,15 +169,15 @@ def require_professional(f):
         feature_name = 'personalized_journeys'  # Key feature that determines professional access
         
         # Log the access attempt
-        logging.info(f"User {user_id} attempting to access professional feature: {request.path}")
+        info(f"User {user_id} attempting to access professional feature: {request.path}")
         
         # Get subscription details for better error messages
         try:
             subscription = get_subscription_details(user_id)
             current_plan = subscription.get('plan_name', 'free')
-            logging.info(f"User {user_id} has '{current_plan}' subscription")
+            info(f"User {user_id} has '{current_plan}' subscription")
         except Exception as e:
-            logging.error(f"Error retrieving subscription details: {str(e)}")
+            error(f"Error retrieving subscription details: {str(e)}")
             current_plan = 'unknown'
         
         # Check if user has professional subscription
@@ -183,19 +185,19 @@ def require_professional(f):
         try:
             # Check if user has access to professional features
             has_access = check_feature_access(user_id, feature_name)
-            logging.info(f"Feature access check for {feature_name}: {has_access}")
+            info(f"Feature access check for {feature_name}: {has_access}")
         except Exception as e:
-            logging.error(f"Error checking professional access for user {user_id}: {str(e)}")
+            error(f"Error checking professional access for user {user_id}: {str(e)}")
             
         if not has_access:
-            logging.warning(f"User {user_id} with {current_plan} plan denied access to professional feature: {request.path}")
+            warning(f"User {user_id} with {current_plan} plan denied access to professional feature: {request.path}")
             message = g.translate('professional_required', 
                 "This feature requires a Professional subscription. Please upgrade your plan to access our most advanced features.")
             flash(message, "warning")
             return redirect(url_for('landing'))
         
         # User has access, proceed with the route    
-        logging.info(f"User {user_id} granted access to professional feature: {request.path}")
+        info(f"User {user_id} granted access to professional feature: {request.path}")
         return f(*args, **kwargs)
     
     return decorated_function
@@ -207,7 +209,7 @@ from models import User, ChatHistory, JournalEntry, NLPExercise, NLPExerciseProg
 # Create database tables
 with app.app_context():
     db.create_all()
-    logging.info("Database tables created")
+    info("Database tables created")
 
 # Initialize OpenAI client
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -511,24 +513,24 @@ def create_checkout(plan):
     # Validate plan
     valid_plans = ['premium', 'professional']
     if plan not in valid_plans:
-        logging.warning(f"Invalid subscription plan requested: {plan}")
+        warning(f"Invalid subscription plan requested: {plan}")
         flash(g.translate('invalid_plan', f"Invalid plan: {plan}"), "danger")
         return redirect(url_for('landing'))
     
     try:
         # Log checkout attempt
-        logging.info(f"User {current_user.id} initiating checkout for plan: {plan}")
+        info(f"User {current_user.id} initiating checkout for plan: {plan}")
         
         # Use the subscription manager to create a checkout session
         checkout_url = create_stripe_checkout_session(current_user.id, plan)
         
         if checkout_url:
             # Redirect to Stripe checkout page
-            logging.info(f"Redirecting user {current_user.id} to Stripe checkout for {plan} plan")
+            info(f"Redirecting user {current_user.id} to Stripe checkout for {plan} plan")
             return redirect(checkout_url)
         else:
             # Handle failure to create checkout session
-            logging.error(f"Failed to create checkout session for user {current_user.id}, plan {plan}")
+            error(f"Failed to create checkout session for user {current_user.id}, plan {plan}")
             flash(g.translate('checkout_error', 
                 "An error occurred while setting up your subscription. Please try again later."), 
                 "danger")
@@ -536,7 +538,7 @@ def create_checkout(plan):
             
     except Exception as e:
         # Handle unexpected errors
-        logging.error(f"Error creating checkout session for user {current_user.id}, plan {plan}: {str(e)}")
+        error(f"Error creating checkout session for user {current_user.id}, plan {plan}: {str(e)}")
         flash(g.translate('checkout_error', 
             "An error occurred while processing your request. Please try again later."), 
             "danger")
@@ -556,13 +558,13 @@ def subscription_success():
     # Get the Stripe session ID from URL query parameters
     session_id = request.args.get('session_id')
     if not session_id:
-        logging.warning(f"Missing session_id in subscription success callback for user {current_user.id}")
+        warning(f"Missing session_id in subscription success callback for user {current_user.id}")
         flash(g.translate('invalid_session', "Invalid checkout session."), "danger")
         return redirect(url_for('manage_subscription'))
         
     try:
         # Log the checkout success attempt
-        logging.info(f"Processing successful checkout for session {session_id}, user {current_user.id}")
+        info(f"Processing successful checkout for session {session_id}, user {current_user.id}")
         
         # Use subscription manager to handle the checkout success
         result = handle_checkout_success(session_id)
@@ -575,7 +577,7 @@ def subscription_success():
             plan_name = subscription_details.get('plan_name', 'premium').capitalize()
             
             # Show success message
-            logging.info(f"Subscription activated successfully for user {current_user.id}, plan: {plan_name}")
+            info(f"Subscription activated successfully for user {current_user.id}, plan: {plan_name}")
             flash(g.translate('subscription_activated', 
                 f"Thank you! Your {plan_name} subscription has been activated."), "success")
             
@@ -583,14 +585,14 @@ def subscription_success():
             return redirect(url_for('manage_subscription'))
         else:
             # Failed to process the subscription
-            logging.error(f"Failed to activate subscription for session {session_id}, user {current_user.id}")
+            error(f"Failed to activate subscription for session {session_id}, user {current_user.id}")
             flash(g.translate('subscription_error', 
                 "An error occurred while activating your subscription. Please try again or contact support."), "danger")
             return redirect(url_for('manage_subscription'))
             
     except Exception as e:
         # Handle unexpected errors
-        logging.error(f"Error processing subscription success for user {current_user.id}: {str(e)}")
+        error(f"Error processing subscription success for user {current_user.id}: {str(e)}")
         flash(g.translate('subscription_error', 
             "An error occurred while processing your subscription. Please contact support."), "danger")
         return redirect(url_for('manage_subscription'))
@@ -605,7 +607,7 @@ def subscription_cancel():
     User canceled the checkout process before completing payment.
     """
     # Log the cancellation
-    logging.info(f"Subscription checkout canceled by user {current_user.id}")
+    info(f"Subscription checkout canceled by user {current_user.id}")
     
     # Show informational message
     flash(g.translate('checkout_canceled', 
@@ -642,12 +644,12 @@ def stripe_webhook():
     request_id = request.headers.get('X-Request-Id', 'unknown')
     
     # Log the webhook receipt
-    logging.info(f"Received Stripe webhook - Request ID: {request_id}, Content Length: {len(payload)}")
+    info(f"Received Stripe webhook - Request ID: {request_id}, Content Length: {len(payload)}")
     
     # Verify webhook signature if secret is available
     webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
     if not webhook_secret:
-        logging.warning("STRIPE_WEBHOOK_SECRET not set. Webhook signature verification disabled.")
+        warning("STRIPE_WEBHOOK_SECRET not set. Webhook signature verification disabled.")
     
     try:
         # Extract the event data
@@ -657,10 +659,10 @@ def stripe_webhook():
                 event = stripe.Webhook.construct_event(
                     payload, sig_header, webhook_secret
                 )
-                logging.info(f"Webhook signature verified - Event ID: {event.get('id', 'unknown')}, Type: {event.get('type', 'unknown')}")
+                info(f"Webhook signature verified - Event ID: {event.get('id', 'unknown')}, Type: {event.get('type', 'unknown')}")
             except stripe.error.SignatureVerificationError as sig_err:
                 # Invalid signature
-                logging.error(f"Invalid webhook signature: {str(sig_err)}")
+                error(f"Invalid webhook signature: {str(sig_err)}")
                 return jsonify({
                     'status': 'error', 
                     'message': 'Invalid signature',
@@ -672,9 +674,9 @@ def stripe_webhook():
             try:
                 data = json.loads(payload)
                 event = data
-                logging.warning(f"Processing webhook without signature verification (development mode) - Event type: {event.get('type', 'unknown')}")
+                warning(f"Processing webhook without signature verification (development mode) - Event type: {event.get('type', 'unknown')}")
             except json.JSONDecodeError as json_err:
-                logging.error(f"Failed to parse webhook payload as JSON: {str(json_err)}")
+                error(f"Failed to parse webhook payload as JSON: {str(json_err)}")
                 return jsonify({
                     'status': 'error',
                     'message': 'Invalid JSON payload',
@@ -687,20 +689,20 @@ def stripe_webhook():
         created_timestamp = event.get('created', 0)
         created_time = datetime.fromtimestamp(created_timestamp).strftime('%Y-%m-%d %H:%M:%S') if created_timestamp else 'unknown'
         
-        logging.info(f"Processing Stripe webhook - ID: {event_id}, Type: {event_type}, Created: {created_time}")
+        info(f"Processing Stripe webhook - ID: {event_id}, Type: {event_type}, Created: {created_time}")
         
         # Additional logging for specific event types
         if event_type == 'checkout.session.completed':
             session = event.get('data', {}).get('object', {})
             customer_id = session.get('customer', 'unknown')
             subscription_id = session.get('subscription', 'unknown')
-            logging.info(f"Checkout completed - Customer: {customer_id}, Subscription: {subscription_id}")
+            info(f"Checkout completed - Customer: {customer_id}, Subscription: {subscription_id}")
         elif event_type.startswith('customer.subscription'):
             subscription = event.get('data', {}).get('object', {})
             customer_id = subscription.get('customer', 'unknown')
             status = subscription.get('status', 'unknown')
             plan = subscription.get('plan', {}).get('nickname', 'unknown')
-            logging.info(f"Subscription event - Customer: {customer_id}, Status: {status}, Plan: {plan}")
+            info(f"Subscription event - Customer: {customer_id}, Status: {status}, Plan: {plan}")
             
         # Process the event with detailed logging
         processing_start_time = time.time()
@@ -708,7 +710,7 @@ def stripe_webhook():
         processing_time = time.time() - processing_start_time
         
         if success:
-            logging.info(f"Successfully processed webhook event: {event_type} in {processing_time:.2f}s")
+            info(f"Successfully processed webhook event: {event_type} in {processing_time:.2f}s")
             return jsonify({
                 'status': 'success',
                 'message': f'Processed {event_type} event',
@@ -716,7 +718,7 @@ def stripe_webhook():
                 'request_id': request_id
             }), 200
         else:
-            logging.error(f"Failed to process webhook event: {event_type}")
+            error(f"Failed to process webhook event: {event_type}")
             return jsonify({
                 'status': 'error', 
                 'message': 'Event processing failed',
@@ -726,7 +728,7 @@ def stripe_webhook():
             
     except ValueError as e:
         # Invalid payload
-        logging.error(f"Invalid webhook payload: {str(e)}")
+        error(f"Invalid webhook payload: {str(e)}")
         return jsonify({
             'status': 'error', 
             'message': 'Invalid payload',
@@ -738,11 +740,11 @@ def stripe_webhook():
         # Catch-all for unexpected errors
         error_details = str(e)
         error_type = type(e).__name__
-        logging.error(f"Unexpected error processing webhook: {error_type}: {error_details}")
+        error(f"Unexpected error processing webhook: {error_type}: {error_details}")
         
         # Log traceback for debugging
         import traceback
-        logging.error(f"Traceback: {traceback.format_exc()}")
+        error(f"Traceback: {traceback.format_exc()}")
         
         return jsonify({
             'status': 'error', 
@@ -788,11 +790,11 @@ def manage_subscription():
             }
         }
         
-        logging.info(f"Rendering subscription page for user: {current_user.id}")
+        info(f"Rendering subscription page for user: {current_user.id}")
         return render_template('subscription_manage.html', subscription=subscription_context)
     
     except Exception as e:
-        logging.error(f"Error retrieving subscription information: {str(e)}")
+        error(f"Error retrieving subscription information: {str(e)}")
         flash("An error occurred while retrieving your subscription information. Please try again later.", "danger")
         return redirect(url_for('index'))
 
@@ -809,26 +811,26 @@ def cancel_user_subscription():
     
     try:
         # Log the cancellation attempt
-        logging.info(f"Cancellation request received for user: {current_user.id}")
+        info(f"Cancellation request received for user: {current_user.id}")
         
         # Attempt to cancel the subscription
         result = cancel_subscription(current_user.id)
         
         if result:
             # Successful cancellation
-            logging.info(f"Subscription successfully canceled for user: {current_user.id}")
+            info(f"Subscription successfully canceled for user: {current_user.id}")
             flash(g.translate('subscription_canceled_message', 
                 "Your subscription has been canceled. You will still have access until the end of your billing period."), 
                 "success")
         else:
             # Cancellation failed for some reason
-            logging.warning(f"Subscription cancellation failed for user: {current_user.id}")
+            warning(f"Subscription cancellation failed for user: {current_user.id}")
             flash(g.translate('cancellation_failed', 
                 "Unable to cancel subscription. Please try again later."), 
                 "danger")
     except Exception as e:
         # Exception occurred during cancellation
-        logging.error(f"Error canceling subscription for user {current_user.id}: {str(e)}")
+        error(f"Error canceling subscription for user {current_user.id}: {str(e)}")
         flash(g.translate('cancellation_error', 
             "An error occurred while processing your request. Please try again later."), 
             "danger")
@@ -882,7 +884,7 @@ def get_technique_recommendation():
     mood = data.get('mood', 'neutral')
     
     # Log the received request
-    logging.debug(f"Technique recommendation request: Message={message}, Mood={mood}")
+    debug(f"Technique recommendation request: Message={message}, Mood={mood}")
     
     # Get technique recommendation
     recommendation = recommend_technique(message, mood)
@@ -911,15 +913,15 @@ def chat():
     if not session_id:
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
-        logging.info(f"Created new session ID: {session_id}")
+        info(f"Created new session ID: {session_id}")
     
     # Check usage quotas based on subscription tier
     user_id = None
     if current_user.is_authenticated:
         user_id = current_user.id
-        logging.info(f"Chat request from authenticated user: {user_id}")
+        info(f"Chat request from authenticated user: {user_id}")
     else:
-        logging.info(f"Chat request from anonymous user with session: {session_id}")
+        info(f"Chat request from anonymous user with session: {session_id}")
     
     # Import subscription manager functions for quota management
     from subscription_manager import check_quota_available, increment_usage_quota, get_subscription_details
@@ -930,9 +932,9 @@ def chat():
         try:
             subscription = get_subscription_details(user_id)
             subscription_tier = subscription.get('plan_name', 'free')
-            logging.info(f"User subscription tier: {subscription_tier}")
+            info(f"User subscription tier: {subscription_tier}")
         except Exception as e:
-            logging.error(f"Error retrieving subscription details: {str(e)}")
+            error(f"Error retrieving subscription details: {str(e)}")
     
     # Check if user has reached their daily message limit
     try:
@@ -944,7 +946,7 @@ def chat():
         )
         
         if not quota_available:
-            logging.warning(f"Quota exceeded for {'user '+user_id if user_id else 'session '+session_id}")
+            warning(f"Quota exceeded for {'user '+user_id if user_id else 'session '+session_id}")
             return jsonify({
                 'response': g.translate('quota_exceeded_message',
                     "You've reached your daily message limit. Please upgrade your subscription for unlimited conversations or wait until tomorrow."),
@@ -953,15 +955,15 @@ def chat():
                 'subscription_tier': subscription_tier
             })
     except Exception as e:
-        logging.error(f"Error checking quota: {str(e)}")
+        error(f"Error checking quota: {str(e)}")
         # Continue processing the request even if quota check fails
     
     # Log the received message for debugging
-    logging.debug(f"Received message: {message} (Mood: {mood}, Technique: {technique}, Session: {session_id})")
+    debug(f"Received message: {message} (Mood: {mood}, Technique: {technique}, Session: {session_id})")
     
     # Check if OpenAI API key is available
     if not OPENAI_API_KEY:
-        logging.error("OpenAI API key is missing")
+        error("OpenAI API key is missing")
         return jsonify({
             'response': "I'm sorry, but I'm not fully configured yet. Please provide an OpenAI API key to enable AI responses."
         })
@@ -1002,7 +1004,7 @@ def chat():
         
         # Extract the AI response
         ai_response = response.choices[0].message.content.strip()
-        logging.debug(f"AI response: {ai_response}")
+        debug(f"AI response: {ai_response}")
         
         # Save the chat history to the database
         try:
@@ -1021,7 +1023,7 @@ def chat():
             )
             db.session.add(chat_entry)
             db.session.commit()
-            logging.info(f"Chat history saved with ID: {chat_entry.id}")
+            info(f"Chat history saved with ID: {chat_entry.id}")
             
             # Increment usage quota counter for user
             try:
@@ -1032,16 +1034,16 @@ def chat():
                     amount=1
                 )
                 if success:
-                    logging.info(f"Usage quota incremented for {'user '+user_id if user_id else 'session '+session_id}")
+                    info(f"Usage quota incremented for {'user '+user_id if user_id else 'session '+session_id}")
                 else:
-                    logging.warning(f"Failed to increment usage quota: {quota_message}")
+                    warning(f"Failed to increment usage quota: {quota_message}")
             except Exception as quota_error:
                 # Log the error but don't interrupt user experience
-                logging.error(f"Error incrementing usage quota: {str(quota_error)}")
+                error(f"Error incrementing usage quota: {str(quota_error)}")
             
         except Exception as db_error:
             # Log the error but don't interrupt user experience
-            logging.error(f"Error saving chat history: {str(db_error)}")
+            error(f"Error saving chat history: {str(db_error)}")
             db.session.rollback()
         
         # Return the AI response to the frontend
@@ -1051,7 +1053,7 @@ def chat():
         
     except Exception as e:
         # Log any errors
-        logging.error(f"Error calling OpenAI API: {str(e)}")
+        error(f"Error calling OpenAI API: {str(e)}")
         return jsonify({
             'response': "I'm sorry, I encountered an error while processing your message. Please try again later."
         })
@@ -1106,16 +1108,16 @@ def start_exercise_route(exercise_id):
     if not session_id:
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
-        logging.info(f"Created new session ID: {session_id}")
+        info(f"Created new session ID: {session_id}")
     
     # Get user ID if logged in
     user_id = None
     subscription_tier = "free"
     if current_user.is_authenticated:
         user_id = current_user.id
-        logging.info(f"Exercise start request from authenticated user: {user_id}")
+        info(f"Exercise start request from authenticated user: {user_id}")
     else:
-        logging.info(f"Exercise start request from anonymous user with session: {session_id}")
+        info(f"Exercise start request from anonymous user with session: {session_id}")
     
     # Import subscription manager functions
     from subscription_manager import check_quota_available, increment_usage_quota, get_subscription_details
@@ -1125,9 +1127,9 @@ def start_exercise_route(exercise_id):
         try:
             subscription = get_subscription_details(user_id)
             subscription_tier = subscription.get('plan_name', 'free')
-            logging.info(f"User subscription tier: {subscription_tier}")
+            info(f"User subscription tier: {subscription_tier}")
         except Exception as e:
-            logging.error(f"Error retrieving subscription details: {str(e)}")
+            error(f"Error retrieving subscription details: {str(e)}")
     
     # Check if user has reached their daily exercise limit
     try:
@@ -1139,7 +1141,7 @@ def start_exercise_route(exercise_id):
         )
         
         if not quota_available:
-            logging.warning(f"Exercise quota exceeded for {'user '+user_id if user_id else 'session '+session_id}")
+            warning(f"Exercise quota exceeded for {'user '+user_id if user_id else 'session '+session_id}")
             return jsonify({
                 'error': g.translate('exercise_quota_exceeded',
                     "You've reached your daily exercise limit. Please upgrade your subscription for more exercises or wait until tomorrow."),
@@ -1147,7 +1149,7 @@ def start_exercise_route(exercise_id):
                 'subscription_tier': subscription_tier
             }), 403
     except Exception as e:
-        logging.error(f"Error checking exercise quota: {str(e)}")
+        error(f"Error checking exercise quota: {str(e)}")
         # Continue processing the request even if quota check fails
     
     # Start the exercise
@@ -1155,7 +1157,7 @@ def start_exercise_route(exercise_id):
         # Create exercise progress entry
         progress = start_exercise(exercise_id, session_id, user_id)
         if not progress:
-            logging.error(f"Failed to start exercise {exercise_id}")
+            error(f"Failed to start exercise {exercise_id}")
             return jsonify({'error': 'Could not start exercise. Please try again later.'}), 500
         
         # Increment usage quota counter for exercises
@@ -1167,12 +1169,12 @@ def start_exercise_route(exercise_id):
                 amount=1
             )
             if success:
-                logging.info(f"Exercise quota incremented for {'user '+user_id if user_id else 'session '+session_id}")
+                info(f"Exercise quota incremented for {'user '+user_id if user_id else 'session '+session_id}")
             else:
-                logging.warning(f"Failed to increment exercise quota: {message}")
+                warning(f"Failed to increment exercise quota: {message}")
         except Exception as quota_error:
             # Log but don't interrupt experience
-            logging.error(f"Error incrementing exercise quota: {str(quota_error)}")
+            error(f"Error incrementing exercise quota: {str(quota_error)}")
         
         # Return the exercise progress data
         return jsonify({
@@ -1185,7 +1187,7 @@ def start_exercise_route(exercise_id):
         
     except Exception as e:
         # Log any errors
-        logging.error(f"Error starting exercise {exercise_id}: {str(e)}")
+        error(f"Error starting exercise {exercise_id}: {str(e)}")
         return jsonify({'error': 'An unexpected error occurred. Please try again later.'}), 500
 
 @app.route('/exercise/progress/<int:progress_id>', methods=['PUT'])
