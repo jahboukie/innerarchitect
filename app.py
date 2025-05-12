@@ -1588,7 +1588,7 @@ def create_journey_api():
     """
     Create a new personalized journey.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -1831,7 +1831,7 @@ def transcribe_audio_api():
     """
     Transcribe audio data.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data or 'audio_data' not in data:
         return jsonify({'error': 'No audio data provided'}), 400
@@ -1864,7 +1864,7 @@ def analyze_voice_api():
     """
     Analyze a voice submission.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -2049,7 +2049,7 @@ def create_reminder_api():
     """
     Create a new reminder.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data:
         return jsonify({'error': 'No data provided'}), 400
