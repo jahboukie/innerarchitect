@@ -7,7 +7,7 @@
     <div class="row">
         <div class="col-lg-10 mx-auto">
             <!-- Introduction -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h2 class="card-title mb-3">Practice Reminders</h2>
                     
@@ -15,22 +15,30 @@
                         Create personalized reminders to maintain consistency in your practice of NLP techniques.
                     </p>
                     
-                    <div class="alert alert-info" role="alert">
-                        <i class="fas fa-lightbulb me-2"></i>
-                        Consistency is key to developing new communication habits. Set up reminders for regular practice
-                        of techniques and exercises that you find most valuable.
+                    <div class="card border-0 p-3 mb-4" style="background: var(--subtle-gradient);">
+                        <div class="d-flex">
+                            <div class="feature-icon flex-shrink-0 me-3" style="margin: 0; width: 48px; height: 48px;">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div>
+                                <p class="mb-0">
+                                    Consistency is key to developing new communication habits. Set up reminders for regular practice
+                                    of techniques and exercises that you find most valuable.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center mt-4">
-                        <button id="create-reminder-btn" class="btn btn-primary">
+                        <button id="create-reminder-btn" class="btn btn-primary rounded-pill">
                             <i class="fas fa-plus-circle me-2"></i>Create New Reminder
                         </button>
                         
                         <div class="btn-group" role="group">
-                            <button id="check-due-btn" class="btn btn-outline-secondary me-2">
+                            <button id="check-due-btn" class="btn btn-outline-secondary rounded-pill me-2">
                                 <i class="fas fa-bell me-2"></i>Check Due Reminders
                             </button>
-                            <button id="refresh-reminders-btn" class="btn btn-outline-secondary">
+                            <button id="refresh-reminders-btn" class="btn btn-outline-secondary rounded-pill">
                                 <i class="fas fa-sync me-2"></i>Refresh
                             </button>
                         </div>
@@ -39,31 +47,43 @@
             </div>
             
             <!-- Reminders Statistics -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h3 class="card-title mb-3">Your Practice Stats</h3>
                     
                     <div class="row g-4">
                         <div class="col-md-3">
-                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                            <div class="card text-center h-100 border-0 p-3 practice-stats-card" style="background: var(--subtle-gradient);">
+                                <div class="feature-icon mx-auto mb-2" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
                                 <h4 class="text-info" id="total-reminders">0</h4>
                                 <p class="mb-0">Total Reminders</p>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                            <div class="card text-center h-100 border-0 p-3 practice-stats-card" style="background: var(--subtle-gradient);">
+                                <div class="feature-icon mx-auto mb-2" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-bell"></i>
+                                </div>
                                 <h4 class="text-info" id="active-reminders">0</h4>
                                 <p class="mb-0">Active Reminders</p>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                            <div class="card text-center h-100 border-0 p-3 practice-stats-card" style="background: var(--subtle-gradient);">
+                                <div class="feature-icon mx-auto mb-2" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
                                 <h4 class="text-info" id="completion-rate">0%</h4>
                                 <p class="mb-0">Completion Rate</p>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card bg-dark text-center h-100 border-0 p-3 practice-stats-card">
+                            <div class="card text-center h-100 border-0 p-3 practice-stats-card" style="background: var(--subtle-gradient);">
+                                <div class="feature-icon mx-auto mb-2" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-fire"></i>
+                                </div>
                                 <h4 class="text-info" id="longest-streak">0</h4>
                                 <p class="mb-0">Longest Streak</p>
                             </div>
