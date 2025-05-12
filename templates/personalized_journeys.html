@@ -110,7 +110,7 @@
                                     
                                     <div class="row g-3">
                                         <div class="col-md-4">
-                                            <div class="form-check card bg-dark-subtle p-3 h-100">
+                                            <div class="form-check card bg-light p-3 h-100">
                                                 <input class="form-check-input" type="radio" name="intensity" id="intensity-light" value="light">
                                                 <label class="form-check-label d-block" for="intensity-light">
                                                     <div class="fw-bold mb-2">Light</div>
@@ -124,7 +124,7 @@
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="form-check card bg-dark-subtle p-3 h-100">
+                                            <div class="form-check card bg-light p-3 h-100">
                                                 <input class="form-check-input" type="radio" name="intensity" id="intensity-moderate" value="moderate" checked>
                                                 <label class="form-check-label d-block" for="intensity-moderate">
                                                     <div class="fw-bold mb-2">Moderate</div>
@@ -138,7 +138,7 @@
                                             </div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="form-check card bg-dark-subtle p-3 h-100">
+                                            <div class="form-check card bg-light p-3 h-100">
                                                 <input class="form-check-input" type="radio" name="intensity" id="intensity-intensive" value="intensive">
                                                 <label class="form-check-label d-block" for="intensity-intensive">
                                                     <div class="fw-bold mb-2">Intensive</div>
@@ -159,7 +159,7 @@
                                     <h4 class="mb-3">Step 5: Review & Create</h4>
                                     <p class="text-muted mb-4">Review your journey details before creating it.</p>
                                     
-                                    <div class="card bg-dark-subtle mb-3">
+                                    <div class="card bg-light mb-3">
                                         <div class="card-body">
                                             <h5 class="card-title" id="review-journey-name">Journey Name</h5>
                                             <p class="card-text" id="review-journey-description">Journey description will appear here.</p>
@@ -213,9 +213,9 @@
                     </p>
                     
                     <div class="accordion" id="journeyTypesAccordion">
-                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                        <div class="accordion-item bg-light border-0 mb-2 rounded">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                <button class="accordion-button collapsed bg-light rounded" type="button" 
                                     data-bs-toggle="collapse" data-bs-target="#collapseOne" 
                                     aria-expanded="false" aria-controls="collapseOne">
                                     Communication Improvement
@@ -229,9 +229,9 @@
                             </div>
                         </div>
                         
-                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                        <div class="accordion-item bg-light border-0 mb-2 rounded">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                <button class="accordion-button collapsed bg-light rounded" type="button" 
                                     data-bs-toggle="collapse" data-bs-target="#collapseTwo" 
                                     aria-expanded="false" aria-controls="collapseTwo">
                                     Confidence Building
@@ -246,9 +246,9 @@
                             </div>
                         </div>
                         
-                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                        <div class="accordion-item bg-light border-0 mb-2 rounded">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                <button class="accordion-button collapsed bg-light rounded" type="button" 
                                     data-bs-toggle="collapse" data-bs-target="#collapseThree" 
                                     aria-expanded="false" aria-controls="collapseThree">
                                     Relationship Enhancement
@@ -263,9 +263,9 @@
                             </div>
                         </div>
                         
-                        <div class="accordion-item bg-dark-subtle border-0 mb-2 rounded">
+                        <div class="accordion-item bg-light border-0 mb-2 rounded">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                <button class="accordion-button collapsed bg-light rounded" type="button" 
                                     data-bs-toggle="collapse" data-bs-target="#collapseFour" 
                                     aria-expanded="false" aria-controls="collapseFour">
                                     Professional Growth
@@ -280,9 +280,9 @@
                             </div>
                         </div>
                         
-                        <div class="accordion-item bg-dark-subtle border-0 rounded">
+                        <div class="accordion-item bg-light border-0 rounded">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed bg-dark-subtle rounded" type="button" 
+                                <button class="accordion-button collapsed bg-light rounded" type="button" 
                                     data-bs-toggle="collapse" data-bs-target="#collapseFive" 
                                     aria-expanded="false" aria-controls="collapseFive">
                                     Emotional Regulation
@@ -466,7 +466,7 @@
                 col.className = 'col-md-6';
                 
                 col.innerHTML = `
-                    <div class="form-check card bg-dark-subtle p-3 h-100">
+                    <div class="form-check card bg-light p-3 h-100">
                         <input class="form-check-input journey-type-radio" type="radio" 
                             name="journeyType" id="journey-${typeId}" value="${typeId}"
                             ${typeId === selectedJourneyType ? 'checked' : ''}>
@@ -612,15 +612,15 @@
                             </div>
                             
                             <div class="d-flex flex-wrap gap-2 mb-3">
-                                <span class="badge bg-dark-subtle text-primary-emphasis">
+                                <span class="badge bg-light text-primary-emphasis">
                                     <i class="fas fa-calendar-alt me-1"></i> 
                                     ${formattedStartDate} - ${formattedEndDate}
                                 </span>
-                                <span class="badge bg-dark-subtle text-primary-emphasis">
+                                <span class="badge bg-light text-primary-emphasis">
                                     <i class="fas fa-clock me-1"></i> 
                                     ${journey.daily_practice_minutes} min/day
                                 </span>
-                                <span class="badge bg-dark-subtle text-primary-emphasis">
+                                <span class="badge bg-light text-primary-emphasis">
                                     <i class="fas fa-trophy me-1"></i> 
                                     ${journey.intensity.charAt(0).toUpperCase() + journey.intensity.slice(1)}
                                 </span>
