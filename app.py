@@ -5,11 +5,19 @@ import time
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, Any, Optional, Union, List, Tuple
 from flask_login import current_user, login_required
 from openai import OpenAI
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Import conversation context management
+from conversation_context import (
+    get_or_create_context, 
+    add_message_to_context, 
+    enhance_prompt_with_context,
+    update_context_summary
+)
 
 # Import models
 from models import ChatHistory, Subscription
