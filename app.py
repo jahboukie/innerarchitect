@@ -2739,5 +2739,48 @@ def admin_enable_professional():
         flash(f"An error occurred: {str(e)}", "danger")
         return redirect(url_for('profile'))
 
+
+# Route to reset conversation context
+@app.route('/reset-context', methods=['POST'])
+def reset_context():
+    """
+    Reset the conversation context to start fresh.
+    This allows users to explicitly start a new conversation thread.
+    """
+    # Get session ID
+    session_id = session.get('session_id')
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+    
+    # Get user ID if authenticated
+    user_id = None
+    if current_user.is_authenticated:
+        user_id = current_user.id
+    
+    try:
+        # Create a new context
+        new_context = create_new_context(user_id, session_id)
+        if new_context:
+            info(f"Conversation context reset for {'user '+user_id if user_id else 'session '+session_id}")
+            return jsonify({
+                'success': True,
+                'message': "Conversation context has been reset. You can start a fresh conversation."
+            })
+        else:
+            warning("Failed to reset conversation context")
+            return jsonify({
+                'success': False,
+                'message': "Unable to reset conversation context. Please try again."
+            })
+    except Exception as e:
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) resetting conversation context: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': "An error occurred while resetting the conversation context."
+        })
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
