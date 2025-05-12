@@ -108,15 +108,15 @@ class VoiceSubmission:
     """Class representing a user's voice submission for an exercise."""
     
     def __init__(self, submission_id, exercise_id, audio_data=None, 
-                 transcript=None, session_id=None, user_id=None):
+                 transcript=None, session_id=None, user_id=None, feedback=None, metrics=None):
         self.submission_id = submission_id
         self.exercise_id = exercise_id
         self.audio_data = audio_data  # Base64 encoded audio data
         self.transcript = transcript
         self.session_id = session_id
         self.user_id = user_id
-        self.feedback = None
-        self.metrics = None
+        self.feedback = feedback  # JSON string of feedback data
+        self.metrics = metrics    # JSON string of metrics data
         self.created_at = datetime.now()
         
     def to_dict(self):

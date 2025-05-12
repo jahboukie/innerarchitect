@@ -31,7 +31,16 @@ def load_user(user_id):
 
 class UserSessionStorage(BaseStorage):
 
-    def get(self, blueprint):
+    def get(self, blueprint) -> dict:
+        """
+        Get the OAuth token from storage for the specified blueprint.
+        
+        Args:
+            blueprint: The OAuth blueprint
+            
+        Returns:
+            dict: The token dictionary or None if not found
+        """
         try:
             token = db.session.query(OAuth).filter_by(
                 user_id=current_user.get_id(),
