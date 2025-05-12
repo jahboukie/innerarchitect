@@ -2101,7 +2101,7 @@ def update_reminder_api(reminder_id):
     """
     Update an existing reminder.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -2238,7 +2238,7 @@ def analyze_belief_api():
     """
     Analyze a belief statement to identify patterns and suggest approaches.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data or 'belief' not in data:
         return jsonify({'error': 'No belief provided'}), 400
@@ -2263,7 +2263,7 @@ def reframe_belief_api():
     """
     Generate suggestions for reframing a limiting belief.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data or 'belief' not in data:
         return jsonify({'error': 'No belief provided'}), 400
@@ -2288,7 +2288,7 @@ def meta_model_questions_api():
     """
     Generate Meta Model questions to challenge a limiting belief.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data or 'belief' not in data:
         return jsonify({'error': 'No belief provided'}), 400
@@ -2313,7 +2313,7 @@ def suggest_actions_api():
     """
     Suggest concrete actions to reinforce a new empowering belief.
     """
-    data = request.json
+    data = get_request_json()
     
     if not data or 'belief' not in data:
         return jsonify({'error': 'No belief provided'}), 400
