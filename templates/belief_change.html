@@ -294,7 +294,7 @@
             </div>
             
             <!-- Past Sessions Section -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4" id="past-sessions-card" style="display: none;">
+            <div class="card shadow-sm border-0 rounded-4 mb-4" id="past-sessions-card" style="display: none;">
                 <div class="card-body p-4">
                     <h3 class="card-title mb-4">Your Past Protocol Sessions</h3>
                     
@@ -306,9 +306,11 @@
                         </div>
                     </div>
                     
-                    <div id="no-sessions-message" class="alert alert-info" style="display: none;">
-                        <i class="fas fa-info-circle me-2"></i>
-                        You haven't started any belief change protocol sessions yet. Click "Start a New Protocol Session" to begin.
+                    <div id="no-sessions-message" class="card border-0 p-4 text-center" style="display: none; background: var(--subtle-gradient);">
+                        <div class="feature-icon mx-auto mb-3" style="width: 48px; height: 48px;">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <p class="mb-0">You haven't started any belief change protocol sessions yet. Click "Start a New Protocol Session" to begin.</p>
                     </div>
                 </div>
             </div>
@@ -319,7 +321,7 @@
 <!-- New Session Modal -->
 <div class="modal fade" id="newSessionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content bg-dark">
+        <div class="modal-content">
             <div class="modal-header border-0">
                 <h5 class="modal-title">Start New Belief Change Session</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -329,7 +331,7 @@
                     <div class="mb-3">
                         <label for="limiting-belief" class="form-label">What limiting belief would you like to transform?</label>
                         <textarea class="form-control" id="limiting-belief" rows="3" placeholder="Example: I'm not good enough to apply for that promotion."></textarea>
-                        <div class="form-text text-muted">Be specific and honest. Write the belief exactly as it appears in your mind.</div>
+                        <div class="form-text">Be specific and honest. Write the belief exactly as it appears in your mind.</div>
                     </div>
                     
                     <div class="mb-3">
@@ -343,7 +345,7 @@
                             <option value="relationships">Relationships & Connection</option>
                             <option value="world">World & Environment</option>
                         </select>
-                        <div class="form-text text-muted">We can analyze and suggest a category, or you can select one yourself.</div>
+                        <div class="form-text">We can analyze and suggest a category, or you can select one yourself.</div>
                     </div>
                     
                     <div class="form-check mb-4">
