@@ -1,49 +1,129 @@
-/* Custom CSS styles for The Inner Architect chat application */
+/* Custom CSS styles for The Inner Architect application - Updated with Stripe-inspired color scheme */
 :root {
-    /* Custom color variables */
-    --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-    --accent-color: #7e57c2;
-    --accent-light: #b085f5;
-    --text-primary: #e9e9e9;
-    --text-secondary: #b0b0b0;
-    --message-bg-user: rgba(37, 117, 252, 0.15);
-    --message-bg-assistant: rgba(80, 60, 120, 0.15);
-    --card-bg: #2d2d3d;
-    --body-bg: #1c1c28;
-    --input-bg: #343444;
-    --header-bg: #1a1a24;
-    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
-    --shadow-strong: 0 8px 32px rgba(0, 0, 0, 0.35);
+    /* Stripe-inspired color palette */
+    --primary-blue: #635bff;
+    --primary-blue-hover: #514bc5;
+    --primary-gradient: linear-gradient(135deg, #635bff 0%, #8F85FF 100%);
+    --secondary-gradient: linear-gradient(135deg, #ff8c66 0%, #ffbb33 100%);
+    --accent-color: #635bff;
+    --accent-light: #8F85FF;
     
-    /* Shadcn-inspired colors */
-    --background: #09090b;
-    --foreground: #fafafa;
-    --card-bg-subtle: #1c1c21;
-    --card-bg-primary: rgba(124, 58, 237, 0.08);
-    --border-subtle: rgba(255, 255, 255, 0.1);
-    --primary-color: #8b5cf6;
-    --primary-foreground: #ffffff;
-    --secondary-color: #71717a;
-    --secondary-foreground: #fafafa;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    --accent: #18181b;
-    --accent-foreground: #fafafa;
-    --destructive: #ef4444;
-    --destructive-foreground: #fafafa;
-    --info-color: #0ea5e9;
-    --info-dot-color: #0ea5e9;
-    --success-color: #22c55e;
+    /* Text colors - light theme */
+    --text-primary: #1a1f36;
+    --text-secondary: #4f566b;
+    --text-tertiary: #697386;
+    
+    /* Background colors - light theme */
+    --body-bg: #ffffff;
+    --subtle-bg: #f7fafc;
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+    --header-bg: #ffffff;
+    
+    /* Component colors */
+    --message-bg-user: rgba(99, 91, 255, 0.08);
+    --message-bg-assistant: rgba(247, 250, 252, 0.8);
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-strong: 0 10px 32px rgba(0, 0, 0, 0.15);
+    
+    /* Additional UI colors */
+    --border-light: #e6ebf1;
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --success-color: #2dcebd;
+    --warning-color: #ffad32;
+    --error-color: #ff4e4e;
+    --info-color: #3e7bfa;
+    
+    /* Colorful gradients for backgrounds */
+    --hero-gradient: linear-gradient(135deg, #ff8c66 0%, #ffbb33 33%, #635bff 66%, #8F85FF 100%);
+    --subtle-gradient: linear-gradient(135deg, rgba(99, 91, 255, 0.05) 0%, rgba(143, 133, 255, 0.03) 100%);
 }
 
 /* Base styling */
 body {
     background-color: var(--body-bg);
     color: var(--text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     line-height: 1.6;
     font-size: 16px;
     overflow-x: hidden;
+}
+
+/* Typography updates for light theme */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Updated card styling for light theme */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-strong);
+    transform: translateY(-3px);
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-blue-hover);
+    border-color: var(--primary-blue-hover);
+}
+
+.btn-outline-primary {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+/* Header styling for light theme */
+.header-light {
+    background-color: var(--header-bg);
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* Bootstrap overrides */
+.navbar-light .navbar-nav .nav-link {
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.navbar-light .navbar-nav .nav-link:hover, 
+.navbar-light .navbar-nav .nav-link:focus {
+    color: var(--accent-color);
+}
+
+.dropdown-menu {
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-soft);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: var(--subtle-bg);
+    color: var(--accent-color);
 }
 
 /* Modern Hero Section Styling */
@@ -218,15 +298,15 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-strong);
 }
 
-/* Feature cards styling */
+/* Feature cards styling - Stripe-inspired light design */
 .feature-card {
-    border-radius: 20px;
-    background-color: rgba(24, 24, 27, 0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.4s ease;
+    border-radius: 16px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    box-shadow: var(--shadow-soft);
     z-index: 1;
 }
 
@@ -234,20 +314,16 @@ h1, h2, h3, h4, h5, h6 {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        to bottom right,
-        rgba(139, 92, 246, 0.1),
-        rgba(14, 165, 233, 0.05)
-    );
+    background: var(--subtle-gradient);
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s ease;
     z-index: -1;
 }
 
 .feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-    border-color: rgba(139, 92, 246, 0.3);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-strong);
+    border-color: var(--accent-color);
 }
 
 .feature-card:hover::before {
@@ -255,33 +331,56 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .feature-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 16px;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 1.5rem;
-    background-color: rgba(139, 92, 246, 0.1);
-    color: var(--primary-color);
-    font-size: 28px;
+    background-color: rgba(99, 91, 255, 0.1);
+    color: var(--accent-color);
+    font-size: 24px;
     transition: all 0.3s ease;
 }
 
 .feature-card:hover .feature-icon {
-    transform: scale(1.1);
-    background-color: rgba(139, 92, 246, 0.2);
+    transform: scale(1.05);
+    background-color: rgba(99, 91, 255, 0.15);
 }
 
 .feature-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     margin-bottom: 1rem;
+    color: var(--text-primary);
     transition: all 0.3s ease;
 }
 
 .feature-card:hover .feature-title {
-    color: var(--primary-color);
+    color: var(--accent-color);
+}
+
+/* Features section background */
+.features-section {
+    position: relative;
+    background-color: var(--body-bg);
+    padding: 5rem 0;
+    overflow: hidden;
+}
+
+.features-section::before {
+    content: '';
+    position: absolute;
+    left: -10%;
+    bottom: -20%;
+    width: 50%;
+    height: 50%;
+    background: var(--secondary-gradient);
+    opacity: 0.03;
+    filter: blur(150px);
+    border-radius: 100%;
+    z-index: 0;
 }
 
 .features-section {
@@ -487,22 +586,49 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.6;
 }
 
-/* Hero section styling */
+/* Hero section styling - Stripe-inspired design */
 .hero-section {
     position: relative;
-    padding: 5rem 0;
+    padding: 7rem 0 5rem;
     overflow: hidden;
-    background-color: var(--background);
+    background: var(--subtle-bg);
+}
+
+/* Create a colorful backdrop similar to Stripe */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 80%;
+    height: 80%;
+    background: var(--hero-gradient);
+    filter: blur(120px);
+    opacity: 0.6;
+    z-index: 0;
+    border-radius: 100%;
+    animation: float 15s ease-in-out infinite alternate;
+}
+
+.hero-section .container {
+    position: relative;
+    z-index: 2;
 }
 
 .hero-title {
-    font-size: 3.5rem;
+    font-size: 4rem;
     font-weight: 800;
     line-height: 1.1;
     margin-bottom: 1.5rem;
-    background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0.8));
+    color: var(--text-primary);
+    letter-spacing: -0.03em;
+}
+
+.hero-title span {
+    background: var(--primary-gradient);
     -webkit-background-clip: text;
     background-clip: text;
+    color: transparent;
     -webkit-text-fill-color: transparent;
     text-fill-color: transparent;
 }
@@ -511,46 +637,44 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.25rem;
     line-height: 1.6;
     color: var(--text-secondary);
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
+    max-width: 85%;
 }
 
 .hero-cta-btn {
-    padding: 0.75rem 2rem;
+    padding: 0.875rem 2.25rem;
     font-weight: 600;
+    font-size: 1.1rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    border-radius: 50px;
     z-index: 1;
+    box-shadow: 0 5px 15px rgba(99, 91, 255, 0.3);
 }
 
-.hero-cta-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg, rgba(139, 92, 246, 0.5), rgba(14, 165, 233, 0.5));
-    z-index: -1;
-    transition: all 0.5s ease;
-    opacity: 0;
-}
-
-.hero-cta-btn:hover::before {
-    opacity: 1;
+.hero-cta-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(99, 91, 255, 0.4);
 }
 
 .hero-image-container {
     position: relative;
-    border-radius: 24px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-strong);
+    transform: perspective(1000px) rotateY(-5deg) rotateX(5deg);
+    transition: all 0.5s ease;
+}
+
+.hero-image-container:hover {
+    transform: perspective(1000px) rotateY(-2deg) rotateX(2deg);
 }
 
 .hero-image {
     width: 100%;
     height: auto;
-    border-radius: 24px;
+    border-radius: 16px;
     transition: all 0.5s ease;
 }
 
@@ -560,8 +684,33 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(14, 165, 233, 0.3));
+    background: linear-gradient(45deg, rgba(99, 91, 255, 0.1), rgba(143, 133, 255, 0.1));
     z-index: 1;
+}
+
+@media (max-width: 992px) {
+    .hero-title {
+        font-size: 3rem;
+    }
+    
+    .hero-subtitle {
+        max-width: 100%;
+    }
+    
+    .hero-image-container {
+        margin-top: 3rem;
+        transform: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 5rem 0 3rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
 }
 
 .floating-shape {

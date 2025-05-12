@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="{{ g.language }}" data-bs-theme="dark" {% if g.is_rtl %}dir="rtl"{% endif %}>
+<html lang="{{ g.language }}" data-bs-theme="light" {% if g.is_rtl %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}</title>
     
-    <!-- Bootstrap CSS (Replit Theme) -->
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- Bootstrap CSS (light theme) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts - Using modern sans-serif fonts like Stripe -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,85 +23,83 @@
 </head>
 <body>
     <!-- Header -->
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark">
+    <header class="header-light shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-light py-3">
             <div class="container">
-                <h1 class="navbar-brand mb-0">
-                    <a href="/" class="text-decoration-none text-white">
-                        <i class="fas fa-brain me-2"></i>{{ g.translate('app_name', 'The Inner Architect') }}
-                    </a>
-                </h1>
+                <!-- Branding - Using smaller heading for better spacing -->
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                    <i class="fas fa-brain me-2 text-primary"></i>
+                    <span>{{ g.translate('app_name', 'The Inner Architect') }}</span>
+                </a>
 
                 <!-- Hamburger menu for mobile -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Navigation items -->
+                <!-- Navigation items with simpler layout and responsive dropdown for features -->
                 <div class="collapse navbar-collapse" id="navbarContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/techniques">
-                                <i class="fas fa-book me-1"></i> {{ g.translate('techniques', 'Techniques') }}
+                    <!-- Main navigation - simplified with dropdown for features on smaller screens -->
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-1">
+                        <!-- Features dropdown to save space -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="featuresDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-book me-1"></i> {{ g.translate('features', 'Features') }}
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="featuresDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="/techniques">
+                                        <i class="fas fa-book me-1"></i> {{ g.translate('techniques', 'Techniques') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/communication-analysis">
+                                        <i class="fas fa-comments me-1"></i> {{ g.translate('communications', 'Communication') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/personalized-journeys">
+                                        <i class="fas fa-map-signs me-1"></i> {{ g.translate('journeys', 'Journeys') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/voice-practice">
+                                        <i class="fas fa-microphone me-1"></i> {{ g.translate('voice_practice', 'Voice') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/practice-reminders">
+                                        <i class="fas fa-bell me-1"></i> {{ g.translate('practice_reminders', 'Reminders') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/belief-change">
+                                        <i class="fas fa-sync-alt me-1"></i> {{ g.translate('belief_change', 'Belief Change') }}
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
+                        <!-- Always show dashboard link directly -->
                         <li class="nav-item">
                             <a class="nav-link" href="/progress/dashboard">
                                 <i class="fas fa-chart-line me-1"></i> {{ g.translate('dashboard', 'Dashboard') }}
                             </a>
                         </li>
+                        <!-- Pricing link -->
                         <li class="nav-item">
-                            <a class="nav-link" href="/communication-analysis">
-                                <i class="fas fa-comments me-1"></i> {{ g.translate('communications', 'Communication Analysis') }}
+                            <a class="nav-link" href="/#pricing">
+                                <i class="fas fa-tag me-1"></i> {{ g.translate('pricing', 'Pricing') }}
                             </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/personalized-journeys">
-                                <i class="fas fa-map-signs me-1"></i> {{ g.translate('journeys', 'Personalized Journeys') }}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/voice-practice">
-                                <i class="fas fa-microphone me-1"></i> {{ g.translate('voice_practice', 'Voice Practice') }}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/practice-reminders">
-                                <i class="fas fa-bell me-1"></i> {{ g.translate('practice_reminders', 'Practice Reminders') }}
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/belief-change">
-                                <i class="fas fa-sync-alt me-1"></i> {{ g.translate('belief_change', 'Belief Change') }}
-                            </a>
-                        </li>
-                        
-                        <!-- Mobile-only authentication options -->
-                        <li class="nav-item d-lg-none border-top mt-3 pt-2">
-                            {% if current_user.is_authenticated %}
-                            <a class="nav-link" href="/profile">
-                                <i class="fas fa-id-card me-1"></i> {{ g.translate('profile', 'Profile') }}
-                            </a>
-                            </li>
-                            <li class="nav-item d-lg-none">
-                            <a class="nav-link" href="{{ url_for('replit_auth.logout') }}">
-                                <i class="fas fa-sign-out-alt me-1"></i> {{ g.translate('logout', 'Logout') }}
-                            </a>
-                            {% else %}
-                            <a class="nav-link" href="{{ url_for('login_check') }}">
-                                <i class="fas fa-sign-in-alt me-1"></i> {{ g.translate('login', 'Login') }}
-                            </a>
-                            {% endif %}
                         </li>
                     </ul>
 
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center ms-lg-4">
                         <!-- Language Dropdown -->
                         <div class="dropdown me-2">
-                            <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle rounded-pill" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-globe me-1"></i> {{ g.language|upper }}
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-light" aria-labelledby="languageDropdown">
                                 {% for code, name in g.languages.items() %}
                                 <li>
                                     <a class="dropdown-item {% if g.language == code %}active{% endif %}" href="{{ url_for('set_language', lang_code=code) }}">
@@ -114,8 +112,8 @@
                         
                         <!-- Authentication -->
                         {% if current_user.is_authenticated %}
-                        <div class="dropdown me-2">
-                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-sm btn-primary dropdown-toggle rounded-pill" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 {% if current_user.profile_image_url %}
                                 <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle me-1" style="width: 24px; height: 24px; object-fit: cover;">
                                 {% else %}
@@ -123,7 +121,7 @@
                                 {% endif %}
                                 {% if current_user.first_name %}{{ current_user.first_name }}{% else %}{{ g.translate('account', 'Account') }}{% endif %}
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-light" aria-labelledby="userDropdown">
                                 <li>
                                     <a class="dropdown-item" href="/profile">
                                         <i class="fas fa-id-card me-2"></i> {{ g.translate('profile', 'Profile') }}
@@ -138,13 +136,14 @@
                             </ul>
                         </div>
                         {% else %}
-                        <a href="{{ url_for('login_check') }}" class="btn btn-sm btn-primary me-2">
+                        <a href="{{ url_for('login_check') }}" class="btn btn-primary btn-sm rounded-pill me-2 px-3">
                             <i class="fas fa-sign-in-alt me-1"></i> {{ g.translate('login', 'Login') }}
                         </a>
                         {% endif %}
                         
-                        <div class="badge bg-dark-subtle text-primary-emphasis px-3 py-2">
-                            <i class="fas fa-code me-1"></i> MVP Version
+                        <!-- Version badge with lighter style -->
+                        <div class="badge bg-light text-primary-emphasis px-3 py-2 d-none d-md-block">
+                            <i class="fas fa-code me-1"></i> MVP
                         </div>
                     </div>
                 </div>
