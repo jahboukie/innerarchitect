@@ -14,7 +14,14 @@ from models import (
 )
 from database import db
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Maximum number of data points to return for charts
+# Get module-specific logger
+logger = get_logger('progress_tracker')
+
 MAX_DATA_POINTS = 50
 
 def add_technique_rating(session_id, technique, rating, notes=None, situation=None, user_id=None):
@@ -52,11 +59,11 @@ def add_technique_rating(session_id, technique, rating, notes=None, situation=No
         update_technique_stats(session_id, technique, normalized_rating)
         
         db.session.commit()
-        logging.info(f"Added rating {normalized_rating} for {technique}")
+        info(f"Added rating {normalized_rating} for {technique}")
         return True
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error adding technique rating: {str(e)}")
+        error(f"Error adding technique rating: {str(e)}")
         return False
 
 def update_technique_stats(session_id, technique, rating=None):
@@ -103,7 +110,7 @@ def update_technique_stats(session_id, technique, rating=None):
         return stats
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error updating technique stats: {str(e)}")
+        error(f"Error updating technique stats: {str(e)}")
         return None
 
 def get_technique_usage(session_id):
@@ -150,7 +157,7 @@ def get_technique_usage(session_id):
         
         return result
     except Exception as e:
-        logging.error(f"Error getting technique usage: {str(e)}")
+        error(f"Error getting technique usage: {str(e)}")
         return []
 
 def get_technique_ratings(session_id, technique=None, limit=MAX_DATA_POINTS):
@@ -187,7 +194,7 @@ def get_technique_ratings(session_id, technique=None, limit=MAX_DATA_POINTS):
         
         return result
     except Exception as e:
-        logging.error(f"Error getting technique ratings: {str(e)}")
+        error(f"Error getting technique ratings: {str(e)}")
         return []
 
 def get_chat_history_with_techniques(session_id, limit=MAX_DATA_POINTS):
@@ -220,7 +227,7 @@ def get_chat_history_with_techniques(session_id, limit=MAX_DATA_POINTS):
         
         return result
     except Exception as e:
-        logging.error(f"Error getting chat history: {str(e)}")
+        error(f"Error getting chat history: {str(e)}")
         return []
 
 def get_progress_summary(session_id):
@@ -304,7 +311,7 @@ def get_progress_summary(session_id):
             'techniques_tried': len(technique_stats)
         }
     except Exception as e:
-        logging.error(f"Error getting progress summary: {str(e)}")
+        error(f"Error getting progress summary: {str(e)}")
         return {
             'chat_count': 0,
             'exercises_started': 0,

@@ -14,7 +14,14 @@ from datetime import datetime
 # External OpenAI API for speech processing
 from openai import OpenAI
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Initialize OpenAI client
+# Get module-specific logger
+logger = get_logger('voice_interactions')
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
@@ -275,7 +282,7 @@ def transcribe_audio(audio_data):
         str: Transcribed text or None if transcription failed
     """
     if not openai_client:
-        logging.warning("OpenAI client not initialized, cannot transcribe audio")
+        warning("OpenAI client not initialized, cannot transcribe audio")
         return None
     
     try:
@@ -301,7 +308,7 @@ def transcribe_audio(audio_data):
         return response.text
     
     except Exception as e:
-        logging.error(f"Error transcribing audio: {e}")
+        error(f"Error transcribing audio: {e}")
         # Clean up temp file if it exists
         if 'temp_filename' in locals() and os.path.exists(temp_filename):
             os.remove(temp_filename)
@@ -320,7 +327,7 @@ def analyze_vocal_delivery(audio_data, transcript, exercise=None):
         dict: Analysis results including metrics and feedback
     """
     if not openai_client:
-        logging.warning("OpenAI client not initialized, cannot analyze vocal delivery")
+        warning("OpenAI client not initialized, cannot analyze vocal delivery")
         return generate_fallback_analysis(transcript, exercise)
     
     try:
@@ -383,7 +390,7 @@ Respond with JSON in this format:
         return analysis
         
     except Exception as e:
-        logging.error(f"Error analyzing vocal delivery: {e}")
+        error(f"Error analyzing vocal delivery: {e}")
         return generate_fallback_analysis(transcript, exercise)
 
 def generate_fallback_analysis(transcript, exercise=None):
@@ -448,7 +455,7 @@ def evaluate_technique_application(transcript, technique, exercise_type):
         dict: Evaluation results
     """
     if not openai_client:
-        logging.warning("OpenAI client not initialized, cannot evaluate technique application")
+        warning("OpenAI client not initialized, cannot evaluate technique application")
         return {
             "application_score": 7,
             "feedback": "Your application of the technique shows understanding, but additional practice would enhance effectiveness."
@@ -490,7 +497,7 @@ Respond with JSON in this format:
         return evaluation
         
     except Exception as e:
-        logging.error(f"Error evaluating technique application: {e}")
+        error(f"Error evaluating technique application: {e}")
         return {
             "application_score": 7,
             "strengths": ["You made an attempt to apply the technique"],

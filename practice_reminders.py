@@ -10,7 +10,14 @@ from datetime import datetime, timedelta, time
 import uuid
 import json
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Reminder frequencies
+# Get module-specific logger
+logger = get_logger('practice_reminders')
+
 REMINDER_FREQUENCIES = {
     'daily': 'Daily',
     'every_other_day': 'Every Other Day',
@@ -103,7 +110,7 @@ def create_reminder(user_id, session_id, title, description, reminder_type,
     """
     # Validate inputs
     if not title or not reminder_type or not frequency:
-        logging.error("Missing required fields for reminder creation")
+        error("Missing required fields for reminder creation")
         return None
     
     # Set defaults for time preferences if not provided

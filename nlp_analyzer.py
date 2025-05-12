@@ -8,7 +8,14 @@ import logging
 from openai import OpenAI
 import os
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Initialize OpenAI client
+# Get module-specific logger
+logger = get_logger('nlp_analyzer')
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
@@ -34,7 +41,7 @@ def recommend_technique(message, mood):
         dict: Contains recommended technique, confidence score, and explanation
     """
     if not OPENAI_API_KEY or not openai_client:
-        logging.warning("OpenAI API key is missing, cannot recommend technique")
+        warning("OpenAI API key is missing, cannot recommend technique")
         return {
             "technique": "reframing",  # Default technique
             "confidence": 0.5,
@@ -73,7 +80,7 @@ def recommend_technique(message, mood):
         
         # Parse the recommendation
         recommendation = response.choices[0].message.content
-        logging.debug(f"Technique recommendation: {recommendation}")
+        debug(f"Technique recommendation: {recommendation}")
         
         # Convert string to dictionary if needed
         if isinstance(recommendation, str):
@@ -83,7 +90,7 @@ def recommend_technique(message, mood):
         return recommendation
         
     except Exception as e:
-        logging.error(f"Error recommending technique: {str(e)}")
+        error(f"Error recommending technique: {str(e)}")
         return {
             "technique": "reframing",  # Default technique
             "confidence": 0.5,

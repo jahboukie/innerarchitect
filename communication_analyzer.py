@@ -11,7 +11,14 @@ from openai import OpenAI
 import os
 import json
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Initialize OpenAI client
+# Get module-specific logger
+logger = get_logger('communication_analyzer')
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
@@ -300,7 +307,7 @@ def analyze_communication_style(text, session_history=None, use_gpt=True):
         try:
             return analyze_with_gpt(text, session_history)
         except Exception as e:
-            logging.error(f"Error using GPT for communication analysis: {e}")
+            error(f"Error using GPT for communication analysis: {e}")
             # Fall back to rule-based analysis
     
     # Perform rule-based analysis as a fallback
@@ -451,7 +458,7 @@ If there's no clear secondary style, omit that field. Confidence should be betwe
         return result
     
     except Exception as e:
-        logging.error(f"Error in GPT communication analysis: {e}")
+        error(f"Error in GPT communication analysis: {e}")
         # Fall back to rule-based analysis
         return analyze_with_rules(text)
 

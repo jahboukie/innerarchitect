@@ -15,7 +15,14 @@ import os
 # External OpenAI API for cognitive analysis
 from openai import OpenAI
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Initialize OpenAI client
+# Get module-specific logger
+logger = get_logger('belief_change')
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
@@ -415,7 +422,7 @@ Respond with only the category identifier (e.g., "self" or "capability").
             return 'self'
             
     except Exception as e:
-        logging.error(f"Error categorizing belief: {e}")
+        error(f"Error categorizing belief: {e}")
         return 'self'  # Default to self if there's an error
 
 
@@ -491,7 +498,7 @@ Respond with JSON in this format:
         return analysis
         
     except Exception as e:
-        logging.error(f"Error analyzing belief: {e}")
+        error(f"Error analyzing belief: {e}")
         return {
             'category': categorize_belief(belief_text),
             'patterns': [
@@ -572,7 +579,7 @@ Format each suggestion as a complete thought that can stand alone. Make the refr
         return suggestions
         
     except Exception as e:
-        logging.error(f"Error generating reframe suggestions: {e}")
+        error(f"Error generating reframe suggestions: {e}")
         return [
             f"Instead of '{belief_text}', consider 'I am learning and growing in this area.'",
             f"What if you viewed this as an opportunity to develop rather than a fixed limitation?",
@@ -650,7 +657,7 @@ Format as a list of questions, each challenging a different aspect of the belief
         return questions
         
     except Exception as e:
-        logging.error(f"Error generating Meta Model questions: {e}")
+        error(f"Error generating Meta Model questions: {e}")
         return [
             f"What specifically makes you believe that {belief_text}?",
             f"How do you know this belief is true?",
@@ -732,7 +739,7 @@ Format as a list of clear action steps.
         return actions
         
     except Exception as e:
-        logging.error(f"Error generating action steps: {e}")
+        error(f"Error generating action steps: {e}")
         return [
             "Practice daily affirmations reinforcing this new belief",
             "Create a vision board with images representing this belief in action",

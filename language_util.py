@@ -13,7 +13,14 @@ from functools import lru_cache
 # External OpenAI API for translations and language detection
 from openai import OpenAI
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Initialize OpenAI client
+# Get module-specific logger
+logger = get_logger('language_util')
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
@@ -104,7 +111,7 @@ Language code:"""
         return DEFAULT_LANGUAGE
         
     except Exception as e:
-        logging.error(f"Error detecting language: {e}")
+        error(f"Error detecting language: {e}")
         return DEFAULT_LANGUAGE
 
 
@@ -173,7 +180,7 @@ Translation:"""
         return translated_text
         
     except Exception as e:
-        logging.error(f"Error translating text: {e}")
+        error(f"Error translating text: {e}")
         return text
 
 
@@ -209,7 +216,7 @@ def load_translations(lang_code):
         return {}
         
     except Exception as e:
-        logging.error(f"Error loading translations for {lang_code}: {e}")
+        error(f"Error loading translations for {lang_code}: {e}")
         _translations_cache[lang_code] = {}
         return {}
 

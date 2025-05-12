@@ -1,3 +1,8 @@
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+# Get module-specific logger
+logger = get_logger('nlp_techniques')
+
 """
 NLP Techniques module for The Inner Architect
 

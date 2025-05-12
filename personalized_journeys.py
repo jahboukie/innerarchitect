@@ -15,7 +15,14 @@ from nlp_techniques import get_technique_details, get_all_technique_names
 from nlp_exercises import get_exercises_by_technique
 from communication_analyzer import get_all_communication_styles
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Journey types with specific focus areas
+# Get module-specific logger
+logger = get_logger('personalized_journeys')
+
 JOURNEY_TYPES = {
     'communication_improvement': {
         'name': 'Communication Improvement',
@@ -195,7 +202,7 @@ def create_personalized_journey(
     """
     # Validate inputs
     if journey_type not in JOURNEY_TYPES:
-        logging.error(f"Invalid journey type: {journey_type}")
+        error(f"Invalid journey type: {journey_type}")
         return None
         
     if intensity not in ['light', 'moderate', 'intensive']:

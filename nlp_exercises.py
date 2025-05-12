@@ -11,7 +11,14 @@ from datetime import datetime
 from models import NLPExercise, NLPExerciseProgress
 from database import db
 
+from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+
+
 # Default exercises for each NLP technique
+# Get module-specific logger
+logger = get_logger('nlp_exercises')
+
 DEFAULT_EXERCISES = [
     # Reframing exercises
     {
@@ -393,7 +400,7 @@ def initialize_default_exercises():
         # Check if we already have exercises
         existing_count = NLPExercise.query.count()
         if existing_count > 0:
-            logging.info(f"Database already contains {existing_count} exercises, skipping initialization")
+            info(f"Database already contains {existing_count} exercises, skipping initialization")
             return
         
         # Add default exercises
@@ -402,10 +409,10 @@ def initialize_default_exercises():
             db.session.add(exercise)
         
         db.session.commit()
-        logging.info(f"Successfully added {len(DEFAULT_EXERCISES)} default NLP exercises")
+        info(f"Successfully added {len(DEFAULT_EXERCISES)} default NLP exercises")
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error initializing default exercises: {str(e)}")
+        error(f"Error initializing default exercises: {str(e)}")
 
 def get_exercises_by_technique(technique):
     """
@@ -421,7 +428,7 @@ def get_exercises_by_technique(technique):
         exercises = NLPExercise.query.filter_by(technique=technique).all()
         return exercises
     except Exception as e:
-        logging.error(f"Error retrieving exercises for {technique}: {str(e)}")
+        error(f"Error retrieving exercises for {technique}: {str(e)}")
         return []
 
 def get_exercise_by_id(exercise_id):
@@ -437,7 +444,7 @@ def get_exercise_by_id(exercise_id):
     try:
         return NLPExercise.query.get(exercise_id)
     except Exception as e:
-        logging.error(f"Error retrieving exercise {exercise_id}: {str(e)}")
+        error(f"Error retrieving exercise {exercise_id}: {str(e)}")
         return None
 
 def start_exercise(exercise_id, session_id, user_id=None):
@@ -456,7 +463,7 @@ def start_exercise(exercise_id, session_id, user_id=None):
         # Check if the exercise exists
         exercise = NLPExercise.query.get(exercise_id)
         if not exercise:
-            logging.error(f"Exercise {exercise_id} not found")
+            error(f"Exercise {exercise_id} not found")
             return None
         
         # Create a progress record
@@ -471,12 +478,12 @@ def start_exercise(exercise_id, session_id, user_id=None):
         
         db.session.add(progress)
         db.session.commit()
-        logging.info(f"Started exercise {exercise_id} for session {session_id}")
+        info(f"Started exercise {exercise_id} for session {session_id}")
         
         return progress
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error starting exercise {exercise_id}: {str(e)}")
+        error(f"Error starting exercise {exercise_id}: {str(e)}")
         return None
 
 def update_exercise_progress(progress_id, current_step, notes=None, completed=False):
@@ -495,7 +502,7 @@ def update_exercise_progress(progress_id, current_step, notes=None, completed=Fa
     try:
         progress = NLPExerciseProgress.query.get(progress_id)
         if not progress:
-            logging.error(f"Progress record {progress_id} not found")
+            error(f"Progress record {progress_id} not found")
             return False
         
         progress.current_step = current_step
@@ -507,11 +514,11 @@ def update_exercise_progress(progress_id, current_step, notes=None, completed=Fa
             progress.completed_at = datetime.utcnow()
         
         db.session.commit()
-        logging.info(f"Updated progress {progress_id} to step {current_step}, completed: {completed}")
+        info(f"Updated progress {progress_id} to step {current_step}, completed: {completed}")
         return True
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error updating exercise progress {progress_id}: {str(e)}")
+        error(f"Error updating exercise progress {progress_id}: {str(e)}")
         return False
 
 def get_exercise_progress(session_id, exercise_id=None):
@@ -532,5 +539,5 @@ def get_exercise_progress(session_id, exercise_id=None):
         
         return query.all()
     except Exception as e:
-        logging.error(f"Error retrieving exercise progress for session {session_id}: {str(e)}")
+        error(f"Error retrieving exercise progress for session {session_id}: {str(e)}")
         return []
