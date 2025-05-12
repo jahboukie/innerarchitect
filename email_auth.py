@@ -59,8 +59,23 @@ def register_user(email, password, first_name=None, last_name=None):
         user.verification_token = verification_token
         user.verification_token_expiry = datetime.utcnow() + timedelta(hours=24)
         
-        # Save to database
+        # Save user to database
         db.session.add(user)
+        db.session.flush()  # This assigns the ID but doesn't commit
+        
+        # Create initial usage quota with default type
+        from models import UsageQuota
+        usage_quota = UsageQuota()
+        usage_quota.user_id = user_id
+        usage_quota.quota_type = 'default'  # Set a default quota type
+        usage_quota.messages_used_today = 0
+        usage_quota.exercises_used_today = 0
+        usage_quota.analyses_used_this_month = 0
+        
+        # Save usage quota to database
+        db.session.add(usage_quota)
+        
+        # Now commit everything
         db.session.commit()
         
         logger.info(f"User registered successfully: {user_id}")
