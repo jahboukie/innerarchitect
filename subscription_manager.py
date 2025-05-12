@@ -12,11 +12,8 @@ from functools import wraps
 
 import stripe
 
-# Import Stripe error classes directly
-from stripe.error import (
-    CardError, RateLimitError, InvalidRequestError, 
-    AuthenticationError, APIConnectionError, StripeError
-)
+# We'll handle Stripe errors generically to avoid LSP issues
+# This is more future-proof against Stripe library updates
 from flask import flash, redirect, url_for, session
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -637,40 +634,36 @@ def create_stripe_checkout_session(user_id, plan_name):
             if subscription:
                 subscription.stripe_customer_id = stripe_customer_id
                 db.session.commit()
-        except CardError as e:
-            # Since it's a POST request, a card error means the customer's card was declined
-            error(f"Card error creating Stripe customer: {e.error.message}")
-            flash(f"Payment error: {e.error.message}", "danger")
-            return None
-        except stripe_error.RateLimitError as e:
-            # Too many requests made to the API too quickly
-            error(f"Rate limit error creating Stripe customer: {str(e)}")
-            flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
-            return None
-        except stripe_error.InvalidRequestError as e:
-            # Invalid parameters were supplied to Stripe's API
-            error(f"Invalid request error creating Stripe customer: {str(e)}")
-            flash("There was an error with your payment information. Please try again.", "danger")
-            return None
-        except stripe_error.AuthenticationError as e:
-            # Authentication with Stripe's API failed
-            error(f"Authentication error with Stripe: {str(e)}")
-            flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
-            return None
-        except stripe_error.APIConnectionError as e:
-            # Network communication with Stripe failed
-            error(f"Network error connecting to Stripe: {str(e)}")
-            flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
-            return None
-        except stripe_error.StripeError as e:
-            # Generic error
-            error(f"Stripe error creating customer: {str(e)}")
-            flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
-            return None
         except Exception as e:
-            # Non-Stripe error
-            error(f"Unexpected error creating Stripe customer: {str(e)}")
-            flash("An unexpected error occurred. Please try again later.", "danger")
+            # Handle all Stripe exceptions in a generic way
+            error_message = str(e)
+            error_type = type(e).__name__
+            error(f"Stripe error ({error_type}) creating customer: {error_message}")
+            
+            # Customize user feedback based on error type
+            if "CardError" in error_type:
+                # Card error (declined, etc.)
+                try:
+                    card_message = getattr(e, 'error', {}).get('message', error_message)
+                    flash(f"Payment error: {card_message}", "danger")
+                except:
+                    flash("Your card was declined or there was an issue with your payment method. Please try again with a different card.", "danger")
+            elif "RateLimitError" in error_type:
+                # Too many requests
+                flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
+            elif "InvalidRequestError" in error_type:
+                # Invalid parameters
+                flash("There was an error with your payment information. Please try again.", "danger")
+            elif "AuthenticationError" in error_type:
+                # Authentication with Stripe's API failed
+                flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
+            elif "APIConnectionError" in error_type:
+                # Network error
+                flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
+            else:
+                # Generic error
+                flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
+            
             return None
     
     # Get the domain for success and cancel URLs
@@ -707,36 +700,39 @@ def create_stripe_checkout_session(user_id, plan_name):
             }
         )
         return checkout_session.url
-    except stripe_error.CardError as e:
-        error(f"Card error creating checkout session: {e.error.message}")
-        flash(f"Payment error: {e.error.message}", "danger")
-        return None
-    except stripe_error.RateLimitError as e:
-        error(f"Rate limit error creating checkout session: {str(e)}")
-        flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
-        return None
-    except stripe_error.InvalidRequestError as e:
-        error(f"Invalid request error creating checkout session: {str(e)}")
-        if "price_id" in str(e).lower():
-            flash("This subscription plan is currently unavailable. Please contact support.", "danger")
-        else:
-            flash("There was an error processing your request. Please try again.", "danger")
-        return None
-    except stripe_error.AuthenticationError as e:
-        error(f"Authentication error with Stripe: {str(e)}")
-        flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
-        return None
-    except stripe_error.APIConnectionError as e:
-        error(f"Network error connecting to Stripe: {str(e)}")
-        flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
-        return None
-    except stripe_error.StripeError as e:
-        error(f"Stripe error creating checkout session: {str(e)}")
-        flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
-        return None
     except Exception as e:
-        error(f"Unexpected error creating checkout session: {str(e)}")
-        flash("An unexpected error occurred. Please try again later.", "danger")
+        # Handle all Stripe exceptions in a generic way
+        error_message = str(e)
+        error_type = type(e).__name__
+        error(f"Stripe error ({error_type}) creating checkout session: {error_message}")
+        
+        # Customize user feedback based on error type
+        if "CardError" in error_type:
+            # Card error (declined, etc.)
+            try:
+                card_message = getattr(e, 'error', {}).get('message', error_message)
+                flash(f"Payment error: {card_message}", "danger")
+            except:
+                flash("Your card was declined or there was an issue with your payment method. Please try again with a different card.", "danger")
+        elif "RateLimitError" in error_type:
+            # Too many requests
+            flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
+        elif "InvalidRequestError" in error_type:
+            # Invalid parameters
+            if "price" in error_message.lower():
+                flash("This subscription plan is currently unavailable. Please contact support.", "danger")
+            else:
+                flash("There was an error with your payment information. Please try again.", "danger")
+        elif "AuthenticationError" in error_type:
+            # Authentication with Stripe's API failed
+            flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
+        elif "APIConnectionError" in error_type:
+            # Network error
+            flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
+        else:
+            # Generic error
+            flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
+        
         return None
 
 def handle_checkout_success(checkout_session_id):
@@ -802,21 +798,22 @@ def handle_checkout_success(checkout_session_id):
             cancel_at_period_end = stripe_subscription.get('cancel_at_period_end', False)
             subscription.cancel_at_period_end = cancel_at_period_end
             
-        except stripe_error.InvalidRequestError as e:
-            error(f"Invalid request error retrieving subscription details: {str(e)}")
-            # Still allow the subscription to be created even if details can't be fetched
         except Exception as e:
-            error(f"Error retrieving subscription details: {str(e)}")
+            # Handle all exceptions in a generic way
+            error_message = str(e)
+            error_type = type(e).__name__
+            error(f"Error ({error_type}) retrieving subscription details: {error_message}")
+            # Still allow the subscription to be created even if details can't be fetched
         
         db.session.commit()
         info(f"Successfully processed subscription for user {user_id} with plan {plan_name}")
         return True
         
-    except stripe_error.InvalidRequestError as e:
-        error(f"Invalid request error handling checkout success: {str(e)}")
-        return False
     except Exception as e:
-        error(f"Error handling checkout success: {str(e)}")
+        # Handle all exceptions in a generic way
+        error_message = str(e)
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) handling checkout success: {error_message}")
         return False
 
 def cancel_subscription(user_id):
@@ -877,7 +874,17 @@ def handle_webhook_event(event):
             info(f"Received unhandled webhook event: {event_type}")
             return True
     except Exception as e:
-        error(f"Error handling webhook event {event_type}: {str(e)}")
+        # Handle all exceptions in a generic way
+        error_message = str(e)
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) handling webhook event {event_type}: {error_message}")
+        
+        # Add more detailed logging for troubleshooting
+        if event and isinstance(event, dict):
+            # Log the event ID but not the full event content for security
+            event_id = event.get('id', 'unknown')
+            error(f"Failed webhook event ID: {event_id}")
+        
         return False
 
 def _handle_subscription_created(event):
