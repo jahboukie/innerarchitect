@@ -257,11 +257,10 @@ def get_subscription_details(user_id):
     
     # If no subscription record exists, create one with the free plan
     if not subscription:
-        subscription = Subscription(
-            user_id=user_id,
-            plan_name='free',
-            status='active'
-        )
+        subscription = Subscription()
+        subscription.user_id = user_id
+        subscription.plan_name = 'free'
+        subscription.status = 'active'
         db.session.add(subscription)
         db.session.commit()
     
@@ -360,11 +359,15 @@ def get_usage_quota(user_id=None, browser_session_id=None):
             return usage
     
     # If no quota record found, create a new one
-    usage = UsageQuota(
-        user_id=user_id,
-        session_id=browser_session_id,
-        quota_type='daily_messages'  # Default quota type
-    )
+    usage = UsageQuota()
+    usage.user_id = user_id
+    usage.browser_session_id = browser_session_id
+    
+    # Initialize with default values
+    usage.messages_used_today = 0
+    usage.exercises_used_today = 0
+    usage.analyses_used_this_month = 0
+    
     db.session.add(usage)
     db.session.commit()
     
@@ -671,7 +674,9 @@ def create_stripe_checkout_session(user_id, plan_name):
     if os.environ.get('REPLIT_DEPLOYMENT'):
         domain = os.environ.get('REPLIT_DEV_DOMAIN')
     elif os.environ.get('REPLIT_DOMAINS'):
-        domain = os.environ.get('REPLIT_DOMAINS').split(',')[0]
+        replit_domains = os.environ.get('REPLIT_DOMAINS')
+        if replit_domains:  # Ensure it's not None before splitting
+            domain = replit_domains.split(',')[0]
     
     # Default to localhost if no domain found
     if not domain:

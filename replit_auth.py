@@ -42,14 +42,14 @@ class UserSessionStorage(BaseStorage):
             The token or None if not found
         """
         try:
-            token = db.session.query(OAuth).filter_by(
+            oauth_entry = db.session.query(OAuth).filter_by(
                 user_id=current_user.get_id(),
                 browser_session_key=g.browser_session_key,
                 provider=blueprint.name,
-            ).one().token
+            ).one()
+            return oauth_entry.token if oauth_entry else None
         except NoResultFound:
-            token = None
-        return token
+            return None
 
     def set(self, blueprint, token):
         db.session.query(OAuth).filter_by(
