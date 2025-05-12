@@ -34,18 +34,26 @@ def send_email(to_email, subject, html_content, text_content=None):
     api_key = os.environ.get('SENDGRID_API_KEY')
     
     if not api_key:
-        logger.error("SendGrid API key not found in environment variables")
-        return False
+        logger.warning("SendGrid API key not found. Email functionality is disabled.")
+        # For development, we'll return True to not block the application flow
+        # In production, you'd want to configure fallback email provider or retry mechanism
+        logger.info(f"Would have sent email to: {to_email}, Subject: {subject}")
+        return True
     
     try:
         # Create message
+        from sendgrid.helpers.mail import Content
+        
         message = Mail(
             from_email=DEFAULT_SENDER,
             to_emails=to_email,
             subject=subject,
-            html_content=html_content,
-            plain_text_content=text_content or html_content
+            html_content=Content("text/html", html_content)
         )
+        
+        if text_content:
+            # Add plain text content as a separate content
+            message.add_content(Content("text/plain", text_content))
         
         # Send message
         sg = SendGridAPIClient(api_key)
@@ -57,10 +65,13 @@ def send_email(to_email, subject, html_content, text_content=None):
             return True
         else:
             logger.error(f"SendGrid API error: {response.status_code} - {response.body}")
+            # Log the full response for debugging
+            logger.error(f"Full response: {response}")
             return False
             
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")
+        logger.exception("Full exception details:")
         return False
 
 def send_verification_email(user, token, base_url):

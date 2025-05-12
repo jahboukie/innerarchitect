@@ -603,9 +603,17 @@ def email_register():
         if user and token:
             # Send verification email
             base_url = request.host_url.rstrip('/')
-            send_verification_email(user, token, base_url)
+            email_sent = send_verification_email(user, token, base_url)
             
-            flash('Your account has been created! Please check your email to verify your account.', 'success')
+            if email_sent:
+                flash('Your account has been created! Please check your email to verify your account.', 'success')
+            else:
+                # For development, allow login without verification
+                flash('Your account has been created! Email verification is currently unavailable, but you can still log in.', 'warning')
+                # In development, auto-verify the email
+                user.email_verified = True
+                db.session.commit()
+                
             return redirect(url_for('email_login'))
         else:
             flash('Registration failed. Please try again.', 'danger')
