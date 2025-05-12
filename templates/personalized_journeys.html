@@ -7,7 +7,7 @@
     <div class="row">
         <div class="col-lg-10 mx-auto">
             <!-- Introduction -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h2 class="card-title mb-3">Personalized NLP Journeys</h2>
                     
@@ -15,19 +15,25 @@
                         Embark on a guided learning experience tailored to your unique communication style and personal goals.
                     </p>
                     
-                    <div class="alert alert-info" role="alert">
-                        <i class="fas fa-lightbulb me-2"></i>
-                        Personalized Journeys combine specific NLP techniques, exercises, and milestones designed to help you
-                        achieve your communication goals through a structured learning path.
+                    <div class="card border-0 p-3 mb-4" style="background: var(--subtle-gradient);">
+                        <div class="d-flex">
+                            <div class="feature-icon flex-shrink-0 me-3" style="margin: 0; width: 48px; height: 48px;">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div>
+                                Personalized Journeys combine specific NLP techniques, exercises, and milestones designed to help you
+                                achieve your communication goals through a structured learning path.
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="journey-controls" class="d-flex justify-content-between align-items-center mt-4">
-                        <button id="create-journey-btn" class="btn btn-primary">
+                        <button id="create-journey-btn" class="btn btn-primary rounded-pill">
                             <i class="fas fa-plus-circle me-2"></i>Create New Journey
                         </button>
                         
                         <div class="btn-group" role="group">
-                            <button id="refresh-journeys-btn" class="btn btn-outline-secondary">
+                            <button id="refresh-journeys-btn" class="btn btn-outline-secondary rounded-pill">
                                 <i class="fas fa-sync me-2"></i>Refresh
                             </button>
                         </div>
