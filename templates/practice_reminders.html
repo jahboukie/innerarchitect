@@ -548,15 +548,27 @@
                 remindersContainer.appendChild(reminderCard);
             });
             
+            // Add event listeners after rendering content
+            attachReminderEventListeners();
+        }
+        
+        // Function to attach event listeners to reminder elements
+        function attachReminderEventListeners() {
             // Add event listeners to active toggles
             document.querySelectorAll('.reminder-active-toggle').forEach(toggle => {
-                toggle.addEventListener('change', function() {
+                // Remove existing listeners to prevent duplicates
+                const newToggle = toggle.cloneNode(true);
+                toggle.parentNode.replaceChild(newToggle, toggle);
+                
+                newToggle.addEventListener('change', function() {
                     const reminderId = this.dataset.reminderId;
                     const active = this.checked;
                     
                     // Update label
                     const label = this.nextElementSibling;
                     label.textContent = active ? 'Active' : 'Inactive';
+                    
+                    console.log(`Toggling reminder ${reminderId} to ${active ? 'active' : 'inactive'}`);
                     
                     // Update in API
                     updateReminderActive(reminderId, active);
@@ -565,7 +577,11 @@
             
             // Add event listeners to delete buttons
             document.querySelectorAll('.delete-reminder-btn').forEach(button => {
-                button.addEventListener('click', function() {
+                // Remove existing listeners to prevent duplicates
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                newButton.addEventListener('click', function() {
                     const reminderId = this.dataset.reminderId;
                     const reminderTitle = this.dataset.reminderTitle;
                     
@@ -581,6 +597,8 @@
         
         // Update reminder active status
         function updateReminderActive(reminderId, active) {
+            console.log(`Sending update to API for reminder ${reminderId}, active=${active}`);
+            
             fetch(`/api/reminders/${reminderId}`, {
                 method: 'PUT',
                 headers: {
@@ -590,8 +608,12 @@
                     active: active
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Update response:', data);
                 if (!data.success) {
                     console.error('Error updating reminder:', data.error);
                     
