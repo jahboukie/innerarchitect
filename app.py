@@ -111,6 +111,17 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 from database import db
 db.init_app(app)
 
+# Run database migrations
+with app.app_context():
+    # Create all tables defined in models
+    db.create_all()
+    logger.info("Created database tables")
+    
+    # Import and run the database schema update
+    from db_init import update_database_schema
+    update_database_schema()
+    logger.info("Updated database schema")
+
 # Initialize login manager and replit auth after db init
 from replit_auth import make_replit_blueprint, require_login
 
