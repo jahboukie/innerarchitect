@@ -11,7 +11,12 @@ from datetime import datetime, timezone
 from functools import wraps
 
 import stripe
-from stripe import error as stripe_error
+
+# Import Stripe error classes directly
+from stripe.error import (
+    CardError, RateLimitError, InvalidRequestError, 
+    AuthenticationError, APIConnectionError, StripeError
+)
 from flask import flash, redirect, url_for, session
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -632,7 +637,7 @@ def create_stripe_checkout_session(user_id, plan_name):
             if subscription:
                 subscription.stripe_customer_id = stripe_customer_id
                 db.session.commit()
-        except stripe_error.CardError as e:
+        except CardError as e:
             # Since it's a POST request, a card error means the customer's card was declined
             error(f"Card error creating Stripe customer: {e.error.message}")
             flash(f"Payment error: {e.error.message}", "danger")
