@@ -8,14 +8,15 @@ and language detection.
 import logging
 import json
 import os
+import time
 from functools import lru_cache
+from typing import Optional, Dict, Any, List, Union, Callable, TypeVar
 
 # External OpenAI API for translations and language detection
 from openai import OpenAI
+from openai.types.chat import ChatCompletion
 
 from logging_config import get_logger, info, error, debug, warning, critical, exception
-
-
 
 # Initialize OpenAI client
 # Get module-specific logger
@@ -23,6 +24,116 @@ logger = get_logger('language_util')
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# Default parameters for OpenAI API calls
+DEFAULT_MODEL = "gpt-4o"  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # seconds
+
+def safe_openai_call(
+    func: Callable, 
+    *args, 
+    retry_count: int = MAX_RETRIES, 
+    fallback_value: Any = None,
+    **kwargs
+) -> Any:
+    """
+    Safely execute an OpenAI API call with error handling and retries.
+    
+    Args:
+        func: The OpenAI function to call
+        *args: Positional arguments to pass to the function
+        retry_count: Number of retries on temporary errors
+        fallback_value: Value to return if all retries fail
+        **kwargs: Keyword arguments to pass to the function
+        
+    Returns:
+        The result of the API call or fallback_value if it fails
+    """
+    if not openai_client:
+        warning("OpenAI client not initialized - API key may be missing")
+        return fallback_value
+        
+    attempts = 0
+    last_error = None
+    
+    while attempts < retry_count:
+        try:
+            result = func(*args, **kwargs)
+            if attempts > 0:
+                info(f"OpenAI API call succeeded after {attempts+1} attempts")
+            return result
+            
+        except Exception as e:
+            error_type = type(e).__name__
+            attempts += 1
+            
+            # Determine if the error is retryable
+            retryable = "Timeout" in error_type or \
+                        "RateLimitError" in error_type or \
+                        "ServiceUnavailableError" in error_type or \
+                        "APIConnectionError" in error_type
+                        
+            if retryable and attempts < retry_count:
+                retry_delay = RETRY_DELAY * attempts  # Exponential backoff
+                warning(f"Retryable error on OpenAI API call ({error_type}): {str(e)}. Retrying in {retry_delay}s...")
+                time.sleep(retry_delay)
+            else:
+                # Non-retryable error or max retries reached
+                error_message = f"Error calling OpenAI API ({error_type}): {str(e)}"
+                if attempts == retry_count:
+                    error_message += f" after {attempts} retries"
+                error(error_message)
+                last_error = e
+                break
+                
+    # If we got here, all retries failed
+    if "AuthenticationError" in type(last_error).__name__:
+        critical("Authentication error with OpenAI API. Check your API key.")
+    
+    return fallback_value
+
+def safe_chat_completion(
+    messages: List[Dict[str, str]], 
+    model: str = DEFAULT_MODEL,
+    max_tokens: int = 1000, 
+    temperature: float = 0.7,
+    fallback_response: str = ""
+) -> str:
+    """
+    Safely execute a chat completion with the OpenAI API.
+    
+    Args:
+        messages: List of message dictionaries (role, content)
+        model: The model to use
+        max_tokens: Maximum number of tokens to generate
+        temperature: Sampling temperature
+        fallback_response: Response to return if the API call fails
+        
+    Returns:
+        The generated text or fallback_response if the call fails
+    """
+    if not openai_client:
+        warning("OpenAI client not initialized - API key may be missing")
+        return fallback_response
+    
+    # Define the closure function to be called by safe_openai_call
+    def execute_chat_completion():
+        completion = openai_client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        result = completion.choices[0].message.content
+        return result.strip() if result else fallback_response
+    
+    result = safe_openai_call(
+        execute_chat_completion,
+        fallback_value=fallback_response
+    )
+    
+    return result if result is not None else fallback_response
 
 # Supported languages
 SUPPORTED_LANGUAGES = {
@@ -80,39 +191,36 @@ def detect_language(text):
         # Default to English for now in this fallback
         return DEFAULT_LANGUAGE
     
-    try:
-        # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-        # Do not change this unless explicitly requested by the user
-        prompt = f"""Detect the language of the following text. Respond with only the ISO 639-1 language code (e.g., 'en' for English, 'es' for Spanish, etc.).
+    # Use the safe chat completion helper
+    prompt = f"""Detect the language of the following text. Respond with only the ISO 639-1 language code (e.g., 'en' for English, 'es' for Spanish, etc.).
 
 Text: "{text}"
 
 Language code:"""
-        
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a language detection specialist. Respond with only the ISO 639-1 language code."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=10
-        )
-        
-        lang_code = response.choices[0].message.content.strip().lower()
-        
-        # Extract the language code if it's wrapped in quotes or other characters
-        if "'" in lang_code or '"' in lang_code:
-            lang_code = ''.join(c for c in lang_code if c.isalpha())
-        
-        # Verify it's a supported language code, default to English if not
-        if lang_code in SUPPORTED_LANGUAGES:
-            return lang_code
-        
-        return DEFAULT_LANGUAGE
-        
-    except Exception as e:
-        error(f"Error detecting language: {e}")
-        return DEFAULT_LANGUAGE
+
+    messages = [
+        {"role": "system", "content": "You are a language detection specialist. Respond with only the ISO 639-1 language code."},
+        {"role": "user", "content": prompt}
+    ]
+    
+    # Use our safe chat completion function with appropriate parameters
+    lang_code = safe_chat_completion(
+        messages=messages,
+        model=DEFAULT_MODEL,
+        max_tokens=10,
+        temperature=0.3,  # Lower temperature for more deterministic output
+        fallback_response=DEFAULT_LANGUAGE
+    ).lower()
+    
+    # Extract the language code if it's wrapped in quotes or other characters
+    if "'" in lang_code or '"' in lang_code:
+        lang_code = ''.join(c for c in lang_code if c.isalpha())
+    
+    # Verify it's a supported language code, default to English if not
+    if lang_code in SUPPORTED_LANGUAGES:
+        return lang_code
+    
+    return DEFAULT_LANGUAGE
 
 
 def translate_text(text, target_lang='en', source_lang=None):
@@ -151,37 +259,36 @@ def translate_text(text, target_lang='en', source_lang=None):
         if source_lang == target_lang:
             return text
     
-    try:
-        # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-        # Do not change this unless explicitly requested by the user
-        prompt = f"""Translate the following text from {SUPPORTED_LANGUAGES.get(source_lang, source_lang)} to {SUPPORTED_LANGUAGES.get(target_lang, target_lang)}.
+    # Use safe chat completion for translation
+    prompt = f"""Translate the following text from {SUPPORTED_LANGUAGES.get(source_lang, source_lang)} to {SUPPORTED_LANGUAGES.get(target_lang, target_lang)}.
 Only provide the translated text with no additional explanations or notes.
 
 Text: "{text}"
 
 Translation:"""
-        
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are a professional translator. Provide only the translated text with no additional comments."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=1000
-        )
-        
-        translated_text = response.choices[0].message.content.strip()
-        
+    
+    messages = [
+        {"role": "system", "content": "You are a professional translator. Provide only the translated text with no additional comments."},
+        {"role": "user", "content": prompt}
+    ]
+    
+    # Use our safe chat completion function with appropriate parameters
+    translated_text = safe_chat_completion(
+        messages=messages,
+        model=DEFAULT_MODEL,
+        max_tokens=1000,
+        temperature=0.3,  # Lower temperature for more accurate translation
+        fallback_response=text  # Return original text if translation fails
+    )
+    
+    # If we got a valid response, clean it up
+    if translated_text and translated_text != text:
         # Remove quotes if they were added by the AI
         if (translated_text.startswith('"') and translated_text.endswith('"')) or \
            (translated_text.startswith("'") and translated_text.endswith("'")):
             translated_text = translated_text[1:-1]
-        
-        return translated_text
-        
-    except Exception as e:
-        error(f"Error translating text: {e}")
-        return text
+    
+    return translated_text
 
 
 @lru_cache(maxsize=8)
