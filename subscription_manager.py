@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from functools import wraps
 
 import stripe
+from stripe import error as stripe_error
 from flask import flash, redirect, url_for, session
 from flask_login import current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -631,32 +632,32 @@ def create_stripe_checkout_session(user_id, plan_name):
             if subscription:
                 subscription.stripe_customer_id = stripe_customer_id
                 db.session.commit()
-        except stripe.error.CardError as e:
+        except stripe_error.CardError as e:
             # Since it's a POST request, a card error means the customer's card was declined
             error(f"Card error creating Stripe customer: {e.error.message}")
             flash(f"Payment error: {e.error.message}", "danger")
             return None
-        except stripe.error.RateLimitError as e:
+        except stripe_error.RateLimitError as e:
             # Too many requests made to the API too quickly
             error(f"Rate limit error creating Stripe customer: {str(e)}")
             flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
             return None
-        except stripe.error.InvalidRequestError as e:
+        except stripe_error.InvalidRequestError as e:
             # Invalid parameters were supplied to Stripe's API
             error(f"Invalid request error creating Stripe customer: {str(e)}")
             flash("There was an error with your payment information. Please try again.", "danger")
             return None
-        except stripe.error.AuthenticationError as e:
+        except stripe_error.AuthenticationError as e:
             # Authentication with Stripe's API failed
             error(f"Authentication error with Stripe: {str(e)}")
             flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
             return None
-        except stripe.error.APIConnectionError as e:
+        except stripe_error.APIConnectionError as e:
             # Network communication with Stripe failed
             error(f"Network error connecting to Stripe: {str(e)}")
             flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
             return None
-        except stripe.error.StripeError as e:
+        except stripe_error.StripeError as e:
             # Generic error
             error(f"Stripe error creating customer: {str(e)}")
             flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
@@ -668,8 +669,18 @@ def create_stripe_checkout_session(user_id, plan_name):
             return None
     
     # Get the domain for success and cancel URLs
-    domain = os.environ.get('REPLIT_DEV_DOMAIN') if os.environ.get('REPLIT_DEPLOYMENT') else os.environ.get('REPLIT_DOMAINS', 'localhost').split(',')[0]
-    if not domain.startswith('http'):
+    domain = None
+    if os.environ.get('REPLIT_DEPLOYMENT'):
+        domain = os.environ.get('REPLIT_DEV_DOMAIN')
+    elif os.environ.get('REPLIT_DOMAINS'):
+        domain = os.environ.get('REPLIT_DOMAINS').split(',')[0]
+    
+    # Default to localhost if no domain found
+    if not domain:
+        domain = 'localhost:5000'
+        
+    # Ensure it has https:// prefix
+    if domain and not domain.startswith('http'):
         domain = f"https://{domain}"
     
     try:
@@ -691,8 +702,36 @@ def create_stripe_checkout_session(user_id, plan_name):
             }
         )
         return checkout_session.url
+    except stripe_error.CardError as e:
+        error(f"Card error creating checkout session: {e.error.message}")
+        flash(f"Payment error: {e.error.message}", "danger")
+        return None
+    except stripe_error.RateLimitError as e:
+        error(f"Rate limit error creating checkout session: {str(e)}")
+        flash("Our payment system is experiencing heavy load. Please try again in a few minutes.", "warning")
+        return None
+    except stripe_error.InvalidRequestError as e:
+        error(f"Invalid request error creating checkout session: {str(e)}")
+        if "price_id" in str(e).lower():
+            flash("This subscription plan is currently unavailable. Please contact support.", "danger")
+        else:
+            flash("There was an error processing your request. Please try again.", "danger")
+        return None
+    except stripe_error.AuthenticationError as e:
+        error(f"Authentication error with Stripe: {str(e)}")
+        flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
+        return None
+    except stripe_error.APIConnectionError as e:
+        error(f"Network error connecting to Stripe: {str(e)}")
+        flash("We're having trouble connecting to our payment provider. Please check your internet connection and try again.", "warning")
+        return None
+    except stripe_error.StripeError as e:
+        error(f"Stripe error creating checkout session: {str(e)}")
+        flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
+        return None
     except Exception as e:
-        error(f"Error creating checkout session: {str(e)}")
+        error(f"Unexpected error creating checkout session: {str(e)}")
+        flash("An unexpected error occurred. Please try again later.", "danger")
         return None
 
 def handle_checkout_success(checkout_session_id):
@@ -705,48 +744,72 @@ def handle_checkout_success(checkout_session_id):
     Returns:
         bool: Success or failure
     """
+    if not checkout_session_id:
+        error("Empty checkout session ID provided")
+        return False
+        
     try:
         # Retrieve the session
         checkout_session = stripe.checkout.Session.retrieve(checkout_session_id)
         
         # Get user ID and plan from metadata
-        user_id = checkout_session.metadata.get('user_id')
-        plan_name = checkout_session.metadata.get('plan_name')
+        metadata = checkout_session.get('metadata', {})
+        user_id = metadata.get('user_id') if metadata else None
+        plan_name = metadata.get('plan_name') if metadata else None
         
         if not user_id or not plan_name:
             error("Missing user_id or plan_name in checkout session metadata")
             return False
         
         # Get stripe subscription ID
-        subscription_id = checkout_session.subscription
+        subscription_id = checkout_session.get('subscription')
+        if not subscription_id:
+            error("No subscription ID found in checkout session")
+            return False
         
         # Get or create subscription record
         subscription = get_subscription(user_id)
         if not subscription:
-            subscription = Subscription(
-                user_id=user_id
-            )
+            # Create new subscription
+            subscription = Subscription()
+            subscription.user_id = user_id
             db.session.add(subscription)
         
         # Update subscription details
-        subscription.stripe_subscription_id = subscription_id
+        subscription.stripe_subscription_id = str(subscription_id)
         subscription.plan_name = plan_name
         subscription.status = 'active'
         
         # Get subscription period details
         try:
-            stripe_subscription = stripe.Subscription.retrieve(subscription_id)
-            current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start, tz=timezone.utc)
-            current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end, tz=timezone.utc)
+            stripe_subscription = stripe.Subscription.retrieve(str(subscription_id))
             
-            subscription.current_period_start = current_period_start
-            subscription.current_period_end = current_period_end
-            subscription.cancel_at_period_end = stripe_subscription.cancel_at_period_end
+            # Safely extract period data
+            current_period_start = stripe_subscription.get('current_period_start')
+            current_period_end = stripe_subscription.get('current_period_end')
+            
+            if current_period_start:
+                subscription.current_period_start = datetime.fromtimestamp(current_period_start, tz=timezone.utc)
+            
+            if current_period_end:
+                subscription.current_period_end = datetime.fromtimestamp(current_period_end, tz=timezone.utc)
+                
+            cancel_at_period_end = stripe_subscription.get('cancel_at_period_end', False)
+            subscription.cancel_at_period_end = cancel_at_period_end
+            
+        except stripe_error.InvalidRequestError as e:
+            error(f"Invalid request error retrieving subscription details: {str(e)}")
+            # Still allow the subscription to be created even if details can't be fetched
         except Exception as e:
             error(f"Error retrieving subscription details: {str(e)}")
         
         db.session.commit()
+        info(f"Successfully processed subscription for user {user_id} with plan {plan_name}")
         return True
+        
+    except stripe_error.InvalidRequestError as e:
+        error(f"Invalid request error handling checkout success: {str(e)}")
+        return False
     except Exception as e:
         error(f"Error handling checkout success: {str(e)}")
         return False
