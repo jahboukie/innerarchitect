@@ -204,7 +204,7 @@ def require_professional(f):
 app.register_blueprint(make_replit_blueprint(), url_prefix="/auth")
 
 # Import models
-from models import User, ChatHistory, JournalEntry, NLPExercise, NLPExerciseProgress, TechniqueEffectiveness, TechniqueUsageStats
+from models import User, ChatHistory, JournalEntry, NLPExercise, NLPExerciseProgress, TechniqueEffectiveness, TechniqueUsageStats, Subscription, UsageQuota
 
 # Create database tables
 with app.app_context():
