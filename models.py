@@ -191,14 +191,27 @@ class TechniqueUsageStats(db.Model):
 
 class UsageQuota(db.Model):
     """Model to track usage quotas for subscription limits."""
+    __tablename__ = 'usage_quota'
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
-    session_id = db.Column(db.String(64), nullable=True)
-    quota_type = db.Column(db.String(30), nullable=False)  # e.g., 'messages_per_day', 'exercises_per_week'
+    session_id = db.Column(db.String(64), nullable=True)  # Session ID for non-logged-in users
+    browser_session_id = db.Column(db.String(64), nullable=True)  # For backward compatibility
+    quota_type = db.Column(db.String(30), nullable=True)  # e.g., 'messages_per_day', 'exercises_per_week'
     usage_count = db.Column(db.Integer, default=0)
+    
+    # Fields used in subscription_manager.py
+    messages_used_today = db.Column(db.Integer, default=0)
+    exercises_used_today = db.Column(db.Integer, default=0)
+    analyses_used_this_month = db.Column(db.Integer, default=0)
+    last_reset_date = db.Column(db.DateTime, default=datetime.utcnow)
+    last_monthly_reset_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # For specific quota periods
     date = db.Column(db.Date, nullable=True, index=True)  # For daily quotas
     week_start = db.Column(db.Date, nullable=True, index=True)  # For weekly quotas
     month_start = db.Column(db.Date, nullable=True, index=True)  # For monthly quotas
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

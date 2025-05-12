@@ -229,7 +229,8 @@ def get_usage_quota(user_id=None, browser_session_id=None):
     # If no quota record found, create a new one
     usage = UsageQuota(
         user_id=user_id,
-        browser_session_id=browser_session_id
+        session_id=browser_session_id,
+        quota_type='daily_messages'  # Default quota type
     )
     db.session.add(usage)
     db.session.commit()
