@@ -165,8 +165,28 @@ def update_reminder(reminder_id, session_id, updates):
     Returns:
         PracticeReminder: The updated reminder or None if not found
     """
-    # In a real application, this would fetch from and save to a database
-    # For now, we'll just return None as if it wasn't found
+    # In a real application, this would fetch from a database
+    # For demo purposes, we'll use the demo reminders
+    reminders = get_demo_reminders(session_id)
+    
+    # Find the reminder with the matching ID
+    for reminder in reminders:
+        if reminder.reminder_id == reminder_id:
+            # Update each field provided
+            for field, value in updates.items():
+                if hasattr(reminder, field):
+                    setattr(reminder, field, value)
+            
+            # If this were a real app, we'd save to database here
+            logger.info(f"Updated reminder {reminder_id}: {updates}")
+            
+            # If active status changed, update next notification time
+            if 'active' in updates:
+                update_next_notification(reminder)
+                
+            return reminder
+    
+    logger.warning(f"Reminder not found: {reminder_id}")
     return None
 
 def delete_reminder(reminder_id, session_id):

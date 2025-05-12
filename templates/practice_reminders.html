@@ -610,11 +610,16 @@
             })
             .then(response => {
                 console.log('Response status:', response.status);
-                return response.json();
+                return response.json().catch(error => {
+                    console.error('Error parsing response:', error);
+                    return { error: 'Failed to parse response' };
+                });
             })
             .then(data => {
                 console.log('Update response:', data);
-                if (!data.success) {
+                if (data.success) {
+                    console.log('Successfully updated reminder');
+                } else {
                     console.error('Error updating reminder:', data.error);
                     
                     // Reload reminders to get current state
