@@ -169,15 +169,15 @@
     {% block content %}{% endblock %}
     
     <!-- Footer -->
-    <footer class="bg-dark py-4 mt-5">
+    <footer class="py-4 mt-5" style="background: var(--subtle-gradient);">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <p class="mb-0 text-light">© 2025 {{ g.translate('app_name', 'The Inner Architect') }}</p>
+                    <p class="mb-0 text-secondary">© 2025 {{ g.translate('app_name', 'The Inner Architect') }}</p>
                     <p class="text-muted small">{{ g.translate('nlp_description', 'A tool for cognitive reframing and emotional well-being') }}</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0 text-light">
+                    <p class="mb-0 text-secondary">
                         <i class="fas fa-brain me-1"></i> {{ g.translate('nlp_techniques', 'Powered by NLP techniques') }}
                     </p>
                     <p class="text-muted small">
