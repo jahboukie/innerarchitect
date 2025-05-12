@@ -11,6 +11,9 @@ from openai import OpenAI
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# Import models
+from models import ChatHistory, Subscription
+
 # Import standardized logging
 from logging_config import get_logger, info, error, debug, warning, critical, exception
 
