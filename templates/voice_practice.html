@@ -7,7 +7,7 @@
     <div class="row">
         <div class="col-lg-10 mx-auto">
             <!-- Introduction -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h2 class="card-title mb-3">Voice-Based Practice</h2>
                     
@@ -15,17 +15,22 @@
                         Practice NLP techniques with your voice to develop more effective verbal communication skills.
                     </p>
                     
-                    <div class="alert alert-info" role="alert">
-                        <i class="fas fa-microphone-alt me-2"></i>
+                    <div class="alert bg-light border border-info rounded-3" role="alert">
+                        <i class="fas fa-microphone-alt me-2 text-primary"></i>
                         Voice practice allows you to apply NLP techniques out loud, getting feedback on both your
                         vocal delivery and your application of the techniques. You'll need a microphone for these exercises.
                     </div>
                     
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <div class="card bg-dark-subtle h-100 border-0 p-3">
-                                <h5 class="card-title">Benefits of Voice Practice</h5>
-                                <ul class="mb-0">
+                            <div class="card h-100 border-0 p-4" style="background: var(--subtle-gradient);">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon me-3" style="margin: 0; width: 48px; height: 48px;">
+                                        <i class="fas fa-award"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0">Benefits of Voice Practice</h5>
+                                </div>
+                                <ul class="mb-0 text-muted">
                                     <li>Develop more natural delivery of NLP techniques</li>
                                     <li>Improve vocal qualities like clarity and pacing</li>
                                     <li>Build confidence in real-world application</li>
@@ -35,9 +40,14 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card bg-dark-subtle h-100 border-0 p-3">
-                                <h5 class="card-title">How It Works</h5>
-                                <ol class="mb-0">
+                            <div class="card h-100 border-0 p-4" style="background: var(--subtle-gradient);">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="feature-icon me-3" style="margin: 0; width: 48px; height: 48px;">
+                                        <i class="fas fa-list-ol"></i>
+                                    </div>
+                                    <h5 class="card-title mb-0">How It Works</h5>
+                                </div>
+                                <ol class="mb-0 text-muted">
                                     <li>Choose an exercise type below</li>
                                     <li>Read the prompt and record your response</li>
                                     <li>Our AI analyzes your vocal delivery</li>
@@ -81,7 +91,7 @@
             <!-- Microphone Test Modal -->
             <div class="modal fade" id="microphoneTestModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
-                    <div class="modal-content bg-dark">
+                    <div class="modal-content">
                         <div class="modal-header border-0">
                             <h5 class="modal-title">Microphone Test</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -95,10 +105,10 @@
                             </div>
                             
                             <div id="recording-controls" class="text-center d-none">
-                                <button id="start-test-recording" class="btn btn-primary">
+                                <button id="start-test-recording" class="btn btn-primary rounded-pill px-4">
                                     <i class="fas fa-microphone me-2"></i>Start Test Recording
                                 </button>
-                                <button id="stop-test-recording" class="btn btn-danger d-none">
+                                <button id="stop-test-recording" class="btn btn-danger rounded-pill px-4 d-none">
                                     <i class="fas fa-stop-circle me-2"></i>Stop Recording
                                 </button>
                                 
@@ -110,12 +120,12 @@
                                 
                                 <div id="transcription-result" class="mt-3 d-none">
                                     <h6>Transcription:</h6>
-                                    <p id="test-transcript" class="p-2 bg-dark-subtle rounded"></p>
+                                    <p id="test-transcript" class="p-3 bg-light rounded border"></p>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer border-0">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -179,13 +189,16 @@
                 col.className = 'col-md-4';
                 
                 col.innerHTML = `
-                    <div class="card h-100 bg-dark shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">${typeData.name}</h5>
-                            <p class="card-text">${typeData.description}</p>
+                    <div class="card h-100 feature-card">
+                        <div class="card-body p-4">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-microphone"></i>
+                            </div>
+                            <h5 class="card-title feature-title">${typeData.name}</h5>
+                            <p class="card-text text-muted">${typeData.description}</p>
                         </div>
-                        <div class="card-footer bg-transparent border-0 text-end">
-                            <a href="/voice-practice?type=${typeId}" class="btn btn-sm btn-primary">
+                        <div class="card-footer bg-transparent border-0 text-end p-3">
+                            <a href="/voice-practice?type=${typeId}" class="btn btn-sm btn-primary rounded-pill px-3">
                                 <i class="fas fa-microphone me-1"></i> Try Exercises
                             </a>
                         </div>
@@ -223,15 +236,27 @@
                 const col = document.createElement('div');
                 col.className = 'col-md-4';
                 
+                // Create different colored feature icons based on technique
+                const iconType = exercise.technique ? 
+                    (exercise.technique.includes('reframing') ? 'fa-sync-alt' : 
+                     exercise.technique.includes('sensory') ? 'fa-eye' : 
+                     exercise.technique.includes('anchor') ? 'fa-link' : 
+                     exercise.technique.includes('meta') ? 'fa-question-circle' : 
+                     exercise.technique.includes('pattern') ? 'fa-cut' : 
+                     'fa-microphone') : 'fa-microphone';
+                
                 col.innerHTML = `
-                    <div class="card h-100 bg-dark shadow-sm">
-                        <div class="card-body">
-                            <span class="badge bg-primary mb-2">${exercise.type_name}</span>
-                            <h5 class="card-title">${exercise.technique ? exercise.technique.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice'}</h5>
-                            <p class="card-text">${exercise.prompt}</p>
+                    <div class="card h-100 feature-card">
+                        <div class="card-body p-4">
+                            <span class="badge bg-primary mb-3">${exercise.type_name}</span>
+                            <div class="feature-icon mb-3">
+                                <i class="fas ${iconType}"></i>
+                            </div>
+                            <h5 class="card-title feature-title">${exercise.technique ? exercise.technique.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'General Practice'}</h5>
+                            <p class="card-text text-muted">${exercise.prompt}</p>
                         </div>
-                        <div class="card-footer bg-transparent border-0 text-end">
-                            <a href="/voice-practice/${exercise.exercise_id}" class="btn btn-sm btn-primary">
+                        <div class="card-footer bg-transparent border-0 text-end p-3">
+                            <a href="/voice-practice/${exercise.exercise_id}" class="btn btn-sm btn-primary rounded-pill px-3">
                                 <i class="fas fa-microphone me-1"></i> Start Exercise
                             </a>
                         </div>
