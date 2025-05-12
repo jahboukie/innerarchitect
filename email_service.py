@@ -9,7 +9,7 @@ import os
 from flask import render_template
 from logging_config import get_logger
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Mail, Content, From, To
 
 # Get module-specific logger
 logger = get_logger('email_service')
