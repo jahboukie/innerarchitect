@@ -3,6 +3,7 @@ import os
 import uuid
 from functools import wraps
 from urllib.parse import urlencode
+from typing import Optional, Dict, Any, Union, cast
 
 from logging_config import get_logger, info, error, debug, warning
 
@@ -29,6 +30,36 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
+# Helper function to safely get OAuth token
+def get_oauth_token(user_id, browser_session_key, provider_name):
+    """
+    Safely get an OAuth token from the database.
+    
+    Args:
+        user_id: The user ID
+        browser_session_key: The browser session key
+        provider_name: The provider name
+        
+    Returns:
+        The token or None if not found
+    """
+    try:
+        oauth_entry = db.session.query(OAuth).filter_by(
+            user_id=user_id,
+            browser_session_key=browser_session_key,
+            provider=provider_name,
+        ).one()
+        
+        # Extract token from oauth_entry
+        if oauth_entry and hasattr(oauth_entry, 'token'):
+            return oauth_entry.token
+        return None
+    except NoResultFound:
+        return None
+    except Exception as e:
+        error(f"Error retrieving OAuth token: {str(e)}")
+        return None
+
 class UserSessionStorage(BaseStorage):
 
     def get(self, blueprint):
@@ -41,17 +72,15 @@ class UserSessionStorage(BaseStorage):
         Returns:
             The token or None if not found
         """
-        try:
-            oauth_entry = db.session.query(OAuth).filter_by(
-                user_id=current_user.get_id(),
-                browser_session_key=g.browser_session_key,
-                provider=blueprint.name,
-            ).one()
-            # Cast the token to the expected type to fix LSP error
-            token = oauth_entry.token if oauth_entry else None
-            return token
-        except NoResultFound:
-            return None
+        # Use the helper function to get the token
+        token = get_oauth_token(
+            current_user.get_id(),
+            g.browser_session_key,
+            blueprint.name
+        )
+        
+        # The BaseStorage.get method returns None
+        return token
 
     def set(self, blueprint, token):
         db.session.query(OAuth).filter_by(
