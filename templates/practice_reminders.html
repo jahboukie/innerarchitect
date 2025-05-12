@@ -237,10 +237,16 @@
                                     </select>
                                 </div>
                                 
-                                <div class="alert alert-info small">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Browser notifications will appear at the selected times when you're using the application.
-                                    For more consistent reminders, consider enabling desktop notifications.
+                                <div class="card border-0 p-3 mb-0 small" style="background: var(--subtle-gradient);">
+                                    <div class="d-flex">
+                                        <div class="feature-icon flex-shrink-0 me-2" style="margin: 0; width: 24px; height: 24px;">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                        <div>
+                                            Browser notifications will appear at the selected times when you're using the application.
+                                            For more consistent reminders, consider enabling desktop notifications.
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -255,7 +261,7 @@
             <!-- Due Reminders Modal -->
             <div class="modal fade" id="dueRemindersModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
-                    <div class="modal-content bg-dark">
+                    <div class="modal-content">
                         <div class="modal-header border-0">
                             <h5 class="modal-title">Due Reminders</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -265,9 +271,11 @@
                                 <!-- Due reminders will be added here by JavaScript -->
                             </div>
                             
-                            <div id="no-due-reminders" class="alert alert-info d-none">
-                                <i class="fas fa-check-circle me-2"></i>
-                                You don't have any due reminders at this time.
+                            <div id="no-due-reminders" class="card border-0 p-4 text-center d-none" style="background: var(--subtle-gradient);">
+                                <div class="feature-icon mx-auto mb-3" style="width: 48px; height: 48px;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <p class="mb-0">You don't have any due reminders at this time.</p>
                             </div>
                         </div>
                         <div class="modal-footer border-0">
@@ -280,7 +288,7 @@
             <!-- Delete Confirmation Modal -->
             <div class="modal fade" id="deleteReminderModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
-                    <div class="modal-content bg-dark">
+                    <div class="modal-content">
                         <div class="modal-header border-0">
                             <h5 class="modal-title">Delete Reminder</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
