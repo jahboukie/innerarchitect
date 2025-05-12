@@ -1,9 +1,10 @@
 import jwt
 import os
 import uuid
-import logging
 from functools import wraps
 from urllib.parse import urlencode
+
+from logging_config import get_logger, info, error, debug, warning
 
 from flask import g, session, redirect, request, render_template, url_for, flash
 from flask_dance.consumer import (
@@ -157,7 +158,7 @@ def logged_in(blueprint, token):
 @oauth_error.connect
 def handle_error(blueprint, error, error_description=None, error_uri=None):
     # Log the error details
-    logging.error(f"OAuth error: {error}, Description: {error_description}, URI: {error_uri}")
+    error(f"OAuth error: {error}, Description: {error_description}, URI: {error_uri}")
     
     # Show a specific error message
     if error_description:
@@ -197,7 +198,7 @@ def require_login(f):
                 replit.token_updater(token)
         except Exception as e:
             # Log the error but continue with the request
-            logging.error(f"Error refreshing token: {str(e)}")
+            error(f"Error refreshing token: {str(e)}")
             pass
 
         return f(*args, **kwargs)
