@@ -6,10 +6,15 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
 from typing import Dict, Any, Optional, Union, List, Tuple
-from flask_login import current_user, login_required
+from flask_login import current_user, login_required, logout_user, login_user
 from openai import OpenAI
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Import email authentication modules
+from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
+from email_auth import register_user, verify_email, login_with_email, request_password_reset, reset_password
+from email_service import send_verification_email, send_password_reset_email
 
 # Import conversation context management
 from conversation_context import (
@@ -536,6 +541,133 @@ def landing():
         session['session_id'] = str(uuid.uuid4())
         
     return render_template('landing.html')
+
+# Email Authentication Routes
+@app.route('/email-login', methods=['GET', 'POST'])
+def email_login():
+    """
+    Handle email-based login.
+    """
+    # If user is already logged in, redirect to index
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    form = LoginForm()
+    
+    if form.validate_on_submit():
+        user = login_with_email(form.email.data, form.password.data, form.remember_me.data)
+        
+        if user:
+            # Set session ID for the user if it doesn't exist
+            if 'session_id' not in session:
+                session['session_id'] = str(uuid.uuid4())
+                
+            flash('Login successful!', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        else:
+            flash('Login failed. Please check your email and password.', 'danger')
+            
+    return render_template('email_login.html', form=form)
+
+@app.route('/email-register', methods=['GET', 'POST'])
+def email_register():
+    """
+    Handle email-based registration.
+    """
+    # If user is already logged in, redirect to index
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        user, token = register_user(
+            form.email.data,
+            form.password.data,
+            form.first_name.data,
+            form.last_name.data
+        )
+        
+        if user and token:
+            # Send verification email
+            base_url = request.host_url.rstrip('/')
+            send_verification_email(user, token, base_url)
+            
+            flash('Your account has been created! Please check your email to verify your account.', 'success')
+            return redirect(url_for('email_login'))
+        else:
+            flash('Registration failed. Please try again.', 'danger')
+            
+    return render_template('email_register.html', form=form)
+
+@app.route('/verify-email/<token>')
+def verify_email_route(token):
+    """
+    Verify a user's email address.
+    """
+    if verify_email(token):
+        flash('Your email has been verified! You can now log in.', 'success')
+    else:
+        flash('The verification link is invalid or has expired.', 'danger')
+        
+    return redirect(url_for('email_login'))
+
+@app.route('/reset-password-request', methods=['GET', 'POST'])
+def reset_password_request():
+    """
+    Handle password reset requests.
+    """
+    # If user is already logged in, redirect to index
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    form = RequestResetForm()
+    
+    if form.validate_on_submit():
+        user, token = request_password_reset(form.email.data)
+        
+        if user and token:
+            # Send password reset email
+            base_url = request.host_url.rstrip('/')
+            send_password_reset_email(user, token, base_url)
+            
+            flash('An email has been sent with instructions to reset your password.', 'info')
+            return redirect(url_for('email_login'))
+        else:
+            flash('Failed to send reset email. Please try again.', 'danger')
+            
+    return render_template('reset_password_request.html', form=form)
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password_route(token):
+    """
+    Handle password reset form.
+    """
+    # If user is already logged in, redirect to index
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    form = ResetPasswordForm()
+    
+    if form.validate_on_submit():
+        if reset_password(token, form.password.data):
+            flash('Your password has been reset! You can now log in.', 'success')
+            return redirect(url_for('email_login'))
+        else:
+            flash('The reset link is invalid or has expired.', 'danger')
+            return redirect(url_for('reset_password_request'))
+            
+    return render_template('reset_password.html', form=form, token=token)
+
+@app.route('/email-logout')
+def email_logout():
+    """
+    Handle email-based logout.
+    """
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('landing'))
 
 
 # Checkout route for subscription plans
