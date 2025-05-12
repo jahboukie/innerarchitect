@@ -15,7 +15,7 @@
             </div>
             
             <!-- Journey Overview -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <div class="row">
                         <div class="col-md-8">
@@ -46,10 +46,10 @@
                             
                             <div class="row g-3">
                                 <div class="col-sm-6">
-                                    <div class="card bg-dark-subtle border-0 p-3">
+                                    <div class="card border-0 p-3" style="background: var(--subtle-gradient);">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <i class="fas fa-calendar-alt fs-3 text-primary"></i>
+                                            <div class="flex-shrink-0 feature-icon" style="margin: 0; width: 48px; height: 48px;">
+                                                <i class="fas fa-calendar-alt"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
                                                 <h6 class="mb-0">Duration</h6>
@@ -62,10 +62,10 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
-                                    <div class="card bg-dark-subtle border-0 p-3">
+                                    <div class="card border-0 p-3" style="background: var(--subtle-gradient);">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <i class="fas fa-clock fs-3 text-primary"></i>
+                                            <div class="flex-shrink-0 feature-icon" style="margin: 0; width: 48px; height: 48px;">
+                                                <i class="fas fa-clock"></i>
                                             </div>
                                             <div class="flex-grow-1 ms-3">
                                                 <h6 class="mb-0">Daily Practice</h6>
@@ -81,7 +81,7 @@
                         </div>
                         
                         <div class="col-md-4">
-                            <div class="card h-100 bg-dark-subtle border-0 p-3">
+                            <div class="card h-100 border-0 p-3" style="background: var(--subtle-gradient);">
                                 <h5 class="card-title">Progress</h5>
                                 
                                 <div id="progress-chart" class="position-relative mx-auto" style="width: 180px; height: 180px;">
@@ -109,7 +109,7 @@
             </div>
             
             <!-- Next Milestone -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h3 class="card-title mb-3">Current Milestone</h3>
                     <div id="next-milestone-container">
@@ -121,21 +121,21 @@
             </div>
             
             <!-- Milestone Timeline -->
-            <div class="card bg-dark shadow-sm border-0 rounded-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4">
                     <h3 class="card-title mb-4">Journey Timeline</h3>
                     
                     <div class="timeline">
                         {% for milestone in journey.milestones %}
                         <div class="timeline-item position-relative pb-4 ps-5" data-milestone-id="{{ milestone.number }}">
-                            <div class="timeline-marker position-absolute top-0 start-0 translate-middle-y bg-secondary">
+                            <div class="timeline-marker position-absolute top-0 start-0 translate-middle-y {% if milestone.completed %}bg-success{% else %}bg-primary{% endif %}">
                                 {% if milestone.completed %}
-                                <i class="fas fa-check text-success"></i>
+                                <i class="fas fa-check text-white"></i>
                                 {% else %}
-                                <i class="fas fa-circle"></i>
+                                <i class="fas fa-circle text-white"></i>
                                 {% endif %}
                             </div>
-                            <div class="card bg-dark-subtle border-0 p-3">
+                            <div class="card border-0 p-3" style="background: var(--subtle-gradient);">
                                 <h5 class="card-title d-flex justify-content-between">
                                     <span>Milestone {{ milestone.number }}</span>
                                     <small class="text-muted">{{ milestone.date }}</small>
@@ -151,7 +151,7 @@
                                 
                                 {% if not milestone.completed %}
                                 <div class="text-end">
-                                    <button class="btn btn-sm btn-outline-success complete-milestone-btn" 
+                                    <button class="btn btn-sm btn-outline-success rounded-pill complete-milestone-btn" 
                                         data-milestone-number="{{ milestone.number }}">
                                         <i class="fas fa-check me-1"></i> Mark as Completed
                                     </button>
@@ -281,7 +281,7 @@
                     `<span class="badge bg-primary">Coming Up: ${formattedDate}</span>`);
             
             container.innerHTML = `
-                <div class="card bg-primary-subtle border-0 rounded-3">
+                <div class="card border-0 rounded-3" style="background: var(--subtle-gradient);">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h4 class="card-title mb-0">Milestone ${milestone.number}</h4>
@@ -295,16 +295,16 @@
                         
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <a href="/techniques/${milestone.technique}" class="btn btn-primary w-100 mb-2">
+                                <a href="/techniques/${milestone.technique}" class="btn btn-primary rounded-pill w-100 mb-2">
                                     <i class="fas fa-book me-2"></i>View Technique Details
                                 </a>
                             </div>
                             <div class="col-md-6">
                                 ${milestone.exercise_id ? 
-                                    `<a href="/exercises/${milestone.exercise_id}" class="btn btn-info w-100 mb-2">
+                                    `<a href="/exercises/${milestone.exercise_id}" class="btn btn-info rounded-pill w-100 mb-2">
                                         <i class="fas fa-dumbbell me-2"></i>Start Exercise
                                     </a>` : 
-                                    `<a href="/techniques/${milestone.technique}#exercises" class="btn btn-info w-100 mb-2">
+                                    `<a href="/techniques/${milestone.technique}#exercises" class="btn btn-info rounded-pill w-100 mb-2">
                                         <i class="fas fa-list-alt me-2"></i>Choose an Exercise
                                     </a>`
                                 }
@@ -312,7 +312,7 @@
                         </div>
                         
                         <div class="text-center mt-3">
-                            <button class="btn btn-success px-4" id="complete-next-milestone-btn" 
+                            <button class="btn btn-success rounded-pill px-4" id="complete-next-milestone-btn" 
                                 data-milestone-number="${milestone.number}">
                                 <i class="fas fa-check-circle me-2"></i>Mark as Completed
                             </button>
@@ -335,14 +335,19 @@
         // Render a completed journey message
         function renderCompletedJourney() {
             document.getElementById('next-milestone-container').innerHTML = `
-                <div class="alert alert-success">
-                    <i class="fas fa-trophy me-2"></i>
-                    <strong>Congratulations!</strong> You've completed all milestones in this journey!
-                </div>
-                <div class="text-center mt-3">
-                    <a href="/personalized-journeys" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-2"></i>Start a New Journey
-                    </a>
+                <div class="card border-0 rounded-3" style="background: var(--subtle-gradient);">
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-3">
+                            <div class="feature-icon mx-auto" style="margin: 0; width: 80px; height: 80px;">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                        </div>
+                        <h4 class="mb-3">Congratulations!</h4>
+                        <p class="fs-5 mb-4">You've completed all milestones in this journey!</p>
+                        <a href="/personalized-journeys" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-plus-circle me-2"></i>Start a New Journey
+                        </a>
+                    </div>
                 </div>
             `;
         }
