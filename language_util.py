@@ -10,11 +10,12 @@ import json
 import os
 import time
 from functools import lru_cache
-from typing import Optional, Dict, Any, List, Union, Callable, TypeVar
+from typing import Optional, Dict, Any, List, Union, Callable, TypeVar, Iterable
 
 # External OpenAI API for translations and language detection
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
 from logging_config import get_logger, info, error, debug, warning, critical, exception
 
