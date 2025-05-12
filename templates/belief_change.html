@@ -363,7 +363,7 @@
                     </div>
                     
                     <div id="belief-analysis-results" style="display: none;" class="mb-4">
-                        <div class="card bg-dark-subtle border-0">
+                        <div class="card border-0" style="background: var(--subtle-gradient)">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-muted">Analysis Results</h6>
                                 <div class="mb-2">
@@ -741,7 +741,8 @@
             
             sessions.forEach(session => {
                 const sessionCard = document.createElement('div');
-                sessionCard.className = 'card bg-dark-subtle border-0 mb-3';
+                sessionCard.className = 'card border-0 mb-3';
+                sessionCard.style.background = 'var(--subtle-gradient)';
                 
                 // Format dates
                 const createdDate = new Date(session.created_at);
@@ -772,7 +773,7 @@
                         </div>
                         
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <span class="badge bg-dark text-light p-2">
+                            <span class="badge bg-primary-subtle text-primary-emphasis p-2">
                                 <i class="fas fa-tag me-1"></i> ${session.category_name}
                             </span>
                             <span class="badge bg-dark text-light p-2">
