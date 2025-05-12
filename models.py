@@ -12,6 +12,18 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
+    
+    # New fields for email auth
+    password_hash = db.Column(db.String(256), nullable=True)
+    email_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(100), nullable=True)
+    verification_token_expiry = db.Column(db.DateTime, nullable=True)
+    reset_password_token = db.Column(db.String(100), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    
+    # Authentication provider (replit_auth, email, etc.)
+    auth_provider = db.Column(db.String(20), nullable=True)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -26,6 +38,18 @@ class User(UserMixin, db.Model):
     
     def __repr__(self):
         return f'<User {self.id}>'
+        
+    def set_password(self, password):
+        """Set the password hash for the user."""
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check if the provided password matches the hash."""
+        from werkzeug.security import check_password_hash
+        if self.password_hash:
+            return check_password_hash(self.password_hash, password)
+        return False
         
 class OAuth(OAuthConsumerMixin, db.Model):
     user_id = db.Column(db.String, db.ForeignKey(User.id))
