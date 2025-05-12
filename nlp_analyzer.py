@@ -4,6 +4,7 @@ NLP Analyzer module for The Inner Architect
 This module provides functions to analyze user messages and recommend
 the most appropriate NLP technique based on content and mood.
 """
+import json
 import logging
 from openai import OpenAI
 import os
@@ -97,7 +98,7 @@ def recommend_technique(message, mood):
         
         # Convert string to dictionary with error handling
         try:
-            import json
+            # json is already imported at the module level
             if isinstance(recommendation, str):
                 recommendation = json.loads(recommendation)
                 

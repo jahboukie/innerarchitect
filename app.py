@@ -1095,11 +1095,36 @@ def chat():
         })
         
     except Exception as e:
-        # Log any errors
-        error(f"Error calling OpenAI API: {str(e)}")
-        return jsonify({
-            'response': "I'm sorry, I encountered an error while processing your message. Please try again later."
-        })
+        # Enhanced error logging with error type information
+        error_type = type(e).__name__
+        error(f"Error ({error_type}) calling OpenAI API: {str(e)}")
+        
+        # Add more detailed error logging for specific error types
+        if "APIConnectionError" in error_type or "Timeout" in error_type:
+            error("Network connection issue with OpenAI API")
+            return jsonify({
+                'response': "I'm having trouble connecting to my thinking engine right now. This could be due to network issues. Please check your connection and try again in a moment.",
+                'error_type': 'connection'
+            })
+        elif "RateLimitError" in error_type:
+            error("OpenAI API rate limit exceeded")
+            return jsonify({
+                'response': "I'm currently handling too many conversations. Please try again in a few minutes.",
+                'error_type': 'rate_limit'
+            })
+        elif "AuthenticationError" in error_type:
+            error("Authentication error with OpenAI API")
+            return jsonify({
+                'response': "I'm having trouble accessing my thinking engine. This is a configuration issue that requires attention from support staff.",
+                'error_type': 'auth'
+            })
+        else:
+            # Generic error response for other types of errors
+            exception(f"Unhandled OpenAI API error: {str(e)}")
+            return jsonify({
+                'response': "I'm sorry, I encountered an error while processing your message. Please try again later.",
+                'error_type': 'general'
+            })
 
 # NLP Exercise routes
 @app.route('/exercises/<technique>', methods=['GET'])
