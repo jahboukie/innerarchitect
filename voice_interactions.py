@@ -285,6 +285,9 @@ def transcribe_audio(audio_data):
         warning("OpenAI client not initialized, cannot transcribe audio")
         return None
     
+    # Initialize temp_filename before the try block
+    temp_filename = None
+    
     try:
         # Decode base64 audio data
         decoded_audio = base64.b64decode(audio_data)
@@ -310,7 +313,7 @@ def transcribe_audio(audio_data):
     except Exception as e:
         error(f"Error transcribing audio: {e}")
         # Clean up temp file if it exists
-        if 'temp_filename' in locals() and os.path.exists(temp_filename):
+        if temp_filename and os.path.exists(temp_filename):
             os.remove(temp_filename)
         return None
 
@@ -386,8 +389,13 @@ Respond with JSON in this format:
         )
         
         # Parse the response
-        analysis = json.loads(response.choices[0].message.content)
-        return analysis
+        content = response.choices[0].message.content
+        if content:
+            analysis = json.loads(content)
+            return analysis
+        else:
+            warning("Received empty response from OpenAI analysis")
+            return generate_fallback_analysis(transcript, exercise)
         
     except Exception as e:
         error(f"Error analyzing vocal delivery: {e}")
@@ -493,8 +501,16 @@ Respond with JSON in this format:
         )
         
         # Parse the response
-        evaluation = json.loads(response.choices[0].message.content)
-        return evaluation
+        content = response.choices[0].message.content
+        if content:
+            evaluation = json.loads(content)
+            return evaluation
+        else:
+            warning("Received empty response from technique evaluation")
+            return {
+                "application_score": 0,
+                "feedback": "Unable to evaluate technique application. Please try again."
+            }
         
     except Exception as e:
         error(f"Error evaluating technique application: {e}")
