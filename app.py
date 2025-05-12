@@ -1012,6 +1012,14 @@ def chat():
         """
         
         # Make the API call to OpenAI
+        # Check if OpenAI client is initialized
+        if openai_client is None:
+            error("OpenAI API key not configured")
+            return jsonify({
+                'error': 'OpenAI API not configured. Please contact support.',
+                'technique': technique
+            }), 500
+            
         # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
         # do not change this unless explicitly requested by the user
         response = openai_client.chat.completions.create(
@@ -1024,7 +1032,7 @@ def chat():
         )
         
         # Extract the AI response
-        ai_response = response.choices[0].message.content.strip()
+        ai_response = response.choices[0].message.content.strip() if response and response.choices else ""
         debug(f"AI response: {ai_response}")
         
         # Save the chat history to the database
@@ -1506,7 +1514,7 @@ def analyze_communication():
     """
     Analyze the user's communication style from provided text.
     """
-    data = request.json
+    data = get_request_json()
     message = data.get('message', '')
     
     if not message or len(message.strip()) < 20:
