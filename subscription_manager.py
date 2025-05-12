@@ -47,6 +47,9 @@ def init_models(user_model, subscription_model, usage_quota_model):
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
+# Constants
+UNLIMITED_QUOTA = 9999999  # Represents unlimited quota (instead of infinity)
+
 # Define subscription plans and features
 SUBSCRIPTION_PLANS = {
     'free': {
@@ -92,9 +95,9 @@ SUBSCRIPTION_PLANS = {
             'Priority support'
         ],
         'quotas': {
-            'daily_messages': float('inf'),
-            'daily_exercises': float('inf'),
-            'monthly_analyses': float('inf')
+            'daily_messages': UNLIMITED_QUOTA,
+            'daily_exercises': UNLIMITED_QUOTA,
+            'monthly_analyses': UNLIMITED_QUOTA
         }
     }
 }
@@ -351,8 +354,8 @@ def increment_usage_quota(user_id=None, browser_session_id=None, quota_type='dai
         current_usage = getattr(usage, quota_field, 0) or 0  # Handle None values
         info(f"Current usage for {quota_type} before increment: {current_usage}/{quota_limit}")
         
-        # Check if unlimited quota (infinity)
-        if quota_limit == float('inf'):
+        # Check if unlimited quota
+        if quota_limit == UNLIMITED_QUOTA:
             info(f"Unlimited quota for {quota_type} on {subscription_plan} plan")
             # Still increment the counter for tracking purposes
             new_usage = current_usage + amount
@@ -453,8 +456,8 @@ def check_quota_available(user_id=None, browser_session_id=None, quota_type='dai
         current_usage = getattr(usage, quota_field, 0) or 0  # Handle None values
         info(f"Current usage for {quota_type}: {current_usage}/{quota_limit}")
         
-        # Check if unlimited quota (infinity)
-        if quota_limit == float('inf'):
+        # Check if unlimited quota
+        if quota_limit == UNLIMITED_QUOTA:
             info(f"Unlimited quota for {quota_type} on {subscription_plan} plan")
             return True, "Unlimited quota available."
         
