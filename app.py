@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
+from typing import Dict, Any, Optional, Union, List
 from flask_login import current_user, login_required
 from openai import OpenAI
 import stripe
@@ -15,6 +16,15 @@ from logging_config import get_logger, info, error, debug, warning, critical, ex
 
 # Get module-specific logger
 logger = get_logger('app')
+
+# Helper function to safely extract JSON from request
+def get_request_json() -> Dict[str, Any]:
+    """
+    Safely extract JSON data from request.
+    Returns an empty dict if request.json is None.
+    This helps with LSP type checking issues.
+    """
+    return request.json or {}
 
 # Set up Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -671,7 +681,7 @@ def stripe_webhook():
                     payload, sig_header, webhook_secret
                 )
                 info(f"Webhook signature verified - Event ID: {event.get('id', 'unknown')}, Type: {event.get('type', 'unknown')}")
-            except stripe.error.SignatureVerificationError as sig_err:
+            except stripe.SignatureVerificationError as sig_err:
                 # Invalid signature
                 error(f"Invalid webhook signature: {str(sig_err)}")
                 return jsonify({
@@ -890,7 +900,7 @@ def get_technique_recommendation():
     based on the user's message and mood.
     """
     # Get the user message and mood from the request
-    data = request.json
+    data = get_request_json()
     message = data.get('message', '')
     mood = data.get('mood', 'neutral')
     
