@@ -763,8 +763,8 @@ def privacy_settings_route():
     """
     View and update privacy settings.
     """
-    # Import the model in the function to avoid circular imports
-    from models import PrivacySettings
+    # Import the models in the function to avoid circular imports
+    from models import PrivacySettings, OAuth
     
     # Get or create privacy settings
     privacy_settings = current_user.privacy_settings
@@ -781,6 +781,25 @@ def privacy_settings_route():
         db.session.add(privacy_settings)
         db.session.commit()
     
+    # Get active login sessions for this user
+    active_sessions = []
+    if current_user.auth_provider == 'replit_auth':
+        try:
+            # For Replit auth users, get active OAuth sessions
+            sessions = OAuth.query.filter_by(user_id=current_user.id).all()
+            for session_obj in sessions:
+                # Extract information if available
+                last_used = session_obj.created_at if hasattr(session_obj, 'created_at') else datetime.now() 
+                
+                active_sessions.append({
+                    'id': session_obj.browser_session_key,
+                    'provider': session_obj.provider,
+                    'last_used': last_used,
+                    'is_current': session_obj.browser_session_key == g.get('browser_session_key', '')
+                })
+        except Exception as e:
+            app.logger.error(f"Error retrieving active sessions: {str(e)}")
+    
     form = PrivacySettingsForm()
     
     if form.validate_on_submit():
@@ -794,7 +813,7 @@ def privacy_settings_route():
         db.session.commit()
         
         flash('Your privacy settings have been updated.', 'success')
-        return redirect(url_for('profile'))
+        return redirect(url_for('privacy_settings_route'))
     elif request.method == 'GET':
         # Populate form with current settings
         form.data_collection.data = privacy_settings.data_collection
@@ -803,7 +822,52 @@ def privacy_settings_route():
         form.email_notifications.data = privacy_settings.email_notifications
         form.marketing_emails.data = privacy_settings.marketing_emails
     
-    return render_template('privacy_settings.html', form=form, privacy_settings=privacy_settings)
+    return render_template('privacy_settings.html', form=form, privacy_settings=privacy_settings, 
+                          active_sessions=active_sessions)
+
+
+@app.route('/revoke-session/<session_id>', methods=['POST'])
+@require_login
+def revoke_session(session_id):
+    """
+    Revoke a specific login session.
+    """
+    if not current_user.auth_provider == 'replit_auth':
+        flash('Session management is only available for Replit login users.', 'info')
+        return redirect(url_for('privacy_settings_route'))
+    
+    if not session_id:
+        flash('Invalid session ID.', 'danger')
+        return redirect(url_for('privacy_settings_route'))
+    
+    # Make sure we don't revoke the current session
+    if session_id == g.get('browser_session_key', ''):
+        flash('You cannot revoke your current session.', 'warning')
+        return redirect(url_for('privacy_settings_route'))
+        
+    try:
+        # Import here to avoid circular imports
+        from models import OAuth
+        
+        # Delete the session
+        result = OAuth.query.filter_by(
+            user_id=current_user.id,
+            browser_session_key=session_id
+        ).delete()
+        
+        db.session.commit()
+        
+        if result:
+            flash('Session has been revoked successfully.', 'success')
+        else:
+            flash('No matching session found.', 'warning')
+            
+    except Exception as e:
+        app.logger.error(f"Error revoking session: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while revoking the session.', 'danger')
+        
+    return redirect(url_for('privacy_settings_route'))
 
 @app.route('/export-data')
 @require_login
@@ -974,12 +1038,12 @@ def reset_password_request():
                 # Always show success message even if sending fails to avoid email enumeration
                 return redirect(url_for('email_login'))
             except Exception as e:
-                logger.error(f"Error sending password reset email: {str(e)}")
-                logger.exception("Full exception details:")
+                app.logger.error(f"Error sending password reset email: {str(e)}")
+                app.logger.exception("Full exception details:")
                 flash('An error occurred while processing your request. Please try again later.', 'danger')
         else:
             # Generic message - don't reveal whether this email exists in system
-            logger.info(f"Password reset requested for non-existent or non-email user: {email}")
+            app.logger.info(f"Password reset requested for non-existent or non-email user: {email}")
             flash('If your email is registered with us, you will receive a reset link shortly.', 'info')
             return redirect(url_for('email_login'))
             
@@ -1004,16 +1068,16 @@ def reset_password_route(token):
     if form.validate_on_submit():
         try:
             if reset_password(token, form.password.data):
-                logger.info(f"Password reset successfully completed for token: {token[:6]}...")
+                app.logger.info(f"Password reset successfully completed for token: {token[:6]}...")
                 flash('Your password has been reset! You can now log in with your new password.', 'success')
                 return redirect(url_for('email_login'))
             else:
-                logger.warning(f"Password reset failed for token: {token[:6]}...")
+                app.logger.warning(f"Password reset failed for token: {token[:6]}...")
                 flash('The reset link is invalid or has expired. Please request a new one.', 'danger')
                 return redirect(url_for('reset_password_request'))
         except Exception as e:
-            logger.error(f"Error during password reset: {str(e)}")
-            logger.exception("Full exception details:")
+            app.logger.error(f"Error during password reset: {str(e)}")
+            app.logger.exception("Full exception details:")
             flash('An error occurred while processing your request. Please try again later.', 'danger')
             return redirect(url_for('reset_password_request'))
             
