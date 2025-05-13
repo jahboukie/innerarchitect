@@ -43,21 +43,31 @@ def get_oauth_token(user_id, browser_session_key, provider_name):
     Returns:
         The token or None if not found
     """
-    try:
-        oauth_entry = db.session.query(OAuth).filter_by(
-            user_id=user_id,
-            browser_session_key=browser_session_key,
-            provider=provider_name,
-        ).one()
+    if not user_id or not browser_session_key:
+        debug("Missing user_id or browser_session_key for OAuth token retrieval")
+        return None
         
-        # Extract token from oauth_entry
-        if oauth_entry and hasattr(oauth_entry, 'token'):
-            return oauth_entry.token
+    try:
+        # Create a fresh scoped session
+        with db.session.begin():
+            oauth_entry = db.session.query(OAuth).filter_by(
+                user_id=user_id,
+                browser_session_key=browser_session_key,
+                provider=provider_name,
+            ).one()
+            
+            # Extract token from oauth_entry
+            if oauth_entry and hasattr(oauth_entry, 'token'):
+                # Cast to match expected return type
+                return cast(Dict[str, Any], oauth_entry.token)
         return None
     except NoResultFound:
+        debug(f"No OAuth token found for user {user_id} and provider {provider_name}")
         return None
     except Exception as e:
         error(f"Error retrieving OAuth token: {str(e)}")
+        # Ensure session is rolled back on error
+        db.session.rollback()
         return None
 
 class UserSessionStorage(BaseStorage):
@@ -72,36 +82,101 @@ class UserSessionStorage(BaseStorage):
         Returns:
             The token or None if not found
         """
-        # Use the helper function to get the token
-        token = get_oauth_token(
-            current_user.get_id(),
-            g.browser_session_key,
-            blueprint.name
-        )
-        
-        # Cast the return value to match the expected type
-        return token
+        # Create a fresh session for this query to avoid transaction issues
+        try:
+            # Return early if no authenticated user
+            if not current_user or not current_user.is_authenticated:
+                debug("No authenticated user for OAuth token retrieval")
+                return None
+                
+            user_id = current_user.get_id()
+            if not user_id or not hasattr(g, 'browser_session_key'):
+                debug("Missing user_id or browser_session_key for OAuth token retrieval")
+                return None
+            
+            # Get token using the helper function
+            token = get_oauth_token(
+                user_id=user_id,
+                browser_session_key=g.browser_session_key,
+                provider_name=blueprint.name
+            )
+            
+            # We can safely return the token here as the helper already handles type casting
+            return token
+        except Exception as e:
+            error(f"Error in OAuth get: {str(e)}")
+            # Make sure to rollback any failed transaction
+            db.session.rollback()
+            return None
 
     def set(self, blueprint, token):
-        db.session.query(OAuth).filter_by(
-            user_id=current_user.get_id(),
-            browser_session_key=g.browser_session_key,
-            provider=blueprint.name,
-        ).delete()
-        new_model = OAuth()
-        new_model.user_id = current_user.get_id()
-        new_model.browser_session_key = g.browser_session_key
-        new_model.provider = blueprint.name
-        new_model.token = token
-        db.session.add(new_model)
-        db.session.commit()
+        """
+        Set the OAuth token in storage for the specified blueprint.
+        
+        Args:
+            blueprint: The OAuth blueprint
+            token: The token to store
+        """
+        try:
+            # Check if user is authenticated
+            if not current_user or not current_user.is_authenticated:
+                return
+                
+            user_id = current_user.get_id()
+            if not user_id or not hasattr(g, 'browser_session_key'):
+                return
+                
+            # Use a transaction to ensure consistency
+            with db.session.begin():
+                # Delete any existing tokens for this user/session/provider
+                db.session.query(OAuth).filter_by(
+                    user_id=user_id,
+                    browser_session_key=g.browser_session_key,
+                    provider=blueprint.name,
+                ).delete()
+                
+                # Create a new token record
+                new_model = OAuth()
+                new_model.user_id = user_id
+                new_model.browser_session_key = g.browser_session_key
+                new_model.provider = blueprint.name
+                new_model.token = token
+                db.session.add(new_model)
+                # Commit is handled by the with block
+        except Exception as e:
+            error(f"Error in OAuth set: {str(e)}")
+            # Ensure rollback on error
+            db.session.rollback()
 
     def delete(self, blueprint):
-        db.session.query(OAuth).filter_by(
-            user_id=current_user.get_id(),
-            browser_session_key=g.browser_session_key,
-            provider=blueprint.name).delete()
-        db.session.commit()
+        """
+        Delete the OAuth token from storage for the specified blueprint.
+        
+        Args:
+            blueprint: The OAuth blueprint
+        """
+        try:
+            # Check if user is authenticated
+            if not current_user or not current_user.is_authenticated:
+                return
+                
+            user_id = current_user.get_id()
+            if not user_id or not hasattr(g, 'browser_session_key'):
+                return
+                
+            # Use a transaction to ensure consistency
+            with db.session.begin():
+                # Delete the tokens for this user/session/provider
+                db.session.query(OAuth).filter_by(
+                    user_id=user_id,
+                    browser_session_key=g.browser_session_key,
+                    provider=blueprint.name
+                ).delete()
+                # Commit is handled by the with block
+        except Exception as e:
+            error(f"Error in OAuth delete: {str(e)}")
+            # Ensure rollback on error
+            db.session.rollback()
 
 
 def make_replit_blueprint():
