@@ -85,6 +85,7 @@ class UsageQuotaModel(SQLABase):
     user_id: Optional[str]
     browser_session_id: Optional[str]
     session_id: Optional[str]
+    quota_type: Optional[str]  # Added to match models.py
     messages_used_today: int
     exercises_used_today: int  
     analyses_used_this_month: int
@@ -362,6 +363,7 @@ def get_usage_quota(user_id=None, browser_session_id=None):
     usage = UsageQuota()
     usage.user_id = user_id
     usage.browser_session_id = browser_session_id
+    # Set quota type directly now that we've added it to UsageQuotaModel
     usage.quota_type = 'default'  # Set a default quota type to prevent NULL constraint violation
     
     # Initialize with default values
