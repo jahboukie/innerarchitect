@@ -2581,6 +2581,15 @@ def premium_features_route():
     """
     return render_template('premium_features.html')
 
+# Offline Page for PWA
+@app.route('/offline.html')
+def offline_page():
+    """
+    Serve the offline fallback page for PWA.
+    This route is accessed when the user is offline and tries to access a page not in the cache.
+    """
+    return render_template('offline.html')
+
 # Progress Dashboard Routes
 @app.route('/progress/dashboard', methods=['GET'])
 @require_premium

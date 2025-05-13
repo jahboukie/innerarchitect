@@ -22,4 +22,5 @@ dependencies = [
     "reportlab>=4.4.0",
     "fpdf>=1.7.2",
     "wtforms>=3.2.1",
+    "cairosvg>=2.8.0",
 ]

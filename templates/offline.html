@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('offline_title', 'You\'re Offline') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 text-center">
+            <div class="mb-4">
+                <i class="fas fa-wifi-slash fa-5x text-muted"></i>
+            </div>
+            
+            <h2 class="mb-3">{{ g.translate('offline_heading', 'You\'re currently offline') }}</h2>
+            
+            <p class="lead text-muted mb-4">
+                {{ g.translate('offline_message', 'It looks like your device has lost its internet connection. Some features may be unavailable until you reconnect.') }}
+            </p>
+            
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title">{{ g.translate('while_offline', 'While you\'re offline, you can:') }}</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item bg-transparent border-0 py-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>{{ g.translate('offline_feature_1', 'Review cached content') }}
+                        </li>
+                        <li class="list-group-item bg-transparent border-0 py-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>{{ g.translate('offline_feature_2', 'Access previously viewed pages') }}
+                        </li>
+                        <li class="list-group-item bg-transparent border-0 py-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>{{ g.translate('offline_feature_3', 'Use basic features that don\'t require a connection') }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <button onclick="window.location.reload()" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-sync-alt me-2"></i> {{ g.translate('try_again', 'Try Again') }}
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
