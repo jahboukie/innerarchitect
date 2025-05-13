@@ -36,6 +36,9 @@ class User(UserMixin, db.Model):
     # Relationship with TechniqueEffectiveness
     technique_ratings = db.relationship('TechniqueEffectiveness', backref='user', lazy='dynamic')
     
+    # Relationship with PrivacySettings
+    privacy_settings = db.relationship('PrivacySettings', backref='user', uselist=False, lazy='joined')
+    
     def __repr__(self):
         return f'<User {self.id}>'
         

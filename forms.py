@@ -5,7 +5,7 @@ This module defines WTForms classes for various forms used in the application.
 """
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 from models import User
 
@@ -76,3 +76,43 @@ class FeedbackForm(FlaskForm):
     comment = TextAreaField('Comments (optional)')
     email = StringField('Email (optional, for follow-up)', validators=[Email()])
     submit = SubmitField('Submit Feedback')
+    
+class DeleteAccountForm(FlaskForm):
+    """Form for account deletion."""
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_text = StringField('Type "DELETE" to confirm', validators=[
+        DataRequired(),
+        Length(min=6, max=6, message='Please type "DELETE" to confirm')
+    ])
+    submit = SubmitField('Permanently Delete Account')
+    
+    def validate_confirm_text(self, confirm_text):
+        """Validate that the confirm text is exactly 'DELETE'."""
+        if confirm_text.data != 'DELETE':
+            raise ValidationError('You must type "DELETE" (all uppercase) to confirm account deletion.')
+            
+class ResendVerificationForm(FlaskForm):
+    """Form for resending email verification."""
+    submit = SubmitField('Resend Verification Email')
+    
+class ChangePasswordForm(FlaskForm):
+    """Form for changing password."""
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[
+        DataRequired(),
+        Length(min=8, message='Password must be at least 8 characters long')
+    ])
+    confirm_password = PasswordField('Confirm New Password', validators=[
+        DataRequired(),
+        EqualTo('new_password', message='Passwords must match')
+    ])
+    submit = SubmitField('Change Password')
+    
+class PrivacySettingsForm(FlaskForm):
+    """Form for privacy settings."""
+    data_collection = BooleanField('Allow usage data collection')
+    progress_tracking = BooleanField('Track exercise progress')
+    personalization = BooleanField('Use data for personalization')
+    email_notifications = BooleanField('Email notifications')
+    marketing_emails = BooleanField('Marketing emails')
+    submit = SubmitField('Save Privacy Settings')

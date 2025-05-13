@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Settings - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-4 text-center">Privacy Settings</h1>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Manage how your data is used by The Inner Architect. We're committed to protecting your privacy.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('privacy_settings_route') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <h5 class="mb-3">Data Usage</h5>
+                        <div class="card mb-4 p-3 border shadow-sm">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="data_collection" name="data_collection" {% if privacy_settings.data_collection %}checked{% endif %}>
+                                <label class="form-check-label" for="data_collection">
+                                    Allow usage data collection
+                                </label>
+                                <div class="form-text">We collect anonymous usage data to improve our services.</div>
+                            </div>
+                            
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="progress_tracking" name="progress_tracking" {% if privacy_settings.progress_tracking %}checked{% endif %}>
+                                <label class="form-check-label" for="progress_tracking">
+                                    Track exercise progress
+                                </label>
+                                <div class="form-text">Track your progress through exercises and techniques over time.</div>
+                            </div>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="personalization" name="personalization" {% if privacy_settings.personalization %}checked{% endif %}>
+                                <label class="form-check-label" for="personalization">
+                                    Use data for personalization
+                                </label>
+                                <div class="form-text">Use your data to provide a more personalized experience.</div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">Communication Preferences</h5>
+                        <div class="card mb-4 p-3 border shadow-sm">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" {% if privacy_settings.email_notifications %}checked{% endif %}>
+                                <label class="form-check-label" for="email_notifications">
+                                    Email notifications
+                                </label>
+                                <div class="form-text">Receive reminders and updates via email.</div>
+                            </div>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="marketing_emails" name="marketing_emails" {% if privacy_settings.marketing_emails %}checked{% endif %}>
+                                <label class="form-check-label" for="marketing_emails">
+                                    Marketing emails
+                                </label>
+                                <div class="form-text">Receive information about new features and offers.</div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">Data Export & Deletion</h5>
+                        <div class="card mb-4 p-3 border shadow-sm">
+                            <p>
+                                <a href="{{ url_for('export_data_route') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-download me-2"></i>Export Your Data
+                                </a>
+                                <span class="ms-2 text-muted small">Download all your data in a machine-readable format</span>
+                            </p>
+                            
+                            <p class="mb-0">
+                                <a href="{{ url_for('delete_account_route') }}" class="btn btn-outline-danger">
+                                    <i class="fas fa-user-times me-2"></i>Delete Account
+                                </a>
+                                <span class="ms-2 text-muted small">Permanently delete your account and data</span>
+                            </p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Save Privacy Settings</button>
+                            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

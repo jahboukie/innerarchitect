@@ -135,6 +135,80 @@
                     </div>
                     {% endif %}
                     
+                    <hr class="my-4">
+                    
+                    <h3 class="mb-3">{{ g.translate('account_management', 'Account Management') }}</h3>
+                    
+                    <div class="row g-4 mb-4">
+                        {% if current_user.auth_provider == 'email' %}
+                        <div class="col-md-6">
+                            <a href="{{ url_for('change_password_route') }}" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-key text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ g.translate('change_password', 'Change Password') }}</h5>
+                                            <p class="card-text small text-muted mb-0">{{ g.translate('update_password', 'Update your account password') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        {% if not current_user.email_verified %}
+                        <div class="col-md-6">
+                            <a href="{{ url_for('resend_verification_route') }}" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-envelope text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ g.translate('verify_email', 'Verify Email') }}</h5>
+                                            <p class="card-text small text-muted mb-0">{{ g.translate('verify_email_desc', 'Resend verification email') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                        
+                        <div class="col-md-6">
+                            <a href="{{ url_for('privacy_settings_route') }}" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-shield-alt text-success"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ g.translate('privacy_settings', 'Privacy Settings') }}</h5>
+                                            <p class="card-text small text-muted mb-0">{{ g.translate('manage_privacy', 'Manage your data and privacy') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <a href="{{ url_for('delete_account_route') }}" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm rounded-4 hover-shadow">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                                            <i class="fas fa-user-times text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ g.translate('delete_account', 'Delete Account') }}</h5>
+                                            <p class="card-text small text-muted mb-0">{{ g.translate('permanently_delete', 'Permanently delete your account') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    
                     <div class="d-grid mt-4">
                         {% if current_user.auth_provider == 'email' %}
                         <a href="{{ url_for('email_logout') }}" class="btn btn-outline-danger">
@@ -155,6 +229,11 @@
 <style>
 .bg-gradient-primary {
     background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
+}
+.hover-shadow:hover {
+    transition: transform 0.2s, box-shadow 0.2s;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
 }
 </style>
 {% endblock %}

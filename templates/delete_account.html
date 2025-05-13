@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Account - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-4 text-center">Delete Account</h1>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">Warning: This action cannot be undone</h5>
+                        <p>Deleting your account will:</p>
+                        <ul>
+                            <li>Remove your personal information</li>
+                            <li>Cancel any active subscriptions</li>
+                            <li>Permanently delete your progress data</li>
+                            <li>Remove access to all premium features</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('delete_account_route') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        {% if current_user.auth_provider == 'email' %}
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Enter your password") }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            {{ form.confirm_text.label(class="form-label") }}
+                            {{ form.confirm_text(class="form-control" + (" is-invalid" if form.confirm_text.errors else ""), placeholder='Type "DELETE" to confirm') }}
+                            {% if form.confirm_text.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.confirm_text.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text text-danger">This action is permanent and cannot be undone.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-danger") }}
+                            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
