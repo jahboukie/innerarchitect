@@ -997,123 +997,504 @@ def handle_webhook_event(event):
 
 def _handle_subscription_created(event):
     """Handle subscription created event."""
-    subscription_object = event['data']['object']
-    stripe_subscription_id = subscription_object['id']
-    customer_id = subscription_object['customer']
-    
-    # Find subscription by customer ID
-    subscription = Subscription.query.filter_by(stripe_customer_id=customer_id).first()
-    if not subscription:
-        warning(f"No subscription found for customer {customer_id}")
+    try:
+        # Extract and validate subscription data
+        if not event.get('data') or not event['data'].get('object'):
+            error("Invalid event data structure in subscription created event")
+            return False
+            
+        subscription_object = event['data']['object']
+        
+        # Validate required fields
+        required_fields = ['id', 'customer', 'status', 'current_period_start', 'current_period_end']
+        for field in required_fields:
+            if field not in subscription_object:
+                error(f"Missing required field '{field}' in subscription created event")
+                return False
+        
+        stripe_subscription_id = subscription_object['id']
+        customer_id = subscription_object['customer']
+        
+        info(f"Processing subscription created event for subscription {stripe_subscription_id}, customer {customer_id}")
+        
+        # Find subscription by customer ID
+        subscription = Subscription.query.filter_by(stripe_customer_id=customer_id).first()
+        if not subscription:
+            warning(f"No subscription found for customer {customer_id}")
+            
+            # Attempt to find user by customer ID from Stripe
+            try:
+                stripe_customer = stripe.Customer.retrieve(customer_id)
+                metadata = stripe_customer.get('metadata', {})
+                user_id = metadata.get('user_id')
+                
+                if user_id:
+                    info(f"Found user {user_id} from Stripe customer metadata")
+                    
+                    # Create a new subscription record for this user
+                    new_sub = Subscription()
+                    new_sub.user_id = user_id
+                    new_sub.stripe_customer_id = customer_id
+                    new_sub.stripe_subscription_id = stripe_subscription_id
+                    new_sub.status = subscription_object['status']
+                    new_sub.plan_name = 'free'  # Default, will be updated later
+                    
+                    # Set period details
+                    current_period_start = datetime.fromtimestamp(subscription_object['current_period_start'], tz=timezone.utc)
+                    current_period_end = datetime.fromtimestamp(subscription_object['current_period_end'], tz=timezone.utc)
+                    
+                    new_sub.current_period_start = current_period_start
+                    new_sub.current_period_end = current_period_end
+                    new_sub.cancel_at_period_end = subscription_object.get('cancel_at_period_end', False)
+                    
+                    db.session.add(new_sub)
+                    db.session.commit()
+                    
+                    info(f"Created new subscription record for user {user_id}")
+                    subscription = new_sub
+                else:
+                    error(f"Could not find user ID in Stripe customer metadata for customer {customer_id}")
+                    return False
+            except Exception as e:
+                error(f"Error retrieving customer from Stripe: {str(e)}")
+                return False
+        
+        if not subscription:
+            # Still no subscription record after recovery attempts
+            error(f"Unable to find or create subscription record for customer {customer_id}")
+            return False
+            
+        # Update subscription details
+        subscription.stripe_subscription_id = stripe_subscription_id
+        subscription.status = subscription_object['status']
+        
+        current_period_start = datetime.fromtimestamp(subscription_object['current_period_start'], tz=timezone.utc)
+        current_period_end = datetime.fromtimestamp(subscription_object['current_period_end'], tz=timezone.utc)
+        
+        subscription.current_period_start = current_period_start
+        subscription.current_period_end = current_period_end
+        subscription.cancel_at_period_end = subscription_object.get('cancel_at_period_end', False)
+        
+        # Update plan name based on price ID
+        if 'items' in subscription_object and 'data' in subscription_object['items']:
+            for item in subscription_object['items']['data']:
+                price_id = item.get('price', {}).get('id')
+                if price_id:
+                    # Map price ID to plan name
+                    for plan_name, plan_details in SUBSCRIPTION_PLANS.items():
+                        if plan_details.get('price_id') == price_id:
+                            info(f"Setting plan to {plan_name} based on price ID {price_id}")
+                            subscription.plan_name = plan_name
+                            break
+        
+        # Save changes
+        db.session.commit()
+        info(f"Successfully processed subscription created event for {stripe_subscription_id}")
+        return True
+        
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        error(f"Error ({error_type}) processing subscription created event: {error_message}")
+        
+        # Log additional details for debugging
+        try:
+            import traceback
+            debug(f"Traceback: {traceback.format_exc()}")
+            
+            if event and isinstance(event, dict):
+                event_id = event.get('id', 'unknown')
+                debug(f"Event ID: {event_id}")
+        except:
+            pass
+            
+        # Rollback any database changes
+        try:
+            db.session.rollback()
+        except:
+            pass
+            
         return False
-    
-    # Update subscription details
-    subscription.stripe_subscription_id = stripe_subscription_id
-    subscription.status = subscription_object['status']
-    
-    current_period_start = datetime.fromtimestamp(subscription_object['current_period_start'], tz=timezone.utc)
-    current_period_end = datetime.fromtimestamp(subscription_object['current_period_end'], tz=timezone.utc)
-    
-    subscription.current_period_start = current_period_start
-    subscription.current_period_end = current_period_end
-    subscription.cancel_at_period_end = subscription_object['cancel_at_period_end']
-    
-    db.session.commit()
-    return True
 
 def _handle_subscription_updated(event):
     """Handle subscription updated event."""
-    subscription_object = event['data']['object']
-    stripe_subscription_id = subscription_object['id']
-    
-    # Find subscription by stripe subscription ID
-    subscription = Subscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
-    if not subscription:
-        warning(f"No subscription found with ID {stripe_subscription_id}")
+    try:
+        # Extract and validate subscription data
+        if not event.get('data') or not event['data'].get('object'):
+            error("Invalid event data structure in subscription updated event")
+            return False
+            
+        subscription_object = event['data']['object']
+        
+        # Validate required fields
+        required_fields = ['id', 'status', 'current_period_start', 'current_period_end']
+        for field in required_fields:
+            if field not in subscription_object:
+                error(f"Missing required field '{field}' in subscription updated event")
+                return False
+        
+        stripe_subscription_id = subscription_object['id']
+        info(f"Processing subscription updated event for subscription {stripe_subscription_id}")
+        
+        # Find subscription by stripe subscription ID
+        subscription = Subscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
+        if not subscription:
+            warning(f"No subscription found with ID {stripe_subscription_id}")
+            
+            # Try to find by customer ID as fallback
+            if 'customer' in subscription_object:
+                customer_id = subscription_object['customer']
+                subscription = Subscription.query.filter_by(stripe_customer_id=customer_id).first()
+                
+                if subscription:
+                    info(f"Found subscription by customer ID {customer_id} instead")
+                    # Update the subscription ID since it was missing
+                    subscription.stripe_subscription_id = stripe_subscription_id
+                else:
+                    error(f"No subscription found for customer ID {customer_id} either")
+                    return False
+            else:
+                error(f"No subscription found with ID {stripe_subscription_id} and no customer ID available")
+                return False
+        
+        # Update subscription details
+        old_status = subscription.status
+        new_status = subscription_object['status']
+        subscription.status = new_status
+        
+        # Log status changes for tracking
+        if old_status != new_status:
+            info(f"Subscription status changed from {old_status} to {new_status}")
+        
+        # Parse timestamps with explicit timezone handling
+        try:
+            current_period_start = datetime.fromtimestamp(subscription_object['current_period_start'], tz=timezone.utc)
+            current_period_end = datetime.fromtimestamp(subscription_object['current_period_end'], tz=timezone.utc)
+            
+            subscription.current_period_start = current_period_start
+            subscription.current_period_end = current_period_end
+        except (ValueError, TypeError) as e:
+            warning(f"Error parsing subscription period dates: {e}. Using string values.")
+            # Continue without updating dates rather than failing
+        
+        # Get cancel_at_period_end with fallback to false
+        subscription.cancel_at_period_end = subscription_object.get('cancel_at_period_end', False)
+        
+        # Check for plan changes
+        old_plan = subscription.plan_name
+        updated_plan = False
+        
+        if 'items' in subscription_object and 'data' in subscription_object['items']:
+            for item in subscription_object['items']['data']:
+                price_id = item.get('price', {}).get('id')
+                if price_id:
+                    # Map price ID to plan name
+                    for plan_name, plan_details in SUBSCRIPTION_PLANS.items():
+                        if plan_details.get('price_id') == price_id:
+                            subscription.plan_name = plan_name
+                            updated_plan = True
+                            break
+        
+        # Log plan changes for tracking
+        if updated_plan and old_plan != subscription.plan_name:
+            info(f"Subscription plan changed from {old_plan} to {subscription.plan_name}")
+        
+        # Save changes
+        db.session.commit()
+        info(f"Successfully processed subscription updated event for {stripe_subscription_id}")
+        return True
+        
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        error(f"Error ({error_type}) processing subscription updated event: {error_message}")
+        
+        # Log additional details for debugging
+        try:
+            import traceback
+            debug(f"Traceback: {traceback.format_exc()}")
+            
+            if event and isinstance(event, dict):
+                event_id = event.get('id', 'unknown')
+                debug(f"Event ID: {event_id}")
+        except:
+            pass
+            
+        # Rollback any database changes
+        try:
+            db.session.rollback()
+        except:
+            pass
+            
         return False
-    
-    # Update subscription details
-    subscription.status = subscription_object['status']
-    
-    current_period_start = datetime.fromtimestamp(subscription_object['current_period_start'], tz=timezone.utc)
-    current_period_end = datetime.fromtimestamp(subscription_object['current_period_end'], tz=timezone.utc)
-    
-    subscription.current_period_start = current_period_start
-    subscription.current_period_end = current_period_end
-    subscription.cancel_at_period_end = subscription_object['cancel_at_period_end']
-    
-    # Check for plan changes
-    if 'items' in subscription_object and 'data' in subscription_object['items']:
-        for item in subscription_object['items']['data']:
-            price_id = item.get('price', {}).get('id')
-            if price_id:
-                # Map price ID to plan name
-                for plan_name, plan_details in SUBSCRIPTION_PLANS.items():
-                    if plan_details.get('price_id') == price_id:
-                        subscription.plan_name = plan_name
-                        break
-    
-    db.session.commit()
-    return True
 
 def _handle_subscription_deleted(event):
     """Handle subscription deleted event."""
-    subscription_object = event['data']['object']
-    stripe_subscription_id = subscription_object['id']
-    
-    # Find subscription by stripe subscription ID
-    subscription = Subscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
-    if not subscription:
-        warning(f"No subscription found with ID {stripe_subscription_id}")
+    try:
+        # Extract and validate subscription data
+        if not event.get('data') or not event['data'].get('object'):
+            error("Invalid event data structure in subscription deleted event")
+            return False
+            
+        subscription_object = event['data']['object']
+        
+        # Validate required fields
+        if 'id' not in subscription_object:
+            error("Missing required field 'id' in subscription deleted event")
+            return False
+        
+        stripe_subscription_id = subscription_object['id']
+        info(f"Processing subscription deleted event for subscription {stripe_subscription_id}")
+        
+        # Find subscription by stripe subscription ID
+        subscription = Subscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
+        if not subscription:
+            warning(f"No subscription found with ID {stripe_subscription_id}")
+            
+            # Try to find by customer ID as fallback
+            if 'customer' in subscription_object:
+                customer_id = subscription_object['customer']
+                subscription = Subscription.query.filter_by(stripe_customer_id=customer_id).first()
+                
+                if subscription:
+                    info(f"Found subscription by customer ID {customer_id} instead")
+                    # Update the subscription ID since it was missing
+                    subscription.stripe_subscription_id = stripe_subscription_id
+                else:
+                    error(f"No subscription found for customer ID {customer_id} either")
+                    return False
+            else:
+                error(f"No subscription found with ID {stripe_subscription_id} and no customer ID available")
+                return False
+        
+        # Update subscription details
+        old_status = subscription.status
+        subscription.status = 'canceled'
+        
+        # Log status changes for tracking
+        info(f"Subscription status changed from {old_status} to canceled")
+        
+        # Store the previous plan in case we need it later
+        old_plan = subscription.plan_name
+        
+        # Downgrade to free plan
+        subscription.plan_name = 'free'
+        info(f"Downgraded subscription from {old_plan} to free plan")
+        
+        # Save changes
+        db.session.commit()
+        info(f"Successfully processed subscription deleted event for {stripe_subscription_id}")
+        return True
+        
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        error(f"Error ({error_type}) processing subscription deleted event: {error_message}")
+        
+        # Log additional details for debugging
+        try:
+            import traceback
+            debug(f"Traceback: {traceback.format_exc()}")
+            
+            if event and isinstance(event, dict):
+                event_id = event.get('id', 'unknown')
+                debug(f"Event ID: {event_id}")
+        except:
+            pass
+            
+        # Rollback any database changes
+        try:
+            db.session.rollback()
+        except:
+            pass
+            
         return False
-    
-    # Update subscription details
-    subscription.status = 'canceled'
-    subscription.plan_name = 'free'  # Downgrade to free plan
-    
-    db.session.commit()
-    return True
 
 def _handle_payment_succeeded(event):
     """Handle invoice payment succeeded event."""
-    invoice = event['data']['object']
-    subscription_id = invoice.get('subscription')
-    
-    if not subscription_id:
-        return True  # Not a subscription invoice
-    
-    # Find subscription by stripe subscription ID
-    subscription = Subscription.query.filter_by(stripe_subscription_id=subscription_id).first()
-    if not subscription:
-        warning(f"No subscription found with ID {subscription_id}")
+    try:
+        # Extract and validate invoice data
+        if not event.get('data') or not event['data'].get('object'):
+            error("Invalid event data structure in payment succeeded event")
+            return False
+            
+        invoice = event['data']['object']
+        
+        # Check if this is a subscription invoice
+        subscription_id = invoice.get('subscription')
+        if not subscription_id:
+            info("Payment succeeded event is not related to a subscription - ignoring")
+            return True  # Not a subscription invoice, but not an error
+        
+        info(f"Processing payment succeeded event for subscription {subscription_id}")
+        
+        # Find subscription by stripe subscription ID
+        subscription = Subscription.query.filter_by(stripe_subscription_id=subscription_id).first()
+        if not subscription:
+            warning(f"No subscription found with ID {subscription_id}")
+            
+            # Try to find by customer ID as fallback
+            if 'customer' in invoice:
+                customer_id = invoice['customer']
+                subscription = Subscription.query.filter_by(stripe_customer_id=customer_id).first()
+                
+                if subscription:
+                    info(f"Found subscription by customer ID {customer_id} instead")
+                    # Update the subscription ID since it was missing
+                    subscription.stripe_subscription_id = subscription_id
+                else:
+                    error(f"No subscription found for customer ID {customer_id} either")
+                    return False
+            else:
+                error(f"No subscription found with ID {subscription_id} and no customer ID available")
+                return False
+        
+        # Update subscription status if needed
+        old_status = subscription.status
+        if old_status != 'active':
+            subscription.status = 'active'
+            info(f"Updated subscription status from {old_status} to active")
+            
+            # Check for plan information in the invoice
+            try:
+                if 'lines' in invoice and 'data' in invoice['lines']:
+                    for line in invoice['lines']['data']:
+                        if line.get('type') == 'subscription' and 'price' in line:
+                            price_id = line['price'].get('id')
+                            if price_id:
+                                # Map price ID to plan name
+                                for plan_name, plan_details in SUBSCRIPTION_PLANS.items():
+                                    if plan_details.get('price_id') == price_id:
+                                        old_plan = subscription.plan_name
+                                        if old_plan != plan_name:
+                                            subscription.plan_name = plan_name
+                                            info(f"Updated subscription plan from {old_plan} to {plan_name}")
+                                        break
+            except Exception as plan_err:
+                warning(f"Error extracting plan information from invoice: {str(plan_err)}")
+                # Continue without updating plan rather than failing
+            
+            # Save changes
+            db.session.commit()
+        
+        info(f"Successfully processed payment succeeded event for subscription {subscription_id}")
+        return True
+        
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        error(f"Error ({error_type}) processing payment succeeded event: {error_message}")
+        
+        # Log additional details for debugging
+        try:
+            import traceback
+            debug(f"Traceback: {traceback.format_exc()}")
+            
+            if event and isinstance(event, dict):
+                event_id = event.get('id', 'unknown')
+                debug(f"Event ID: {event_id}")
+        except:
+            pass
+            
+        # Rollback any database changes
+        try:
+            db.session.rollback()
+        except:
+            pass
+            
         return False
-    
-    # Update subscription status if needed
-    if subscription.status != 'active':
-        subscription.status = 'active'
-        db.session.commit()
-    
-    return True
 
 def _handle_payment_failed(event):
     """Handle invoice payment failed event."""
-    invoice = event['data']['object']
-    subscription_id = invoice.get('subscription')
-    
-    if not subscription_id:
-        return True  # Not a subscription invoice
-    
-    # Find subscription by stripe subscription ID
-    subscription = Subscription.query.filter_by(stripe_subscription_id=subscription_id).first()
-    if not subscription:
-        warning(f"No subscription found with ID {subscription_id}")
+    try:
+        # Extract and validate invoice data
+        if not event.get('data') or not event['data'].get('object'):
+            error("Invalid event data structure in payment failed event")
+            return False
+            
+        invoice = event['data']['object']
+        
+        # Check if this is a subscription invoice
+        subscription_id = invoice.get('subscription')
+        if not subscription_id:
+            info("Payment failed event is not related to a subscription - ignoring")
+            return True  # Not a subscription invoice, but not an error
+        
+        info(f"Processing payment failed event for subscription {subscription_id}")
+        
+        # Find subscription by stripe subscription ID
+        subscription = Subscription.query.filter_by(stripe_subscription_id=subscription_id).first()
+        if not subscription:
+            warning(f"No subscription found with ID {subscription_id}")
+            
+            # Try to find by customer ID as fallback
+            if 'customer' in invoice:
+                customer_id = invoice['customer']
+                subscription = Subscription.query.filter_by(stripe_customer_id=customer_id).first()
+                
+                if subscription:
+                    info(f"Found subscription by customer ID {customer_id} instead")
+                    # Update the subscription ID since it was missing
+                    subscription.stripe_subscription_id = subscription_id
+                else:
+                    error(f"No subscription found for customer ID {customer_id} either")
+                    return False
+            else:
+                error(f"No subscription found with ID {subscription_id} and no customer ID available")
+                return False
+        
+        # Update subscription status
+        old_status = subscription.status
+        subscription.status = 'past_due'
+        
+        # Log status changes for tracking
+        info(f"Updated subscription status from {old_status} to past_due due to payment failure")
+        
+        # Check for additional failed payment details
+        payment_intent = invoice.get('payment_intent')
+        attempt_count = invoice.get('attempt_count', 1)
+        next_payment_attempt = invoice.get('next_payment_attempt')
+        
+        if payment_intent:
+            info(f"Failed payment intent: {payment_intent}, attempt: {attempt_count}")
+            
+        if next_payment_attempt:
+            # Convert timestamp to datetime
+            try:
+                next_attempt_date = datetime.fromtimestamp(next_payment_attempt, tz=timezone.utc)
+                info(f"Next payment attempt scheduled for {next_attempt_date.isoformat()}")
+            except:
+                # Continue without logging this information
+                pass
+        
+        # Save changes
+        db.session.commit()
+        info(f"Successfully processed payment failed event for subscription {subscription_id}")
+        return True
+        
+    except Exception as e:
+        error_type = type(e).__name__
+        error_message = str(e)
+        error(f"Error ({error_type}) processing payment failed event: {error_message}")
+        
+        # Log additional details for debugging
+        try:
+            import traceback
+            debug(f"Traceback: {traceback.format_exc()}")
+            
+            if event and isinstance(event, dict):
+                event_id = event.get('id', 'unknown')
+                debug(f"Event ID: {event_id}")
+        except:
+            pass
+            
+        # Rollback any database changes
+        try:
+            db.session.rollback()
+        except:
+            pass
+            
         return False
-    
-    # Update subscription status
-    subscription.status = 'past_due'
-    db.session.commit()
-    
-    return True
 
 # Create tables if they don't exist
 def init_tables():
