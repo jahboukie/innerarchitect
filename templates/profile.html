@@ -278,6 +278,33 @@
                         </a>
                         {% endif %}
                     </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h3 class="mb-3">{{ g.translate('app_options', 'App Options') }}</h3>
+                    
+                    <!-- PWA Install Button -->
+                    {% include 'partials/pwa_install_button.html' %}
+                    
+                    <!-- App Info -->
+                    <div class="card shadow-sm border-0 rounded-4 mt-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename='icons/icon-96x96.png') }}" alt="App Icon" width="48" height="48" class="rounded me-3">
+                                    <div>
+                                        <h5 class="mb-1">{{ g.translate('app_name', 'The Inner Architect') }}</h5>
+                                        <p class="mb-0 text-muted small">{{ g.translate('app_version', 'Version:') }} 0.5.0</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i> {{ g.translate('app_status', 'Up to date') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
