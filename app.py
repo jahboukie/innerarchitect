@@ -1869,24 +1869,70 @@ Keep responses concise (2-3 short paragraphs maximum) and conversational. Use th
                 'technique': technique
             }), 500
             
-        # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-        # do not change this unless explicitly requested by the user
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"User mood: {mood}\nUser message: {message}\nRequested NLP technique: {technique}"}
-            ],
-            max_tokens=500  # Increased token limit for more detailed responses
-        )
+        # Import the API error handling tools
+        from api_fallback import with_retry_and_timeout, APIError, get_fallback_response, show_user_friendly_error
         
-        # Extract the AI response with proper null checking
+        # Get the response from OpenAI with error handling
         ai_response = ""
-        if response and hasattr(response, 'choices') and response.choices:
-            message_content = getattr(response.choices[0].message, 'content', None)
-            if message_content is not None:
-                ai_response = message_content.strip()
-        debug(f"AI response: {ai_response}")
+        response = None
+        try:
+            # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
+            @with_retry_and_timeout(timeout=20, retries=2)
+            def get_openai_response(prompt, user_content, model="gpt-4o", max_tokens=500, timeout=20):
+                return openai_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": user_content}
+                    ],
+                    max_tokens=max_tokens,
+                    timeout=timeout  # Pass through timeout parameter
+                )
+            
+            # Call the enhanced function with retry logic
+            response = get_openai_response(
+                prompt=system_prompt,
+                user_content=f"User mood: {mood}\nUser message: {message}\nRequested NLP technique: {technique}"
+            )
+            
+            # Extract the AI response with proper null checking
+            if response and hasattr(response, 'choices') and response.choices:
+                message_content = getattr(response.choices[0].message, 'content', None)
+                if message_content is not None:
+                    ai_response = message_content.strip()
+            debug(f"AI response: {ai_response}")
+            
+        except APIError as api_err:
+            # Handle specific API errors with appropriate fallbacks
+            error(f"API error in chat endpoint: {str(api_err)}")
+            
+            # Get the error type from the exception
+            error_type = "response"
+            if "timeout" in str(api_err).lower():
+                error_type = "timeout"
+            elif "connection" in str(api_err).lower():
+                error_type = "connection"
+                
+            # Get a fallback response
+            context = {
+                "user_message": message,
+                "endpoint": "chat",
+                "technique": technique,
+                "mood": mood
+            }
+            fallback = get_fallback_response(error_type, context)
+            
+            # Use the fallback message as the AI response
+            ai_response = fallback["message"]
+            
+            # Show a user-friendly error message
+            show_user_friendly_error(error_type, context)
+            
+        except Exception as e:
+            # Handle any other errors
+            error(f"Unexpected error in chat endpoint: {str(e)}")
+            ai_response = "I'm having trouble processing your request right now. Please try again in a moment."
         
         # Save the chat history to the database
         try:
