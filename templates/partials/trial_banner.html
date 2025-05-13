@@ -1,0 +1,55 @@
+{% macro trial_banner(days_remaining, plan='premium', dismiss_id=None) %}
+    {% set banner_class = 'bg-gradient-premium' if plan == 'premium' else 'bg-gradient-pro' %}
+    {% set icon = 'crown' if plan == 'premium' else 'star' %}
+    {% set plan_label = g.translate('premium', 'Premium') if plan == 'premium' else g.translate('professional', 'Professional') %}
+    
+    <div class="trial-banner rounded p-3 mb-4 {{ banner_class }} text-white shadow-sm" 
+         {% if dismiss_id %}id="{{ dismiss_id }}"{% endif %}>
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="trial-banner-icon me-3">
+                    <i class="fas fa-{{ icon }} fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1 fw-bold">{{ g.translate('trial_active_title', 'Your %s Trial is Active')|format(plan_label) }}</h5>
+                    <p class="mb-0">
+                        {% if days_remaining > 1 %}
+                            {{ g.translate('trial_days_remaining', 'You have %s days remaining to explore all features.')|format(days_remaining) }}
+                        {% elif days_remaining == 1 %}
+                            {{ g.translate('trial_one_day_remaining', 'Your trial ends tomorrow! Explore all features today.') }}
+                        {% else %}
+                            {{ g.translate('trial_ends_today', 'Your trial ends today! Subscribe now to keep access.') }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('create_checkout', plan=plan) }}" class="btn btn-light btn-sm rounded-pill px-3 me-2">
+                    <i class="fas fa-arrow-up me-1"></i> {{ g.translate('upgrade_now', 'Upgrade Now') }}
+                </a>
+                
+                {% if dismiss_id %}
+                <button type="button" class="btn-close btn-close-white" aria-label="Close"
+                         onclick="document.getElementById('{{ dismiss_id }}').style.display = 'none';"></button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro trial_badge(days_remaining, show_days=True) %}
+    <span class="badge bg-warning text-dark rounded-pill trial-badge">
+        <i class="fas fa-clock me-1"></i>
+        {% if show_days %}
+            {% if days_remaining > 1 %}
+                {{ g.translate('trial_badge_days', 'Trial: %s days')|format(days_remaining) }}
+            {% elif days_remaining == 1 %}
+                {{ g.translate('trial_badge_one_day', 'Trial: 1 day') }}
+            {% else %}
+                {{ g.translate('trial_badge_ends_today', 'Trial ends today') }}
+            {% endif %}
+        {% else %}
+            {{ g.translate('trial_badge', 'Trial') }}
+        {% endif %}
+    </span>
+{% endmacro %}

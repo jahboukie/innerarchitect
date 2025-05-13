@@ -15,6 +15,16 @@
                         <code>{{ error_message }}</code>
                     </div>
                     {% endif %}
+                    
+                    <!-- Trial banner -->
+                    {% if subscription and subscription.has_active_trial %}
+                        {% from 'partials/trial_banner.html' import trial_banner %}
+                        {{ trial_banner(
+                            days_remaining=subscription.trial_days_remaining,
+                            plan=subscription.trial_plan,
+                            dismiss_id='profile-trial-banner'
+                        ) }}
+                    {% endif %}
                 
                     <div class="text-center mb-4">
                         {% if current_user.profile_image_url %}
@@ -61,25 +71,57 @@
                     <div class="card shadow-sm border-0 mb-4 rounded">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="card-title mb-0">{{ g.translate('current_plan', 'Current Plan') }}: <span class="badge bg-primary">{{ subscription.plan_name }}</span></h5>
-                                {% if subscription.current_period_end %}
-                                <small class="text-muted">{{ g.translate('renewal_date', 'Renews on') }} {{ subscription.current_period_end.strftime('%b %d, %Y') }}</small>
+                                <div>
+                                    <h5 class="card-title mb-0">
+                                        {{ g.translate('current_plan', 'Current Plan') }}: 
+                                        {% if subscription.has_active_trial %}
+                                            {% from 'partials/trial_banner.html' import trial_badge %}
+                                            <span class="badge bg-primary">{{ subscription.plan_name }}</span>
+                                            {{ trial_badge(subscription.trial_days_remaining) }}
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ subscription.plan_name }}</span>
+                                        {% endif %}
+                                    </h5>
+                                    {% if subscription.has_active_trial %}
+                                        <small class="text-muted">
+                                            {{ g.translate('trial_for', 'Trying') }} <strong>{{ subscription.trial_plan|title }}</strong> {{ g.translate('features', 'features') }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if subscription.current_period_end and not subscription.has_active_trial %}
+                                    <small class="text-muted">{{ g.translate('renewal_date', 'Renews on') }} {{ subscription.current_period_end.strftime('%b %d, %Y') }}</small>
+                                {% elif subscription.has_active_trial %}
+                                    <small class="text-muted">{{ g.translate('trial_ends', 'Trial ends') }} {{ subscription.trial_ends_at.strftime('%b %d, %Y') }}</small>
                                 {% endif %}
                             </div>
                             
                             <ul class="list-group list-group-flush bg-transparent">
-                                {% for feature in subscription.features %}
-                                <li class="list-group-item bg-transparent border-0 py-1">
-                                    <i class="fas fa-check-circle text-success me-2"></i>{{ feature }}
-                                </li>
-                                {% endfor %}
+                                {% if subscription.has_active_trial %}
+                                    <!-- Show features from trial plan instead -->
+                                    {% for feature in subscription.features %}
+                                    <li class="list-group-item bg-transparent border-0 py-1">
+                                        <i class="fas fa-check-circle text-success me-2"></i>{{ feature }}
+                                    </li>
+                                    {% endfor %}
+                                {% else %}
+                                    {% for feature in subscription.features %}
+                                    <li class="list-group-item bg-transparent border-0 py-1">
+                                        <i class="fas fa-check-circle text-success me-2"></i>{{ feature }}
+                                    </li>
+                                    {% endfor %}
+                                {% endif %}
                             </ul>
                             
                             <div class="d-grid gap-2 mt-3">
-                                {% if subscription.plan_name|lower == 'free' %}
-                                <a href="{{ url_for('landing') }}" class="btn btn-primary">
-                                    <i class="fas fa-crown me-2"></i>{{ g.translate('upgrade_plan', 'Upgrade Your Plan') }}
-                                </a>
+                                {% if subscription.has_active_trial %}
+                                    <a href="{{ url_for('create_checkout', plan=subscription.trial_plan) }}" class="btn btn-primary">
+                                        <i class="fas fa-crown me-2"></i>{{ g.translate('subscribe_to_plan', 'Subscribe to %s')|format(subscription.trial_plan|title) }}
+                                    </a>
+                                {% elif subscription.plan_name|lower == 'free' %}
+                                    <a href="{{ url_for('landing') }}#pricing" class="btn btn-primary">
+                                        <i class="fas fa-crown me-2"></i>{{ g.translate('upgrade_plan', 'Upgrade Your Plan') }}
+                                    </a>
                                 {% endif %}
                                 <a href="{{ url_for('manage_subscription') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-cog me-2"></i>{{ g.translate('manage_subscription', 'Manage Subscription') }}
