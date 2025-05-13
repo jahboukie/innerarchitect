@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Email - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-4 text-center">Verify Your Email</h1>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="alert alert-warning mb-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Your email address <strong>{{ current_user.email }}</strong> has not been verified yet.
+                    </div>
+                    
+                    <p class="mb-4">
+                        Please verify your email address to ensure you can recover your account if needed and receive important notifications.
+                    </p>
+                    
+                    <form method="POST" action="{{ url_for('resend_verification_route') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">Back to Profile</a>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center text-muted small">
+                        <p>
+                            If you don't receive the email within a few minutes, please check your spam folder or try again.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -13,8 +13,14 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy.exc import SQLAlchemyError
 
 # Import email authentication modules
-from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
-from email_auth import register_user, verify_email, login_with_email, request_password_reset, reset_password
+from forms import (
+    LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm,
+    DeleteAccountForm, ChangePasswordForm, ResendVerificationForm, PrivacySettingsForm
+)
+from email_auth import (
+    register_user, verify_email, login_with_email, request_password_reset, reset_password,
+    delete_account, regenerate_verification_token
+)
 from email_service import send_verification_email, send_password_reset_email
 
 # Import conversation context management
@@ -615,6 +621,197 @@ def landing():
         
     return render_template('landing.html')
 
+# Account Management Routes
+@app.route('/delete-account', methods=['GET', 'POST'])
+@require_login
+def delete_account_route():
+    """
+    Handle account deletion.
+    Permanently deletes the user's account and associated data in a GDPR-compliant way.
+    """
+    form = DeleteAccountForm()
+    
+    if form.validate_on_submit():
+        success = False
+        
+        if current_user.auth_provider == 'email':
+            # Verify password for email users
+            success = delete_account(current_user.id, form.password.data)
+        else:
+            # No password verification needed for Replit auth users
+            success = delete_account(current_user.id)
+            
+        if success:
+            # Account deleted, show message on landing page
+            flash('Your account has been permanently deleted. We\'re sorry to see you go!', 'info')
+            return redirect(url_for('landing'))
+        else:
+            flash('Failed to delete account. Please try again or contact support.', 'danger')
+    
+    return render_template('delete_account.html', form=form)
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@require_login
+def change_password_route():
+    """
+    Handle password change for email-authenticated users.
+    """
+    # Only available for email-authenticated users
+    if current_user.auth_provider != 'email':
+        flash('Password change is only available for email accounts.', 'warning')
+        return redirect(url_for('profile'))
+    
+    form = ChangePasswordForm()
+    
+    if form.validate_on_submit():
+        # Verify current password
+        if not current_user.check_password(form.current_password.data):
+            flash('Current password is incorrect.', 'danger')
+            return render_template('change_password.html', form=form)
+        
+        # Update password
+        current_user.set_password(form.new_password.data)
+        db.session.commit()
+        
+        flash('Your password has been updated successfully.', 'success')
+        return redirect(url_for('profile'))
+    
+    return render_template('change_password.html', form=form)
+
+@app.route('/resend-verification', methods=['GET', 'POST'])
+@require_login
+def resend_verification_route():
+    """
+    Resend email verification link.
+    """
+    # Only available for unverified email-authenticated users
+    if current_user.auth_provider != 'email' or current_user.email_verified:
+        flash('Email verification is not needed for your account.', 'info')
+        return redirect(url_for('profile'))
+    
+    form = ResendVerificationForm()
+    
+    if form.validate_on_submit():
+        # Generate new verification token
+        user, token = regenerate_verification_token(current_user.id)
+        
+        if user and token:
+            # Send verification email
+            base_url = request.host_url.rstrip('/')
+            email_sent = send_verification_email(user, token, base_url)
+            
+            if email_sent:
+                flash('A new verification email has been sent. Please check your inbox.', 'success')
+            else:
+                flash('Failed to send verification email. Please try again later.', 'danger')
+                
+            return redirect(url_for('profile'))
+    
+    return render_template('resend_verification.html', form=form)
+
+@app.route('/privacy-settings', methods=['GET', 'POST'])
+@require_login
+def privacy_settings_route():
+    """
+    View and update privacy settings.
+    """
+    # Import the model in the function to avoid circular imports
+    from models import PrivacySettings
+    
+    # Get or create privacy settings
+    privacy_settings = current_user.privacy_settings
+    
+    if not privacy_settings:
+        # Create default privacy settings with explicit field assignment
+        privacy_settings = PrivacySettings()
+        privacy_settings.user_id = current_user.id
+        privacy_settings.data_collection = True
+        privacy_settings.progress_tracking = True
+        privacy_settings.personalization = True
+        privacy_settings.email_notifications = True
+        privacy_settings.marketing_emails = False
+        db.session.add(privacy_settings)
+        db.session.commit()
+    
+    form = PrivacySettingsForm()
+    
+    if form.validate_on_submit():
+        # Update privacy settings
+        privacy_settings.data_collection = form.data_collection.data
+        privacy_settings.progress_tracking = form.progress_tracking.data
+        privacy_settings.personalization = form.personalization.data
+        privacy_settings.email_notifications = form.email_notifications.data
+        privacy_settings.marketing_emails = form.marketing_emails.data
+        
+        db.session.commit()
+        
+        flash('Your privacy settings have been updated.', 'success')
+        return redirect(url_for('profile'))
+    elif request.method == 'GET':
+        # Populate form with current settings
+        form.data_collection.data = privacy_settings.data_collection
+        form.progress_tracking.data = privacy_settings.progress_tracking
+        form.personalization.data = privacy_settings.personalization
+        form.email_notifications.data = privacy_settings.email_notifications
+        form.marketing_emails.data = privacy_settings.marketing_emails
+    
+    return render_template('privacy_settings.html', form=form, privacy_settings=privacy_settings)
+
+@app.route('/export-data')
+@require_login
+def export_data_route():
+    """
+    Export user data in a machine-readable format (JSON).
+    """
+    # Collect user data
+    user_data = {
+        'user': {
+            'id': current_user.id,
+            'email': current_user.email,
+            'first_name': current_user.first_name,
+            'last_name': current_user.last_name,
+            'auth_provider': current_user.auth_provider,
+            'created_at': current_user.created_at.isoformat() if current_user.created_at else None
+        },
+        'chats': [],
+        'exercises': [],
+        'technique_ratings': []
+    }
+    
+    # Add chat history
+    for chat in current_user.chats.all():
+        user_data['chats'].append({
+            'id': chat.id,
+            'message': chat.message,
+            'response': chat.response,
+            'technique': chat.technique,
+            'timestamp': chat.timestamp.isoformat() if chat.timestamp else None
+        })
+    
+    # Add exercise progress
+    for progress in current_user.exercise_progress.all():
+        user_data['exercises'].append({
+            'id': progress.id,
+            'exercise_id': progress.exercise_id,
+            'status': progress.status,
+            'completion_date': progress.completion_date.isoformat() if progress.completion_date else None,
+            'user_response': progress.user_response
+        })
+    
+    # Add technique ratings
+    for rating in current_user.technique_ratings.all():
+        user_data['technique_ratings'].append({
+            'id': rating.id,
+            'technique': rating.technique,
+            'rating': rating.rating,
+            'timestamp': rating.timestamp.isoformat() if rating.timestamp else None
+        })
+    
+    # Create response with appropriate headers
+    response = jsonify(user_data)
+    response.headers['Content-Disposition'] = f'attachment; filename=inner_architect_data_{current_user.id}.json'
+    return response
+
 # Email Authentication Routes
 @app.route('/email-login', methods=['GET', 'POST'])
 def email_login():
@@ -706,17 +903,34 @@ def reset_password_request():
     form = RequestResetForm()
     
     if form.validate_on_submit():
-        user, token = request_password_reset(form.email.data)
+        email = form.email.data.strip().lower()  # Normalize email
+        user, token = request_password_reset(email)
         
         if user and token:
-            # Send password reset email
-            base_url = request.host_url.rstrip('/')
-            send_password_reset_email(user, token, base_url)
-            
-            flash('An email has been sent with instructions to reset your password.', 'info')
-            return redirect(url_for('email_login'))
+            try:
+                # Send password reset email
+                base_url = request.host_url.rstrip('/')
+                email_sent = send_password_reset_email(user, token, base_url)
+                
+                if email_sent:
+                    logger.info(f"Password reset email sent to {user.email}")
+                    flash('An email has been sent with instructions to reset your password. Please check your inbox.', 'info')
+                else:
+                    logger.error(f"Failed to send password reset email to {user.email}")
+                    flash('We could not send the reset email at this time. Please try again later.', 'warning')
+                
+                # Don't reveal whether a user with this email exists or not
+                # Always show success message even if sending fails to avoid email enumeration
+                return redirect(url_for('email_login'))
+            except Exception as e:
+                logger.error(f"Error sending password reset email: {str(e)}")
+                logger.exception("Full exception details:")
+                flash('An error occurred while processing your request. Please try again later.', 'danger')
         else:
-            flash('Failed to send reset email. Please try again.', 'danger')
+            # Generic message - don't reveal whether this email exists in system
+            logger.info(f"Password reset requested for non-existent or non-email user: {email}")
+            flash('If your email is registered with us, you will receive a reset link shortly.', 'info')
+            return redirect(url_for('email_login'))
             
     return render_template('reset_password_request.html', form=form)
 
@@ -728,15 +942,28 @@ def reset_password_route(token):
     # If user is already logged in, redirect to index
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    
+    # Validate token format before processing
+    if not token or len(token) != 64:
+        flash('Invalid reset link. Please request a new one.', 'danger')
+        return redirect(url_for('reset_password_request'))
         
     form = ResetPasswordForm()
     
     if form.validate_on_submit():
-        if reset_password(token, form.password.data):
-            flash('Your password has been reset! You can now log in.', 'success')
-            return redirect(url_for('email_login'))
-        else:
-            flash('The reset link is invalid or has expired.', 'danger')
+        try:
+            if reset_password(token, form.password.data):
+                logger.info(f"Password reset successfully completed for token: {token[:6]}...")
+                flash('Your password has been reset! You can now log in with your new password.', 'success')
+                return redirect(url_for('email_login'))
+            else:
+                logger.warning(f"Password reset failed for token: {token[:6]}...")
+                flash('The reset link is invalid or has expired. Please request a new one.', 'danger')
+                return redirect(url_for('reset_password_request'))
+        except Exception as e:
+            logger.error(f"Error during password reset: {str(e)}")
+            logger.exception("Full exception details:")
+            flash('An error occurred while processing your request. Please try again later.', 'danger')
             return redirect(url_for('reset_password_request'))
             
     return render_template('reset_password.html', form=form, token=token)

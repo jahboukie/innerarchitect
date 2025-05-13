@@ -174,6 +174,11 @@ def request_password_reset(email):
         if not user:
             logger.warning(f"Password reset requested for non-existent email: {email}")
             return None, None
+        
+        # Only allow password reset for email-authenticated users
+        if user.auth_provider != 'email':
+            logger.warning(f"Password reset requested for non-email user: {user.id}, provider: {user.auth_provider}")
+            return None, None
             
         # Generate reset token
         reset_token = generate_token()
@@ -186,6 +191,7 @@ def request_password_reset(email):
         
     except Exception as e:
         logger.error(f"Error requesting password reset: {str(e)}")
+        logger.exception("Full exception details:")
         db.session.rollback()
         return None, None
 

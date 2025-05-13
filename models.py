@@ -4,6 +4,23 @@ from flask_login import UserMixin
 from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from sqlalchemy import ForeignKey, UniqueConstraint
 
+class PrivacySettings(db.Model):
+    """Model for user privacy settings and preferences."""
+    __tablename__ = 'privacy_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, unique=True)
+    data_collection = db.Column(db.Boolean, default=True)
+    progress_tracking = db.Column(db.Boolean, default=True)
+    personalization = db.Column(db.Boolean, default=True)
+    email_notifications = db.Column(db.Boolean, default=True)
+    marketing_emails = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<PrivacySettings {self.id} for user {self.user_id}>'
+
+
 class User(UserMixin, db.Model):
     """User model for authentication and profile information."""
     __tablename__ = 'users'
@@ -37,7 +54,7 @@ class User(UserMixin, db.Model):
     technique_ratings = db.relationship('TechniqueEffectiveness', backref='user', lazy='dynamic')
     
     # Relationship with PrivacySettings
-    privacy_settings = db.relationship('PrivacySettings', backref='user', uselist=False, lazy='joined')
+    privacy_settings = db.relationship('PrivacySettings', backref='user', uselist=False, lazy='joined', cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<User {self.id}>'
