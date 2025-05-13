@@ -227,7 +227,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/static/service-worker.js', { scope: '/' })
+                navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}", { scope: '/' })
                     .then(registration => {
                         console.log('ServiceWorker registered with scope:', registration.scope);
                     })
