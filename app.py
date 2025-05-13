@@ -1053,6 +1053,9 @@ def revoke_session(session_id):
 def export_data_route():
     """
     Export user data in a machine-readable format (JSON).
+    
+    This exports ALL data associated with the user account.
+    For more selective chat history exports, use export_history_route.
     """
     # Collect user data
     user_data = {
@@ -1069,38 +1072,313 @@ def export_data_route():
         'technique_ratings': []
     }
     
-    # Add chat history
+    # Add chat history with null handling
     for chat in current_user.chats.all():
-        user_data['chats'].append({
+        chat_entry = {
             'id': chat.id,
-            'message': chat.message,
-            'response': chat.response,
-            'technique': chat.technique,
-            'timestamp': chat.timestamp.isoformat() if chat.timestamp else None
-        })
+            'session_id': getattr(chat, 'session_id', None),
+            'user_message': getattr(chat, 'user_message', None),
+            'ai_response': getattr(chat, 'ai_response', None),
+            'nlp_technique': getattr(chat, 'nlp_technique', None),
+            'mood': getattr(chat, 'mood', None),
+            'created_at': chat.created_at.isoformat() if getattr(chat, 'created_at', None) else None
+        }
+        user_data['chats'].append(chat_entry)
     
-    # Add exercise progress
+    # Add exercise progress with null handling
     for progress in current_user.exercise_progress.all():
-        user_data['exercises'].append({
+        progress_entry = {
             'id': progress.id,
-            'exercise_id': progress.exercise_id,
-            'status': progress.status,
-            'completion_date': progress.completion_date.isoformat() if progress.completion_date else None,
-            'user_response': progress.user_response
-        })
+            'exercise_id': getattr(progress, 'exercise_id', None),
+            'completed': getattr(progress, 'completed', False),
+            'current_step': getattr(progress, 'current_step', 0),
+            'notes': getattr(progress, 'notes', None),
+            'started_at': progress.started_at.isoformat() if getattr(progress, 'started_at', None) else None,
+            'completed_at': progress.completed_at.isoformat() if getattr(progress, 'completed_at', None) else None
+        }
+        user_data['exercises'].append(progress_entry)
     
-    # Add technique ratings
+    # Add technique ratings with null handling
     for rating in current_user.technique_ratings.all():
-        user_data['technique_ratings'].append({
+        rating_entry = {
             'id': rating.id,
-            'technique': rating.technique,
-            'rating': rating.rating,
-            'timestamp': rating.timestamp.isoformat() if rating.timestamp else None
-        })
+            'technique': getattr(rating, 'technique', None),
+            'rating': getattr(rating, 'rating', None),
+            'notes': getattr(rating, 'notes', None),
+            'situation': getattr(rating, 'situation', None),
+            'entry_date': rating.entry_date.isoformat() if getattr(rating, 'entry_date', None) else None
+        }
+        user_data['technique_ratings'].append(rating_entry)
     
     # Create response with appropriate headers
     response = jsonify(user_data)
     response.headers['Content-Disposition'] = f'attachment; filename=inner_architect_data_{current_user.id}.json'
+    return response
+
+
+@app.route('/export-history')
+@require_login
+def export_history_route():
+    """
+    View and export chat history with formatting options.
+    
+    Supports filtering by date range and exporting in multiple formats:
+    - TXT (plain text)
+    - CSV (comma-separated values)
+    - JSON (JavaScript Object Notation)
+    - PDF (Portable Document Format)
+    """
+    from datetime import datetime
+    from models import ChatHistory
+    from flask import Response
+    
+    # Parse filter parameters
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    export_format = request.args.get('format', None)  # If set, triggers an export
+    
+    # Convert date strings to datetime objects
+    start_date = None
+    end_date = None
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        except ValueError:
+            flash('Invalid start date format. Please use YYYY-MM-DD.', 'warning')
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            # Set time to end of day for inclusive filtering
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            flash('Invalid end date format. Please use YYYY-MM-DD.', 'warning')
+    
+    # Build query with filters
+    query = ChatHistory.query.filter_by(user_id=current_user.id)
+    
+    if start_date:
+        query = query.filter(ChatHistory.created_at >= start_date)
+    
+    if end_date:
+        query = query.filter(ChatHistory.created_at <= end_date)
+    
+    # Get total count for pagination info
+    total_count = query.count()
+    
+    # Limit results for preview to avoid overwhelming the page
+    chat_history = query.order_by(ChatHistory.created_at.desc()).limit(25).all()
+    
+    # If an export format is specified, generate the export file
+    if export_format:
+        return generate_export(query.all(), export_format, start_date, end_date)
+    
+    # Otherwise render the export page with preview
+    return render_template(
+        'export_history.html',
+        chat_history=chat_history,
+        total_count=total_count
+    )
+
+
+def generate_export(chats, format_type, start_date=None, end_date=None):
+    """
+    Generate an export file of chat history in the specified format.
+    
+    Args:
+        chats: List of ChatHistory objects
+        format_type: Export format (txt, csv, json, pdf)
+        start_date: Optional start date for filename
+        end_date: Optional end date for filename
+        
+    Returns:
+        Flask response with the exported file
+    """
+    from flask import Response, jsonify
+    
+    # Generate filename with date range if provided
+    date_suffix = ""
+    if start_date and end_date:
+        date_suffix = f"_{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}"
+    elif start_date:
+        date_suffix = f"_{start_date.strftime('%Y%m%d')}-present"
+    elif end_date:
+        date_suffix = f"_until-{end_date.strftime('%Y%m%d')}"
+        
+    filename = f"chat_history{date_suffix}"
+    
+    # Export based on requested format
+    if format_type == 'txt':
+        return export_as_txt(chats, filename)
+    elif format_type == 'csv':
+        return export_as_csv(chats, filename)
+    elif format_type == 'json':
+        return export_as_json(chats, filename)
+    elif format_type == 'pdf':
+        return export_as_pdf(chats, filename)
+    else:
+        flash(f'Unsupported export format: {format_type}', 'danger')
+        return redirect(url_for('export_history_route'))
+
+
+def export_as_txt(chats, filename):
+    """Export chat history as a plain text file."""
+    from flask import Response
+    
+    lines = []
+    lines.append("THE INNER ARCHITECT - CHAT HISTORY EXPORT")
+    lines.append("=" * 50)
+    lines.append("")
+    
+    for chat in chats:
+        lines.append(f"Date: {chat.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"Technique: {chat.nlp_technique or 'None'}")
+        lines.append(f"Mood: {chat.mood or 'Not specified'}")
+        lines.append("-" * 50)
+        lines.append("You:")
+        lines.append(chat.user_message)
+        lines.append("")
+        lines.append("Inner Architect:")
+        lines.append(chat.ai_response)
+        lines.append("=" * 50)
+        lines.append("")
+    
+    text_content = "\n".join(lines)
+    
+    response = Response(text_content, mimetype='text/plain')
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}.txt'
+    return response
+
+
+def export_as_csv(chats, filename):
+    """Export chat history as a CSV file."""
+    import csv
+    from io import StringIO
+    from flask import Response
+    
+    output = StringIO()
+    csv_writer = csv.writer(output)
+    
+    # Write header
+    csv_writer.writerow(['Date', 'Technique', 'Mood', 'Your Message', 'AI Response'])
+    
+    # Write chat data
+    for chat in chats:
+        csv_writer.writerow([
+            chat.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            chat.nlp_technique or '',
+            chat.mood or '',
+            chat.user_message,
+            chat.ai_response
+        ])
+    
+    response = Response(output.getvalue(), mimetype='text/csv')
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}.csv'
+    return response
+
+
+def export_as_json(chats, filename):
+    """Export chat history as a JSON file."""
+    from flask import jsonify
+    
+    chat_data = []
+    
+    for chat in chats:
+        chat_data.append({
+            'date': chat.created_at.isoformat(),
+            'technique': chat.nlp_technique,
+            'mood': chat.mood,
+            'user_message': chat.user_message,
+            'ai_response': chat.ai_response
+        })
+    
+    response = jsonify(chat_data)
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}.json'
+    return response
+
+
+def export_as_pdf(chats, filename):
+    """Export chat history as a PDF file."""
+    from io import BytesIO
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from flask import Response
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, title="Chat History")
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    heading_style = styles['Heading2']
+    normal_style = styles['Normal']
+    
+    # Create custom styles
+    styles.add(ParagraphStyle(
+        name='UserMessage',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+    ))
+    
+    styles.add(ParagraphStyle(
+        name='AIResponse',
+        parent=styles['Normal'],
+        leftIndent=20,
+    ))
+    
+    # Build document content
+    content = []
+    
+    # Add title
+    content.append(Paragraph("The Inner Architect - Chat History", title_style))
+    content.append(Spacer(1, 12))
+    
+    # Add chat entries
+    for chat in chats:
+        # Add date and metadata
+        date_str = chat.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        content.append(Paragraph(f"Date: {date_str}", heading_style))
+        
+        # Add technique and mood
+        meta_data = [
+            ["Technique:", chat.nlp_technique or "None"],
+            ["Mood:", chat.mood or "Not specified"]
+        ]
+        meta_table = Table(meta_data, colWidths=[80, 400])
+        meta_table.setStyle(TableStyle([
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.gray),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        content.append(meta_table)
+        content.append(Spacer(1, 6))
+        
+        # Add user message
+        content.append(Paragraph("You:", styles['UserMessage']))
+        content.append(Paragraph(chat.user_message.replace('\n', '<br/>'), normal_style))
+        content.append(Spacer(1, 6))
+        
+        # Add AI response
+        content.append(Paragraph("Inner Architect:", styles['UserMessage']))
+        content.append(Paragraph(chat.ai_response.replace('\n', '<br/>'), styles['AIResponse']))
+        
+        # Add separator
+        content.append(Spacer(1, 12))
+        content.append(Paragraph("_" * 65, normal_style))
+        content.append(Spacer(1, 12))
+    
+    # Build PDF
+    doc.build(content)
+    
+    # Prepare response
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    response = Response(pdf_data, mimetype='application/pdf')
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}.pdf'
     return response
 
 # Email Authentication Routes
