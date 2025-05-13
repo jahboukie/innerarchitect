@@ -2572,6 +2572,15 @@ def get_progress():
         'completed_at': p.completed_at.isoformat() if p.completed_at else None
     } for p in progress_records])
 
+# Premium Features Page
+@app.route('/premium-features')
+def premium_features_route():
+    """
+    Display information about premium features.
+    Serves as a gateway to premium features, with explanations and subscription options.
+    """
+    return render_template('premium_features.html')
+
 # Progress Dashboard Routes
 @app.route('/progress/dashboard', methods=['GET'])
 @require_premium

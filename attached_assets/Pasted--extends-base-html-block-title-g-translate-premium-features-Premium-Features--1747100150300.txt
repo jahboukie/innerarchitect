@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('premium_features', 'Premium Features') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold mb-3">{{ g.translate('premium_features_title', 'Premium Features') }}</h1>
+                <p class="lead text-muted">{{ g.translate('premium_features_subtitle', 'Unlock advanced tools and techniques for your personal transformation') }}</p>
+            </div>
+            
+            <!-- Trial banner if trial active -->
+            {% if current_user and current_user.is_authenticated and current_user.subscription and current_user.subscription.has_active_trial %}
+                {% from 'partials/trial_banner.html' import trial_banner %}
+                {{ trial_banner(
+                    days_remaining=current_user.subscription.trial_days_remaining,
+                    plan=current_user.subscription.trial_plan,
+                    dismiss_id='premium-trial-banner'
+                ) }}
+            {% endif %}
+            
+            <div class="row g-4 mb-5">
+                <!-- Premium Feature Cards -->
+                {% from 'partials/premium_badge.html' import premium_feature_card %}
+                
+                <!-- Premium Feature 1: All NLP Techniques -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('premium_nlp_techniques', 'All NLP Techniques'),
+                        description=g.translate('premium_nlp_techniques_desc', 'Access our full library of 25+ NLP techniques, including advanced options like the Meta Model, Milton Model, and Parts Integration.'),
+                        plan='premium',
+                        feature_link=url_for('techniques_page'),
+                        button_text=g.translate('explore_techniques', 'Explore Techniques'),
+                        icon='brain'
+                    ) }}
+                </div>
+                
+                <!-- Premium Feature 2: Unlimited AI Chats -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('unlimited_chats', 'Unlimited AI Chats'),
+                        description=g.translate('unlimited_chats_desc', 'Get unlimited high-quality AI interactions, with no daily message limits. Perfect for deep personal work and continuous support.'),
+                        plan='premium',
+                        feature_link=url_for('index'),
+                        button_text=g.translate('start_chatting', 'Start Chatting'),
+                        icon='comments'
+                    ) }}
+                </div>
+                
+                <!-- Premium Feature 3: Progress Tracking -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('progress_tracking', 'Detailed Progress Tracking'),
+                        description=g.translate('progress_tracking_desc', 'Track your growth with detailed analytics, effectiveness ratings, and personalized insights on your cognitive development.'),
+                        plan='premium',
+                        feature_link=url_for('progress_dashboard'),
+                        button_text=g.translate('view_dashboard', 'View Dashboard'),
+                        icon='chart-line'
+                    ) }}
+                </div>
+                
+                <!-- Premium Feature 4: Communication Analysis -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('communication_analysis', 'Communication Analysis'),
+                        description=g.translate('communication_analysis_desc', 'Analyze your communication style with AI-powered insights and get personalized recommendations for improvement.'),
+                        plan='premium',
+                        feature_link=url_for('communication_analysis_page'),
+                        button_text=g.translate('analyze_style', 'Analyze Style'),
+                        icon='comment-dots'
+                    ) }}
+                </div>
+            </div>
+            
+            <div class="text-center mb-5">
+                <h2 class="fw-bold mb-3">{{ g.translate('professional_features_title', 'Professional Features') }}</h2>
+                <p class="lead text-muted">{{ g.translate('professional_features_subtitle', 'Advanced development tools for serious personal transformation') }}</p>
+            </div>
+            
+            <div class="row g-4 mb-5">
+                <!-- Professional Feature 1: Personalized Journeys -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('personalized_journeys', 'Personalized Development Journeys'),
+                        description=g.translate('personalized_journeys_desc', 'Follow structured development paths tailored to your specific goals, with milestones and achievements.'),
+                        plan='professional',
+                        feature_link=url_for('personalized_journeys_page'),
+                        button_text=g.translate('start_journey', 'Start Journey'),
+                        icon='route'
+                    ) }}
+                </div>
+                
+                <!-- Professional Feature 2: Belief Change Protocol -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('belief_change', 'Belief Change Protocol'),
+                        description=g.translate('belief_change_desc', 'Transform limiting beliefs using our structured protocol based on advanced NLP models and cognitive psychology.'),
+                        plan='professional',
+                        feature_link=url_for('belief_change_page'),
+                        button_text=g.translate('transform_beliefs', 'Transform Beliefs'),
+                        icon='sync-alt'
+                    ) }}
+                </div>
+                
+                <!-- Professional Feature 3: Voice Practice -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('voice_practice', 'Voice Practice Exercises'),
+                        description=g.translate('voice_practice_desc', 'Enhance your verbal communication with guided voice exercises, transcription, and AI-powered feedback.'),
+                        plan='professional',
+                        feature_link=url_for('voice_practice_page'),
+                        button_text=g.translate('practice_voice', 'Practice Voice'),
+                        icon='microphone'
+                    ) }}
+                </div>
+                
+                <!-- Professional Feature 4: Practice Reminders -->
+                <div class="col-lg-6">
+                    {{ premium_feature_card(
+                        title=g.translate('practice_reminders', 'Practice Reminders'),
+                        description=g.translate('practice_reminders_desc', 'Set up customized practice reminders to integrate NLP techniques into your daily life with consistency.'),
+                        plan='professional',
+                        feature_link=url_for('reminders_page'),
+                        button_text=g.translate('set_reminders', 'Set Reminders'),
+                        icon='bell'
+                    ) }}
+                </div>
+            </div>
+            
+            <!-- Subscription Plans -->
+            <div class="card shadow-sm border-0 rounded-4 mb-5">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4 text-center">{{ g.translate('subscription_plans', 'Subscription Plans') }}</h3>
+                    
+                    <div class="row g-4">
+                        <!-- Free Plan -->
+                        <div class="col-md-4">
+                            <div class="card h-100 border-light">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title text-center mb-0">{{ g.translate('free_plan', 'Free') }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-0">$0</h3>
+                                        <small class="text-muted">{{ g.translate('per_month', 'per month') }}</small>
+                                    </div>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('basic_reframing', 'Basic cognitive reframing') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('limited_chats', 'Limited AI chats (10/day)') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('basic_dashboard', 'Basic dashboard') }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Premium Plan -->
+                        <div class="col-md-4">
+                            <div class="card h-100 border-primary shadow">
+                                <div class="card-header bg-gradient-premium text-white">
+                                    <h5 class="card-title text-center mb-0">{{ g.translate('premium_plan', 'Premium') }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-0">$9.99</h3>
+                                        <small class="text-muted">{{ g.translate('per_month', 'per month') }}</small>
+                                    </div>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> <strong>{{ g.translate('everything_in_free', 'Everything in Free') }}</strong></li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('all_techniques', 'All NLP techniques') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('unlimited_ai', 'Unlimited AI chats') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('detailed_tracking', 'Detailed progress tracking') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('communication_analyze', 'Communication analysis') }}</li>
+                                    </ul>
+                                    {% if current_user and current_user.is_authenticated %}
+                                        {% if current_user.subscription and current_user.subscription.has_premium_access %}
+                                            <div class="d-grid">
+                                                <span class="btn btn-outline-success disabled">
+                                                    <i class="fas fa-check-circle me-2"></i>{{ g.translate('current_plan', 'Current Plan') }}
+                                                </span>
+                                            </div>
+                                        {% elif current_user.subscription and current_user.subscription.is_premium_trial %}
+                                            <div class="d-grid">
+                                                <a href="{{ url_for('create_checkout', plan='premium') }}" class="btn btn-premium">
+                                                    <i class="fas fa-crown me-2"></i>{{ g.translate('subscribe_now', 'Subscribe Now') }}
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-grid gap-2">
+                                                <a href="{{ url_for('create_checkout', plan='premium') }}" class="btn btn-premium">
+                                                    <i class="fas fa-crown me-2"></i>{{ g.translate('subscribe_now', 'Subscribe Now') }}
+                                                </a>
+                                                <form action="{{ url_for('start_trial') }}" method="POST">
+                                                    <input type="hidden" name="trial_plan" value="premium">
+                                                    <button type="submit" class="btn btn-outline-primary w-100">
+                                                        <i class="fas fa-clock me-2"></i>{{ g.translate('try_free', 'Try Free') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="d-grid">
+                                            <a href="{{ url_for('login_check') }}" class="btn btn-primary">
+                                                <i class="fas fa-sign-in-alt me-2"></i>{{ g.translate('login_to_subscribe', 'Login to Subscribe') }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Professional Plan -->
+                        <div class="col-md-4">
+                            <div class="card h-100 border-light">
+                                <div class="card-header bg-gradient-pro text-white">
+                                    <h5 class="card-title text-center mb-0">{{ g.translate('pro_plan', 'Professional') }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <h3 class="mb-0">$19.99</h3>
+                                        <small class="text-muted">{{ g.translate('per_month', 'per month') }}</small>
+                                    </div>
+                                    <ul class="list-unstyled mb-4">
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> <strong>{{ g.translate('everything_in_premium', 'Everything in Premium') }}</strong></li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('dev_journeys', 'Personalized development journeys') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('belief_protocol', 'Belief change protocol') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('voice_exercises', 'Voice practice exercises') }}</li>
+                                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('custom_reminders', 'Custom practice reminders') }}</li>
+                                    </ul>
+                                    {% if current_user and current_user.is_authenticated %}
+                                        {% if current_user.subscription and current_user.subscription.has_professional_access %}
+                                            <div class="d-grid">
+                                                <span class="btn btn-outline-success disabled">
+                                                    <i class="fas fa-check-circle me-2"></i>{{ g.translate('current_plan', 'Current Plan') }}
+                                                </span>
+                                            </div>
+                                        {% elif current_user.subscription and current_user.subscription.is_professional_trial %}
+                                            <div class="d-grid">
+                                                <a href="{{ url_for('create_checkout', plan='professional') }}" class="btn btn-professional">
+                                                    <i class="fas fa-star me-2"></i>{{ g.translate('subscribe_now', 'Subscribe Now') }}
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-grid gap-2">
+                                                <a href="{{ url_for('create_checkout', plan='professional') }}" class="btn btn-professional">
+                                                    <i class="fas fa-star me-2"></i>{{ g.translate('subscribe_now', 'Subscribe Now') }}
+                                                </a>
+                                                <form action="{{ url_for('start_trial') }}" method="POST">
+                                                    <input type="hidden" name="trial_plan" value="professional">
+                                                    <button type="submit" class="btn btn-outline-primary w-100">
+                                                        <i class="fas fa-clock me-2"></i>{{ g.translate('try_free', 'Try Free') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="d-grid">
+                                            <a href="{{ url_for('login_check') }}" class="btn btn-primary">
+                                                <i class="fas fa-sign-in-alt me-2"></i>{{ g.translate('login_to_subscribe', 'Login to Subscribe') }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQs -->
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title mb-4 text-center">{{ g.translate('faq_title', 'Frequently Asked Questions') }}</h3>
+                    
+                    <div class="accordion" id="premiumFaq">
+                        <!-- FAQ 1 -->
+                        <div class="accordion-item border-0 mb-3">
+                            <h2 class="accordion-header" id="faqOne">
+                                <button class="accordion-button collapsed rounded shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    {{ g.translate('faq_1', 'What happens when my trial ends?') }}
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="faqOne" data-bs-parent="#premiumFaq">
+                                <div class="accordion-body bg-light rounded-bottom">
+                                    {{ g.translate('faq_1_answer', 'When your trial ends, your account will automatically revert to the free plan. You will not be charged unless you choose to subscribe. You can subscribe at any time during or after your trial to maintain access to premium features.') }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- FAQ 2 -->
+                        <div class="accordion-item border-0 mb-3">
+                            <h2 class="accordion-header" id="faqTwo">
+                                <button class="accordion-button collapsed rounded shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    {{ g.translate('faq_2', 'Can I cancel my subscription at any time?') }}
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#premiumFaq">
+                                <div class="accordion-body bg-light rounded-bottom">
+                                    {{ g.translate('faq_2_answer', 'Yes, you can cancel your subscription at any time from your profile or subscription management page. When you cancel, you will continue to have access until the end of your current billing period, after which your account will revert to the free plan.') }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- FAQ 3 -->
+                        <div class="accordion-item border-0 mb-3">
+                            <h2 class="accordion-header" id="faqThree">
+                                <button class="accordion-button collapsed rounded shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    {{ g.translate('faq_3', 'What payment methods do you accept?') }}
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#premiumFaq">
+                                <div class="accordion-body bg-light rounded-bottom">
+                                    {{ g.translate('faq_3_answer', 'We accept all major credit and debit cards, including Visa, Mastercard, American Express, and Discover. Payments are securely processed through Stripe, one of the world\'s most trusted payment processors.') }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- FAQ 4 -->
+                        <div class="accordion-item border-0">
+                            <h2 class="accordion-header" id="faqFour">
+                                <button class="accordion-button collapsed rounded shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    {{ g.translate('faq_4', 'Can I upgrade from Premium to Professional?') }}
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#premiumFaq">
+                                <div class="accordion-body bg-light rounded-bottom">
+                                    {{ g.translate('faq_4_answer', 'Yes, you can upgrade from Premium to Professional at any time. When you upgrade, you will be charged the prorated difference for the remainder of your current billing cycle. Your new plan will take effect immediately, giving you instant access to all Professional features.') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
