@@ -51,9 +51,16 @@
         
         {% if error_type == 'quota_exceeded' %}
             <div class="text-center">
+                <a href="{{ url_for('premium_features_route') }}" class="btn btn-premium rounded-pill px-4 mb-2 mb-md-0 me-md-2">
+                    <i class="fas fa-crown me-2"></i> {{ g.translate('view_premium', 'View Premium Features') }}
+                </a>
                 <a href="{{ url_for('manage_subscription') }}" class="btn btn-outline-primary rounded-pill px-4">
                     <i class="fas fa-arrow-up me-2"></i> {{ g.translate('upgrade_plan', 'Upgrade Plan') }}
                 </a>
+                <p class="text-muted small mt-2">
+                    <i class="fas fa-info-circle me-1"></i> 
+                    {{ g.translate('unlimited_usage', 'Premium plans offer unlimited usage') }}
+                </p>
             </div>
         {% endif %}
         
@@ -61,14 +68,21 @@
             <div class="upgrade-options mt-3">
                 <div class="text-center">
                     <div class="mb-3">
-                        <a href="{{ url_for('create_checkout', plan='premium') }}" class="btn btn-premium py-2 px-4 mb-2 mb-md-0 me-md-2">
-                            <i class="fas fa-crown me-2"></i> {{ g.translate('get_premium', 'Get Premium') }}
+                        <a href="{{ url_for('premium_features_route') }}" class="btn btn-premium py-2 px-4 mb-2 mb-md-0 me-md-2">
+                            <i class="fas fa-crown me-2"></i> {{ g.translate('view_premium', 'View Premium Features') }}
                         </a>
                         
-                        <a href="{{ url_for('start_trial') }}" class="btn btn-outline-primary rounded-pill px-4">
-                            <i class="fas fa-clock me-2"></i> {{ g.translate('start_trial', 'Start Trial') }}
-                        </a>
+                        <form action="{{ url_for('start_trial') }}" method="POST" class="d-inline">
+                            <input type="hidden" name="trial_plan" value="premium">
+                            <button type="submit" class="btn btn-outline-primary rounded-pill px-4">
+                                <i class="fas fa-clock me-2"></i> {{ g.translate('start_trial', 'Start Free Trial') }}
+                            </button>
+                        </form>
                     </div>
+                    <p class="text-muted small mt-2">
+                        <i class="fas fa-info-circle me-1"></i> 
+                        {{ g.translate('unlock_features', 'Unlock all premium features with a free trial or subscription') }}
+                    </p>
                 </div>
             </div>
         {% endif %}

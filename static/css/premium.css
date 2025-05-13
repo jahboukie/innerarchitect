@@ -127,6 +127,29 @@
   max-width: 300px;
 }
 
+/* Premium navigation link styling */
+.premium-nav-link {
+  position: relative;
+  background: linear-gradient(to right, var(--bs-indigo), var(--bs-purple));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.premium-nav-link:hover {
+  background: linear-gradient(to right, var(--bs-purple), var(--bs-pink));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transform: translateY(-1px);
+}
+
+.premium-nav-link .badge {
+  -webkit-text-fill-color: initial; /* Reset for badge text */
+}
+
 /* Animation for trial badges */
 @keyframes trial-pulse {
   0% {

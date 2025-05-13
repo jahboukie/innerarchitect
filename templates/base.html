@@ -82,6 +82,17 @@
                                 </li>
                             </ul>
                         </li>
+                        <!-- Premium Features link with special styling -->
+                        <li class="nav-item">
+                            <a class="nav-link premium-nav-link" href="{{ url_for('premium_features_route') }}">
+                                <i class="fas fa-crown me-1"></i> {{ g.translate('premium_features', 'Premium') }}
+                                {% if current_user.is_authenticated and current_user.subscription and current_user.subscription.has_active_trial %}
+                                    <span class="badge rounded-pill bg-warning text-dark ms-1 small">
+                                        <i class="fas fa-clock small"></i> {{ g.translate('trial', 'Trial') }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
                         <!-- Always show dashboard link directly -->
                         <li class="nav-item">
                             <a class="nav-link" href="/progress/dashboard">
