@@ -158,6 +158,10 @@ stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 # Constants
 UNLIMITED_QUOTA = 9999999  # Represents unlimited quota (instead of infinity)
 
+# Trial constants
+DEFAULT_TRIAL_DAYS = 7  # Default 7-day trial period
+MAX_TRIAL_DAYS = 30  # Maximum allowed trial period
+
 # Define subscription plans and features
 SUBSCRIPTION_PLANS = {
     'free': {
@@ -312,10 +316,17 @@ def check_feature_access(user_id, feature):
             warning(f"No subscription found for user {user_id}")
             return False
         
-        # Get the plan name from the subscription
-        plan_name = subscription.plan_name
-        if not plan_name:
-            warning(f"Subscription found for user {user_id} but plan_name is empty")
+        # Check for active trial
+        if subscription.has_active_trial:
+            # Use the trial plan for access checks
+            effective_plan = subscription.trial_plan
+            info(f"User {user_id} has active trial for {effective_plan} plan")
+        else:
+            # Use the regular subscription plan
+            effective_plan = subscription.plan_name
+        
+        if not effective_plan:
+            warning(f"Subscription found for user {user_id} but effective_plan is empty")
             return False
             
         # Get the list of plans that have access to this feature
@@ -325,8 +336,8 @@ def check_feature_access(user_id, feature):
             return False
         
         # Check if the user's plan has access to this feature
-        has_access = plan_name in allowed_plans
-        info(f"Feature access check result: user {user_id} with plan '{plan_name}' {'has' if has_access else 'does not have'} access to {feature}")
+        has_access = effective_plan in allowed_plans
+        info(f"Feature access check result: user {user_id} with {'trial ' if subscription.has_active_trial else ''}plan '{effective_plan}' {'has' if has_access else 'does not have'} access to {feature}")
         
         return has_access
         

@@ -102,6 +102,14 @@ class Subscription(db.Model):
     current_period_start = db.Column(db.DateTime, nullable=True)
     current_period_end = db.Column(db.DateTime, nullable=True)
     cancel_at_period_end = db.Column(db.Boolean, default=False)
+    
+    # Trial-related fields
+    is_trial = db.Column(db.Boolean, default=False)
+    trial_started_at = db.Column(db.DateTime, nullable=True)
+    trial_ends_at = db.Column(db.DateTime, nullable=True)
+    trial_plan = db.Column(db.String, nullable=True)  # Which plan the trial is for: 'premium' or 'professional'
+    trial_converted = db.Column(db.Boolean, default=False)  # Whether trial converted to paid subscription
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -115,23 +123,47 @@ class Subscription(db.Model):
     def is_active(self):
         """Check if subscription is active."""
         return self.status == 'active'
+    
+    @property
+    def has_active_trial(self):
+        """Check if user has an active trial."""
+        if not self.is_trial:
+            return False
+        now = datetime.utcnow()
+        return self.trial_ends_at and self.trial_ends_at > now
+    
+    @property
+    def trial_days_remaining(self):
+        """Get days remaining in trial or 0 if no active trial."""
+        if not self.has_active_trial:
+            return 0
+        now = datetime.utcnow()
+        remaining = self.trial_ends_at - now
+        return max(0, remaining.days)
         
     @property
     def has_premium_access(self):
-        """Check if the user has premium or better access."""
-        return self.is_active and self.plan_name in ['premium', 'professional']
+        """Check if the user has premium or better access, including trial."""
+        regular_access = self.is_active and self.plan_name in ['premium', 'professional']
+        trial_access = self.has_active_trial and self.trial_plan in ['premium', 'professional']
+        return regular_access or trial_access
         
     @property
     def has_professional_access(self):
-        """Check if the user has professional access."""
-        return self.is_active and self.plan_name == 'professional'
+        """Check if the user has professional access, including trial."""
+        regular_access = self.is_active and self.plan_name == 'professional'
+        trial_access = self.has_active_trial and self.trial_plan == 'professional'
+        return regular_access or trial_access
         
     def to_dict(self):
         """Convert subscription to dictionary for JSON serialization."""
         # Import here to avoid circular import
         from subscription_manager import SUBSCRIPTION_PLANS
         
-        return {
+        # Determine effective plan for features - use trial plan if in active trial
+        effective_plan = self.trial_plan if self.has_active_trial else self.plan_name
+        
+        result = {
             'id': self.id,
             'user_id': self.user_id,
             'plan_name': self.plan_name,
@@ -139,9 +171,23 @@ class Subscription(db.Model):
             'current_period_start': self.current_period_start.isoformat() if self.current_period_start else None,
             'current_period_end': self.current_period_end.isoformat() if self.current_period_end else None,
             'cancel_at_period_end': getattr(self, 'cancel_at_period_end', False),
-            'features': SUBSCRIPTION_PLANS.get(self.plan_name, {}).get('features', []),
-            'quotas': SUBSCRIPTION_PLANS.get(self.plan_name, {}).get('quotas', {})
+            'features': SUBSCRIPTION_PLANS.get(effective_plan, {}).get('features', []),
+            'quotas': SUBSCRIPTION_PLANS.get(effective_plan, {}).get('quotas', {})
         }
+        
+        # Add trial info if there's a trial
+        if self.is_trial:
+            result.update({
+                'is_trial': True,
+                'trial_plan': self.trial_plan,
+                'trial_started_at': self.trial_started_at.isoformat() if self.trial_started_at else None,
+                'trial_ends_at': self.trial_ends_at.isoformat() if self.trial_ends_at else None,
+                'trial_days_remaining': self.trial_days_remaining,
+                'has_active_trial': self.has_active_trial,
+                'trial_converted': self.trial_converted
+            })
+        
+        return result
 
 
 class ChatHistory(db.Model):
