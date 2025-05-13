@@ -4043,5 +4043,66 @@ def onboarding_route(step):
     )
 
 
+# Error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    error_details = {
+        'error_type': 'not_found',
+        'error_title': 'Page Not Found',
+        'error_message': 'The page you are looking for doesn\'t exist or has been moved.',
+        'retry_action': None,
+        'alternative_action': {
+            'text': 'Go to Home',
+            'url': url_for('index')
+        }
+    }
+    return render_template('error.html', **error_details), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    error_details = {
+        'error_type': 'server',
+        'error_title': 'Server Error',
+        'error_message': 'Something went wrong on our end. Our team has been notified.',
+        'retry_action': {
+            'text': 'Try Again',
+            'url': request.referrer or url_for('index')
+        },
+        'alternative_action': {
+            'text': 'Go to Home',
+            'url': url_for('index')
+        }
+    }
+    return render_template('error.html', **error_details), 500
+
+@app.errorhandler(403)
+def forbidden(e):
+    error_details = {
+        'error_type': 'auth',
+        'error_title': 'Access Denied',
+        'error_message': 'You don\'t have permission to access this resource.',
+        'retry_action': None,
+        'alternative_action': {
+            'text': 'Go to Home',
+            'url': url_for('index')
+        }
+    }
+    return render_template('error.html', **error_details), 403
+    
+@app.errorhandler(429)
+def too_many_requests(e):
+    error_details = {
+        'error_type': 'rate_limit',
+        'error_title': 'Too Many Requests',
+        'error_message': 'You\'ve made too many requests. Please try again later.',
+        'retry_action': None,
+        'alternative_action': {
+            'text': 'Go to Home',
+            'url': url_for('index')
+        }
+    }
+    return render_template('error.html', **error_details), 429
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

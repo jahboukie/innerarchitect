@@ -157,34 +157,96 @@ def get_fallback_response(error_type: str, context: Optional[Dict[str, Any]] = N
             
     return fallback
 
-def show_user_friendly_error(error_type: str, context: Optional[Dict[str, Any]] = None) -> None:
+def show_user_friendly_error(error_type: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    Shows a user-friendly error message for API failures.
+    Prepares and shows a user-friendly error message for API failures.
     
     Args:
         error_type: Type of error (timeout, connection, response)
         context: Optional context about the failed request
+        
+    Returns:
+        Dict containing error details for rendering
     """
     context = context or {}
     category = "warning"
     
-    if error_type == "timeout":
-        message = "The service is taking longer than expected to respond. Please try again."
-    elif error_type == "connection":
-        message = "Unable to connect to the service. Please check your internet connection and try again."
-    elif error_type == "response":
-        message = "There was an issue processing your request. Please try again later."
-        category = "danger"
-    else:
-        message = "An unexpected error occurred. Please try again later."
-        category = "danger"
-        
-    # Add a translation if available
+    # Define error templates for different error types
+    error_details = {
+        'timeout': {
+            'title': 'Taking Longer Than Expected',
+            'message': 'Our AI service is busy. We\'re using a simplified response for now.',
+            'retry_action': {
+                'text': 'Try Again',
+                'url': '#'  # Will be filled by the caller
+            },
+            'category': 'warning'
+        },
+        'connection': {
+            'title': 'Connection Issue',
+            'message': 'We\'re having trouble connecting to our AI service. Please check your internet connection.',
+            'retry_action': {
+                'text': 'Reconnect',
+                'url': '#'  # Will be filled by the caller
+            },
+            'category': 'warning'
+        },
+        'response': {
+            'title': 'Unexpected Response',
+            'message': 'We received an unusual response from our AI. Our team has been notified.',
+            'retry_action': {
+                'text': 'Try Again',
+                'url': '#'  # Will be filled by the caller
+            },
+            'category': 'danger'
+        },
+        'auth': {
+            'title': 'Authentication Required',
+            'message': 'This feature requires authentication or subscription.',
+            'alternative_action': {
+                'text': 'Learn More',
+                'url': '#'  # Will be filled by the caller
+            },
+            'category': 'info'
+        }
+    }
+    
+    # Get current endpoint from context
+    endpoint = context.get('endpoint', '') if context else ''
+    current_url = f"/{endpoint}" if endpoint else '/'
+    
+    # Get error details based on type, or use default if type not found
+    error_info = error_details.get(error_type, {
+        'title': 'Something Went Wrong',
+        'message': 'We encountered an unexpected error. Please try again later.',
+        'retry_action': {
+            'text': 'Try Again',
+            'url': current_url
+        },
+        'category': 'danger'
+    })
+    
+    # Fill in dynamic URLs
+    if 'retry_action' in error_info and error_info['retry_action']['url'] == '#':
+        error_info['retry_action']['url'] = current_url
+    
+    # Apply translations if available
     if hasattr(g, 'translate'):
         try:
-            message = g.translate('error_' + error_type, message)
+            error_info['message'] = g.translate('error_' + error_type + '_message', error_info['message'])
+            error_info['title'] = g.translate('error_' + error_type + '_title', error_info['title'])
         except:
             # If translation fails, keep original message
             pass
-            
-    flash(message, category)
+    
+    # Flash the message for immediate feedback
+    flash(error_info['message'], error_info['category'])
+    
+    # Return structured error details for template rendering
+    return {
+        'error_type': error_type,
+        'error_title': error_info['title'],
+        'error_message': error_info['message'],
+        'retry_action': error_info.get('retry_action'),
+        'alternative_action': error_info.get('alternative_action')
+    }
