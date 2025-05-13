@@ -4125,31 +4125,22 @@ def onboarding_route(step):
 @app.errorhandler(404)
 def page_not_found(e):
     error_details = {
-        'error_type': 'not_found',
-        'error_title': 'Page Not Found',
-        'error_message': 'The page you are looking for doesn\'t exist or has been moved.',
+        'error_type': 'empty_state',
+        'title': g.translate('page_not_found', 'Page Not Found'),
+        'message': g.translate('page_not_found_message', 'The page you are looking for doesn\'t exist or has been moved.'),
         'retry_action': None,
-        'alternative_action': {
-            'text': 'Go to Home',
-            'url': url_for('index')
-        }
+        'help_link': None
     }
     return render_template('error.html', **error_details), 404
 
 @app.errorhandler(500)
 def internal_server_error(e):
     error_details = {
-        'error_type': 'server',
-        'error_title': 'Server Error',
-        'error_message': 'Something went wrong on our end. Our team has been notified.',
-        'retry_action': {
-            'text': 'Try Again',
-            'url': request.referrer or url_for('index')
-        },
-        'alternative_action': {
-            'text': 'Go to Home',
-            'url': url_for('index')
-        }
+        'error_type': 'general',
+        'title': g.translate('server_error', 'Server Error'),
+        'message': g.translate('server_error_message', 'Something went wrong on our end. Our team has been notified.'),
+        'retry_action': f"window.location.href='{request.referrer or url_for('index')}'",
+        'help_link': None
     }
     return render_template('error.html', **error_details), 500
 

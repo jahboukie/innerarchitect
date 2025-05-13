@@ -19,7 +19,7 @@
                 <p class="hero-subtitle">{{ g.translate('landing_hero_subtitle', 'The Inner Architect uses AI-powered Neuro-Linguistic Programming techniques to help you recognize patterns, reframe negative thoughts, and build emotional resilience.') }}</p>
                 
                 <div class="d-flex flex-column flex-sm-row gap-3 mt-5">
-                    {% if current_user.is_authenticated %}
+                    {% if current_user and current_user.is_authenticated %}
                     <a href="{{ url_for('index') }}" class="btn btn-primary hero-cta-btn">
                         <i class="fas fa-brain me-2"></i> {{ g.translate('landing_cta_logged_in', 'Go to Dashboard') }}
                     </a>
@@ -127,6 +127,97 @@
                     <p class="text-center text-muted">{{ g.translate('landing_feature6_desc', 'Follow customized development pathways designed to meet your specific goals and needs.') }}</p>
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- Premium Features Showcase -->
+<section id="premium-features" class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-2" style="font-size: 2.5rem; letter-spacing: -0.02em;">
+                {{ g.translate('premium_features_title', 'Premium Features') }}
+            </h2>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                {{ g.translate('premium_features_subtitle', 'Unlock advanced tools for your personal transformation') }}
+            </p>
+        </div>
+        
+        <!-- Load the premium badge macro -->
+        {% from 'partials/premium_badge.html' import premium_badge, premium_feature_card %}
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Premium Feature 1: Advanced NLP Techniques -->
+            <div class="col-lg-6">
+                {{ premium_feature_card(
+                    title=g.translate('premium_feature_nlp_title', 'Advanced NLP Techniques'),
+                    description=g.translate('premium_feature_nlp_desc', 'Access our full library of advanced Neuro-Linguistic Programming techniques, including Meta Model, Milton Model, and more.'),
+                    plan='premium',
+                    feature_link=url_for('techniques_page'),
+                    button_text=g.translate('explore_techniques', 'Explore Techniques')
+                ) }}
+            </div>
+            
+            <!-- Premium Feature 2: Progress Dashboard -->
+            <div class="col-lg-6">
+                {{ premium_feature_card(
+                    title=g.translate('premium_feature_dashboard_title', 'Detailed Progress Analytics'),
+                    description=g.translate('premium_feature_dashboard_desc', 'Track your growth journey with detailed analytics, technique effectiveness ratings, and personalized insights.'),
+                    plan='premium',
+                    feature_link=url_for('progress_dashboard'),
+                    button_text=g.translate('view_dashboard', 'View Dashboard')
+                ) }}
+            </div>
+            
+            <!-- Professional Feature 1: Personalized Journeys -->
+            <div class="col-lg-6">
+                {{ premium_feature_card(
+                    title=g.translate('pro_feature_journey_title', 'Personalized Development Journeys'),
+                    description=g.translate('pro_feature_journey_desc', 'Follow structured development paths tailored to your specific goals, with milestones and achievements.'),
+                    plan='professional',
+                    feature_link=url_for('personalized_journeys_page'),
+                    button_text=g.translate('start_journey', 'Start Journey')
+                ) }}
+            </div>
+            
+            <!-- Professional Feature 2: Belief Change Protocol -->
+            <div class="col-lg-6">
+                {{ premium_feature_card(
+                    title=g.translate('pro_feature_belief_title', 'Belief Change Protocol'),
+                    description=g.translate('pro_feature_belief_desc', 'Transform limiting beliefs using our structured protocol based on advanced NLP models and cognitive psychology.'),
+                    plan='professional',
+                    feature_link=url_for('belief_change_page'),
+                    button_text=g.translate('transform_beliefs', 'Transform Beliefs')
+                ) }}
+            </div>
+        </div>
+        
+        <!-- Start Trial Call to Action -->
+        <div class="text-center mt-5">
+            <h4 class="mb-4">{{ g.translate('try_premium_features', 'Try Premium Features Free') }}</h4>
+            
+            {% if current_user and current_user.is_authenticated %}
+                <form action="{{ url_for('start_trial') }}" method="POST" class="d-inline-block">
+                    <input type="hidden" name="trial_plan" value="premium">
+                    <button type="submit" class="btn btn-premium py-2 px-4 mb-2 mb-md-0 me-md-2">
+                        <i class="fas fa-crown me-2"></i>
+                        {{ g.translate('start_premium_trial', 'Start Premium Trial') }}
+                    </button>
+                </form>
+                
+                <form action="{{ url_for('start_trial') }}" method="POST" class="d-inline-block">
+                    <input type="hidden" name="trial_plan" value="professional">
+                    <button type="submit" class="btn btn-professional py-2 px-4">
+                        <i class="fas fa-star me-2"></i>
+                        {{ g.translate('start_professional_trial', 'Start Professional Trial') }}
+                    </button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('login_check') }}" class="btn btn-primary rounded-pill py-2 px-4">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    {{ g.translate('sign_up_for_trial', 'Sign Up For Free Trial') }}
+                </a>
+            {% endif %}
         </div>
     </div>
 </section>
@@ -484,7 +575,7 @@
         <h2 class="fw-bold mb-4">{{ g.translate('landing_final_cta_title', 'Ready to Transform Your Thinking?') }}</h2>
         <p class="lead mb-4">{{ g.translate('landing_final_cta_subtitle', 'Join thousands of users who are already experiencing the benefits of The Inner Architect.') }}</p>
         <div class="d-flex justify-content-center">
-            {% if current_user.is_authenticated %}
+            {% if current_user and current_user.is_authenticated %}
             <a href="{{ url_for('index') }}" class="btn btn-light btn-lg px-4">
                 <i class="fas fa-brain me-2"></i> {{ g.translate('landing_final_cta_logged_in', 'Go to Dashboard') }}
             </a>
@@ -504,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Premium subscription button
     document.getElementById('premiumSubscribeBtn').addEventListener('click', function() {
         // Check if user is logged in
-        {% if current_user.is_authenticated %}
+        {% if current_user and current_user.is_authenticated %}
         // Redirect to checkout for premium plan
         window.location.href = "{{ url_for('create_checkout', plan='premium') }}";
         {% else %}
@@ -516,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Professional subscription button
     document.getElementById('proSubscribeBtn').addEventListener('click', function() {
         // Check if user is logged in
-        {% if current_user.is_authenticated %}
+        {% if current_user and current_user.is_authenticated %}
         // Redirect to checkout for professional plan
         window.location.href = "{{ url_for('create_checkout', plan='professional') }}";
         {% else %}

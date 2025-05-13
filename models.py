@@ -155,6 +155,16 @@ class Subscription(db.Model):
         trial_access = self.has_active_trial and self.trial_plan == 'professional'
         return regular_access or trial_access
         
+    @property
+    def is_premium_trial(self):
+        """Check if the user has an active premium trial."""
+        return self.has_active_trial and self.trial_plan == 'premium'
+    
+    @property
+    def is_professional_trial(self):
+        """Check if the user has an active professional trial."""
+        return self.has_active_trial and self.trial_plan == 'professional'
+        
     def to_dict(self):
         """Convert subscription to dictionary for JSON serialization."""
         # Import here to avoid circular import

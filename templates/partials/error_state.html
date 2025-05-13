@@ -1,44 +1,127 @@
-{% macro error_state(title, message, error_type, retry_action=None, alternative_action=None) %}
-<div class="error-state-container p-4 my-3 rounded-4 shadow-sm border">
-    <div class="d-flex align-items-center mb-3">
-        {% if error_type == 'timeout' %}
-        <div class="error-icon bg-warning bg-opacity-10 text-warning p-3 rounded-circle me-3">
-            <i class="fas fa-clock fa-2x"></i>
+{% macro error_state(
+    title=g.translate('error_title', 'Something went wrong'),
+    message=g.translate('error_message', 'We encountered an unexpected error. Please try again later.'),
+    error_type='general',
+    retry_action=None,
+    help_link=None
+) %}
+    <div class="error-state-container py-4 px-3 rounded border border-light">
+        <div class="text-center mb-4">
+            {% if error_type == 'api_timeout' %}
+                <div class="error-icon mb-3 text-warning">
+                    <i class="fas fa-hourglass-end fa-3x"></i>
+                </div>
+            {% elif error_type == 'api_connection' %}
+                <div class="error-icon mb-3 text-danger">
+                    <i class="fas fa-wifi fa-3x"></i>
+                </div>
+            {% elif error_type == 'api_response' %}
+                <div class="error-icon mb-3 text-danger">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                </div>
+            {% elif error_type == 'quota_exceeded' %}
+                <div class="error-icon mb-3 text-warning">
+                    <i class="fas fa-hand-paper fa-3x"></i>
+                </div>
+            {% elif error_type == 'subscription_required' %}
+                <div class="error-icon mb-3 text-primary">
+                    <i class="fas fa-crown fa-3x"></i>
+                </div>
+            {% elif error_type == 'empty_state' %}
+                <div class="error-icon mb-3 text-info">
+                    <i class="fas fa-search fa-3x"></i>
+                </div>
+            {% else %}
+                <div class="error-icon mb-3 text-secondary">
+                    <i class="fas fa-robot fa-3x"></i>
+                </div>
+            {% endif %}
+            
+            <h4 class="fw-bold">{{ title }}</h4>
+            <p class="text-secondary">{{ message }}</p>
         </div>
-        {% elif error_type == 'connection' %}
-        <div class="error-icon bg-danger bg-opacity-10 text-danger p-3 rounded-circle me-3">
-            <i class="fas fa-wifi-slash fa-2x"></i>
-        </div>
-        {% elif error_type == 'auth' %}
-        <div class="error-icon bg-info bg-opacity-10 text-info p-3 rounded-circle me-3">
-            <i class="fas fa-lock fa-2x"></i>
-        </div>
-        {% else %}
-        <div class="error-icon bg-secondary bg-opacity-10 text-secondary p-3 rounded-circle me-3">
-            <i class="fas fa-exclamation-triangle fa-2x"></i>
-        </div>
-        {% endif %}
         
-        <div>
-            <h5 class="mb-1">{{ title }}</h5>
-            <p class="mb-0 text-muted">{{ message }}</p>
-        </div>
-    </div>
-    
-    {% if retry_action or alternative_action %}
-    <div class="d-flex gap-2 mt-3">
         {% if retry_action %}
-        <a href="{{ retry_action.url }}" class="btn btn-primary">
-            <i class="fas fa-sync me-2"></i>{{ retry_action.text }}
-        </a>
+            <div class="text-center mb-3">
+                <button type="button" onclick="{{ retry_action }}" class="btn btn-primary rounded-pill px-4">
+                    <i class="fas fa-redo me-2"></i> {{ g.translate('try_again', 'Try Again') }}
+                </button>
+            </div>
         {% endif %}
         
-        {% if alternative_action %}
-        <a href="{{ alternative_action.url }}" class="btn btn-outline-secondary">
-            <i class="fas fa-angle-right me-2"></i>{{ alternative_action.text }}
-        </a>
+        {% if error_type == 'quota_exceeded' %}
+            <div class="text-center">
+                <a href="{{ url_for('manage_subscription') }}" class="btn btn-outline-primary rounded-pill px-4">
+                    <i class="fas fa-arrow-up me-2"></i> {{ g.translate('upgrade_plan', 'Upgrade Plan') }}
+                </a>
+            </div>
+        {% endif %}
+        
+        {% if error_type == 'subscription_required' %}
+            <div class="upgrade-options mt-3">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <a href="{{ url_for('create_checkout', plan='premium') }}" class="btn btn-premium py-2 px-4 mb-2 mb-md-0 me-md-2">
+                            <i class="fas fa-crown me-2"></i> {{ g.translate('get_premium', 'Get Premium') }}
+                        </a>
+                        
+                        <a href="{{ url_for('start_trial') }}" class="btn btn-outline-primary rounded-pill px-4">
+                            <i class="fas fa-clock me-2"></i> {{ g.translate('start_trial', 'Start Trial') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if help_link %}
+            <div class="text-center mt-2">
+                <a href="{{ help_link }}" class="text-decoration-none">
+                    <i class="fas fa-question-circle me-1"></i> {{ g.translate('get_help', 'Get Help') }}
+                </a>
+            </div>
         {% endif %}
     </div>
+{% endmacro %}
+
+{% macro api_fallback_message(error_type, context=None) %}
+    {% if error_type == 'timeout' %}
+        <div class="alert alert-warning" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-hourglass-end me-2"></i> {{ g.translate('api_timeout_title', 'Response Taking Too Long') }}
+            </h5>
+            <p>{{ g.translate('api_timeout_message', 'Our AI is taking longer than expected to respond. Here\'s a simpler response while you wait:') }}</p>
+            
+            {% if context and context.fallback_content %}
+                <div class="fallback-content border-top pt-3 mt-3">
+                    {{ context.fallback_content|safe }}
+                </div>
+            {% endif %}
+        </div>
+    {% elif error_type == 'connection' %}
+        <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-wifi me-2"></i> {{ g.translate('api_connection_title', 'Connection Issue') }}
+            </h5>
+            <p>{{ g.translate('api_connection_message', 'We\'re having trouble connecting to our AI service. Here\'s an alternative response:') }}</p>
+            
+            {% if context and context.fallback_content %}
+                <div class="fallback-content border-top pt-3 mt-3">
+                    {{ context.fallback_content|safe }}
+                </div>
+            {% endif %}
+        </div>
+    {% elif error_type == 'response' %}
+        <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-exclamation-triangle me-2"></i> {{ g.translate('api_response_title', 'Service Unavailable') }}
+            </h5>
+            <p>{{ g.translate('api_response_message', 'Our AI service provided an invalid response. Here\'s the best alternative we can offer:') }}</p>
+            
+            {% if context and context.fallback_content %}
+                <div class="fallback-content border-top pt-3 mt-3">
+                    {{ context.fallback_content|safe }}
+                </div>
+            {% endif %}
+        </div>
     {% endif %}
-</div>
 {% endmacro %}
