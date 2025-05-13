@@ -1888,6 +1888,11 @@ def manage_subscription():
     """
     Render the subscription management page.
     Shows the current subscription status, usage limits, and available plans.
+    
+    This page also allows users to:
+    - Start a free trial
+    - Cancel their subscription
+    - Upgrade or downgrade their plan
     """
     from subscription_manager import get_subscription_details, get_usage_quota
     
@@ -1924,6 +1929,79 @@ def manage_subscription():
         error(f"Error retrieving subscription information: {str(e)}")
         flash("An error occurred while retrieving your subscription information. Please try again later.", "danger")
         return redirect(url_for('index'))
+
+
+# Trial management
+@app.route('/subscription/start-trial', methods=['POST'])
+@require_login
+def start_trial():
+    """
+    Start a free trial for the user.
+    
+    Allows users to try premium or professional features before committing to a paid subscription.
+    Trial length is controlled by the DEFAULT_TRIAL_DAYS constant in subscription_manager.py.
+    """
+    from subscription_manager import create_trial, DEFAULT_TRIAL_DAYS
+    
+    # Get trial plan from form data (default to premium if not specified)
+    trial_plan = request.form.get('trial_plan', 'premium')
+    
+    # Validate trial plan
+    if trial_plan not in ['premium', 'professional']:
+        flash(g.translate('invalid_trial_plan', "Invalid trial plan selected."), "danger")
+        return redirect(url_for('manage_subscription'))
+    
+    # Create the trial
+    try:
+        success, message, subscription = create_trial(current_user.id, trial_plan)
+        
+        if success:
+            # Trial created successfully
+            info(f"Trial created for user {current_user.id}: {trial_plan} for {DEFAULT_TRIAL_DAYS} days")
+            flash(g.translate('trial_started', f"Your {trial_plan} trial has been activated! You now have access to all {trial_plan} features for the next {DEFAULT_TRIAL_DAYS} days."), "success")
+        else:
+            # Failed to create trial
+            warning(f"Failed to create trial for user {current_user.id}: {message}")
+            flash(g.translate('trial_error', f"Couldn't start trial: {message}"), "danger")
+    except Exception as e:
+        # Exception during trial creation
+        error(f"Error creating trial for user {current_user.id}: {str(e)}")
+        flash(g.translate('trial_error', "An error occurred while starting your trial. Please try again later."), "danger")
+    
+    return redirect(url_for('manage_subscription'))
+
+
+@app.route('/subscription/end-trial', methods=['POST'])
+@require_login
+def end_user_trial():
+    """
+    End the user's trial subscription.
+    
+    Users can choose to end their trial early or convert it to a paid subscription.
+    """
+    from subscription_manager import end_trial
+    
+    # Check if the user wants to convert to paid
+    convert_to_paid = request.form.get('convert_to_paid') == 'true'
+    
+    try:
+        success, message = end_trial(current_user.id, convert_to_paid)
+        
+        if success:
+            if convert_to_paid:
+                info(f"Trial converted to paid subscription for user {current_user.id}")
+                flash(g.translate('trial_converted', "Your trial has been converted to a paid subscription. Thank you for your support!"), "success")
+            else:
+                info(f"Trial ended for user {current_user.id}")
+                flash(g.translate('trial_ended', "Your trial has been ended. Thank you for trying our premium features!"), "info")
+        else:
+            warning(f"Failed to end trial for user {current_user.id}: {message}")
+            flash(g.translate('trial_end_error', f"Couldn't end trial: {message}"), "danger")
+    except Exception as e:
+        error(f"Error ending trial for user {current_user.id}: {str(e)}")
+        flash(g.translate('trial_end_error', "An error occurred while ending your trial. Please try again later."), "danger")
+    
+    return redirect(url_for('manage_subscription'))
 
 
 # Cancel subscription

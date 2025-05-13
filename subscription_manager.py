@@ -7,7 +7,7 @@ and usage quota tracking for the application.
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 import stripe
@@ -345,6 +345,149 @@ def check_feature_access(user_id, feature):
         error(f"Error checking feature access for user {user_id}, feature {feature}: {str(e)}")
         # Default to False on error to prevent unauthorized access
         return False
+
+
+def create_trial(user_id, trial_plan='premium', trial_days=DEFAULT_TRIAL_DAYS):
+    """
+    Create a trial subscription for a user.
+    
+    Args:
+        user_id (str): The user ID
+        trial_plan (str): The plan to trial ('premium' or 'professional')
+        trial_days (int): Number of days for the trial (default: 7)
+        
+    Returns:
+        tuple: (success, message, subscription) where success is a boolean, 
+               message is a string, and subscription is the Subscription object
+    """
+    info(f"Creating {trial_plan} trial for user {user_id} for {trial_days} days")
+    
+    # Validate parameters
+    if trial_plan not in ['premium', 'professional']:
+        error_msg = f"Invalid trial plan: {trial_plan}"
+        error(error_msg)
+        return False, error_msg, None
+    
+    # Limit trial days to reasonable range
+    if trial_days <= 0:
+        error_msg = "Trial days must be greater than 0"
+        error(error_msg)
+        return False, error_msg, None
+    
+    if trial_days > MAX_TRIAL_DAYS:
+        warning(f"Trial days {trial_days} exceeds maximum {MAX_TRIAL_DAYS}, limiting to {MAX_TRIAL_DAYS}")
+        trial_days = MAX_TRIAL_DAYS
+    
+    try:
+        # Check if user already has a subscription
+        subscription = get_subscription(user_id)
+        
+        # If user already has a paid subscription, don't create a trial
+        if subscription and subscription.plan_name in ['premium', 'professional']:
+            if subscription.is_active:
+                warning(f"User {user_id} already has an active {subscription.plan_name} subscription, trial not created")
+                return False, f"User already has an active {subscription.plan_name} subscription", subscription
+        
+        # If user has an active trial, don't create another one
+        if subscription and subscription.is_trial and subscription.has_active_trial:
+            warning(f"User {user_id} already has an active trial for {subscription.trial_plan}")
+            return False, f"User already has an active trial for {subscription.trial_plan}", subscription
+        
+        current_time = datetime.now(timezone.utc)
+        trial_end = current_time + timedelta(days=trial_days)
+        
+        # Create or update subscription with trial
+        if subscription:
+            info(f"Updating existing subscription for user {user_id} with trial")
+            
+            # If they have a free subscription, convert to trial
+            subscription.is_trial = True
+            subscription.trial_started_at = current_time
+            subscription.trial_ends_at = trial_end
+            subscription.trial_plan = trial_plan
+            subscription.trial_converted = False
+            
+            db.session.commit()
+            info(f"Updated subscription to {trial_plan} trial until {trial_end}")
+        else:
+            info(f"Creating new subscription for user {user_id} with trial")
+            
+            # Create a new subscription with trial
+            subscription = Subscription(
+                user_id=user_id,
+                plan_name='free',  # Base plan is still free
+                status='active',
+                is_trial=True,
+                trial_started_at=current_time,
+                trial_ends_at=trial_end,
+                trial_plan=trial_plan,
+                trial_converted=False
+            )
+            
+            db.session.add(subscription)
+            db.session.commit()
+            info(f"Created new subscription with {trial_plan} trial until {trial_end}")
+        
+        # Return success
+        return True, f"{trial_plan.capitalize()} trial activated for {trial_days} days", subscription
+        
+    except Exception as e:
+        error(f"Error creating trial for user {user_id}: {str(e)}")
+        db.session.rollback()
+        return False, f"Error creating trial: {str(e)}", None
+
+
+def end_trial(user_id, convert_to_paid=False):
+    """
+    End a user's trial subscription.
+    
+    Args:
+        user_id (str): The user ID
+        convert_to_paid (bool): Whether to convert the trial to a paid subscription
+        
+    Returns:
+        tuple: (success, message) where success is a boolean and message is a string
+    """
+    info(f"Ending trial for user {user_id}, convert to paid: {convert_to_paid}")
+    
+    try:
+        # Get the subscription
+        subscription = get_subscription(user_id)
+        
+        if not subscription:
+            error_msg = f"No subscription found for user {user_id}"
+            error(error_msg)
+            return False, error_msg
+        
+        if not subscription.is_trial:
+            warning(f"User {user_id} doesn't have a trial subscription")
+            return False, "User doesn't have a trial subscription"
+        
+        if convert_to_paid:
+            # Convert to paid subscription
+            subscription.is_trial = False
+            subscription.trial_converted = True
+            subscription.plan_name = subscription.trial_plan
+            subscription.status = 'active'
+            subscription.current_period_start = datetime.now(timezone.utc)
+            subscription.current_period_end = subscription.current_period_start + timedelta(days=30)  # 30-day billing cycle
+            
+            db.session.commit()
+            info(f"Converted trial to paid {subscription.plan_name} subscription")
+            return True, f"Trial converted to paid {subscription.plan_name} subscription"
+        else:
+            # Just end the trial
+            subscription.is_trial = False
+            subscription.trial_converted = False
+            
+            db.session.commit()
+            info(f"Trial ended without conversion")
+            return True, "Trial ended"
+        
+    except Exception as e:
+        error(f"Error ending trial for user {user_id}: {str(e)}")
+        db.session.rollback()
+        return False, f"Error ending trial: {str(e)}"
 
 def get_usage_quota(user_id=None, browser_session_id=None):
     """
