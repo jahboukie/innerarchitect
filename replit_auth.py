@@ -277,12 +277,38 @@ def save_user(user_claims):
         error("Missing 'sub' in user claims")
         raise ValueError("Missing required user identifier in authentication data")
     
-    try:    
-        # Check if user already exists
+    try:
+        # First check if the email from claims already exists
+        email = user_claims.get('email')
+        email_user = None
+        
+        if email:
+            email_user = User.query.filter_by(email=email).first()
+            
+        # Check if user with this sub ID already exists
         user = User.query.filter_by(id=user_claims['sub']).first()
         
-        if not user:
-            # Create a new user
+        # Handle email collision - if email exists for different user
+        if email_user and (not user or email_user.id != user.id):
+            info(f"Email {email} already exists for user {email_user.id}, linking with Replit user {user_claims['sub']}")
+            
+            # Solution: Use the existing email user account and update its ID
+            # This essentially links the accounts while preserving preferences, history, etc.
+            if user:
+                # Existing Replit user - need to migrate data to email user account
+                warning(f"User ID conflict: {user.id} vs {email_user.id} for email {email}")
+                # We'll keep the email user as the primary and update Replit tokens
+                user = email_user
+                # Keep email_user.auth_provider as is
+            else:
+                # No existing Replit user - just use email user
+                user = email_user
+                user.auth_provider = 'replit_auth'  # Update to allow both login methods
+            
+            # Skip email update below to avoid constraint violation
+            email = None
+        elif not user:
+            # No existing user with this ID or email - create new
             user = User()
             user.id = user_claims['sub']
             user.auth_provider = 'replit_auth'  # Set auth provider for new users
@@ -291,7 +317,8 @@ def save_user(user_claims):
             info(f"Updating existing user with id {user_claims['sub']}")
         
         # Update user data
-        user.email = user_claims.get('email')
+        if email:  # Only update email if it's safe (no collision)
+            user.email = email
         user.first_name = user_claims.get('first_name')
         user.last_name = user_claims.get('last_name')
         user.profile_image_url = user_claims.get('profile_image_url')
