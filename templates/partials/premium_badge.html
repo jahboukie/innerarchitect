@@ -1,0 +1,110 @@
+{% macro premium_badge(plan='premium', trial=False, with_text=True) %}
+{# 
+  Reusable premium feature badge component
+  
+  Parameters:
+    plan: The plan level ('premium' or 'professional')
+    trial: Whether this is being shown during a trial period
+    with_text: Whether to include text label
+#}
+
+<span class="badge rounded-pill {{ 'bg-gradient-premium' if plan == 'premium' else 'bg-gradient-pro' }} 
+             {{ 'trial-badge' if trial else '' }} align-middle">
+  <i class="fas {{ 'fa-crown' if plan == 'premium' else 'fa-star' }} me-1"></i>
+  {% if with_text %}
+    {{ g.translate('premium_badge_text', 'Premium') if plan == 'premium' else g.translate('professional_badge_text', 'Professional') }}
+    {% if trial %}
+      <span class="badge rounded-pill bg-light text-dark ms-1">{{ g.translate('trial_badge_text', 'TRIAL') }}</span>
+    {% endif %}
+  {% endif %}
+</span>
+{% endmacro %}
+
+{% macro premium_feature_card(title, description, plan='premium', trial=False, feature_link=None, feature_id=None, button_text=None) %}
+{# 
+  Premium feature card component
+  
+  Parameters:
+    title: Feature title
+    description: Feature description
+    plan: The plan level ('premium' or 'professional')
+    trial: Whether this is being shown during a trial period
+    feature_link: Optional link to the feature
+    feature_id: Optional ID for the feature
+    button_text: Text for optional button (if feature_link is provided)
+#}
+
+<div class="card premium-feature-card mb-4 {{ plan }}-feature {{ 'trial-feature' if trial }}">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0">{{ title }}</h5>
+    {{ premium_badge(plan, trial) }}
+  </div>
+  <div class="card-body">
+    <p class="card-text">{{ description }}</p>
+    
+    {% if feature_link %}
+      <a href="{{ feature_link }}" class="btn {{ 'btn-premium' if plan == 'premium' else 'btn-professional' }}" 
+         {% if feature_id %}id="{{ feature_id }}"{% endif %}>
+        {{ button_text or g.translate('try_feature', 'Try This Feature') }}
+        <i class="fas fa-arrow-right ms-2"></i>
+      </a>
+    {% endif %}
+  </div>
+  {% if not current_user.is_authenticated %}
+    <div class="card-footer">
+      <a href="{{ url_for('replit_auth.login') }}" class="btn btn-sm btn-outline-secondary">
+        {{ g.translate('sign_in_required', 'Sign in required') }}
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro feature_upgrade_button(plan='premium', current_plan='free', trial=False) %}
+{# 
+  Button to upgrade or start trial for a premium feature
+  
+  Parameters:
+    plan: The plan level ('premium' or 'professional')
+    current_plan: The user's current plan
+    trial: Whether the user currently has an active trial
+#}
+
+{% if current_user.is_authenticated %}
+  {% if trial %}
+    <form action="{{ url_for('end_user_trial') }}" method="POST" class="d-inline">
+      <input type="hidden" name="convert_to_paid" value="true">
+      <button type="submit" class="btn btn-sm {{ 'btn-premium' if plan == 'premium' else 'btn-professional' }}">
+        <i class="fas fa-crown me-1"></i>
+        {{ g.translate('convert_trial_to_paid', 'Keep Access') }}
+      </button>
+    </form>
+  {% elif current_plan == 'free' %}
+    <div class="btn-group">
+      <form action="{{ url_for('start_trial') }}" method="POST" class="d-inline">
+        <input type="hidden" name="trial_plan" value="{{ plan }}">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-flask me-1"></i>
+          {{ g.translate('start_trial', 'Try Free') }}
+        </button>
+      </form>
+      <a href="{{ url_for('create_checkout', plan=plan) }}" 
+         class="btn btn-sm {{ 'btn-premium' if plan == 'premium' else 'btn-professional' }}">
+        <i class="fas fa-crown me-1"></i>
+        {{ g.translate('upgrade_now', 'Upgrade Now') }}
+      </a>
+    </div>
+  {% elif current_plan == 'premium' and plan == 'professional' %}
+    <a href="{{ url_for('create_checkout', plan='professional') }}" 
+       class="btn btn-sm btn-professional">
+      <i class="fas fa-level-up-alt me-1"></i>
+      {{ g.translate('upgrade_to_pro', 'Upgrade to Pro') }}
+    </a>
+  {% endif %}
+{% else %}
+  <a href="{{ url_for('replit_auth.login') }}" class="btn btn-sm btn-outline-secondary">
+    <i class="fas fa-sign-in-alt me-1"></i>
+    {{ g.translate('sign_in', 'Sign In') }}
+  </a>
+{% endif %}
+{% endmacro %}
