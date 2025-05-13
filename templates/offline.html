@@ -1,42 +1,79 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}{{ g.translate('offline_title', 'You\'re Offline') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+{% block title %}{{ g.translate('offline_title', 'You are currently offline - The Inner Architect') }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6 text-center">
-            <div class="mb-4">
-                <i class="fas fa-wifi-slash fa-5x text-muted"></i>
-            </div>
-            
-            <h2 class="mb-3">{{ g.translate('offline_heading', 'You\'re currently offline') }}</h2>
-            
-            <p class="lead text-muted mb-4">
-                {{ g.translate('offline_message', 'It looks like your device has lost its internet connection. Some features may be unavailable until you reconnect.') }}
-            </p>
-            
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-body p-4">
-                    <h5 class="card-title">{{ g.translate('while_offline', 'While you\'re offline, you can:') }}</h5>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item bg-transparent border-0 py-2">
-                            <i class="fas fa-check-circle text-success me-2"></i>{{ g.translate('offline_feature_1', 'Review cached content') }}
-                        </li>
-                        <li class="list-group-item bg-transparent border-0 py-2">
-                            <i class="fas fa-check-circle text-success me-2"></i>{{ g.translate('offline_feature_2', 'Access previously viewed pages') }}
-                        </li>
-                        <li class="list-group-item bg-transparent border-0 py-2">
-                            <i class="fas fa-check-circle text-success me-2"></i>{{ g.translate('offline_feature_3', 'Use basic features that don\'t require a connection') }}
-                        </li>
-                    </ul>
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-md-5 text-center">
+                    <div class="offline-icon mb-4">
+                        <i class="fas fa-wifi-slash fa-5x" style="color: var(--premium-gradient-start);"></i>
+                    </div>
+                    
+                    <h1 class="mb-3">{{ g.translate('offline_heading', 'You\'re offline') }}</h1>
+                    
+                    <p class="lead mb-4">
+                        {{ g.translate('offline_message', 'It looks like you\'re currently offline. Some features of the Inner Architect require an internet connection.') }}
+                    </p>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="offline-actions">
+                        <h5 class="mb-3">{{ g.translate('offline_what_now', 'What you can do:') }}</h5>
+                        
+                        <ul class="list-group list-group-flush mb-4 text-start">
+                            <li class="list-group-item bg-transparent">
+                                <i class="fas fa-sync-alt me-2 text-primary"></i> 
+                                {{ g.translate('offline_check_connection', 'Check your internet connection and try again') }}
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <i class="fas fa-book-open me-2 text-primary"></i> 
+                                {{ g.translate('offline_access_cached', 'Access previously viewed pages that have been cached') }}
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <i class="fas fa-history me-2 text-primary"></i> 
+                                {{ g.translate('offline_try_later', 'Try again later when you have connectivity') }}
+                            </li>
+                        </ul>
+                        
+                        <button onclick="window.location.reload()" class="btn btn-primary px-4 py-2">
+                            <i class="fas fa-sync-alt me-2"></i> {{ g.translate('offline_try_again', 'Try Again') }}
+                        </button>
+                    </div>
                 </div>
             </div>
-            
-            <button onclick="window.location.reload()" class="btn btn-primary rounded-pill px-4">
-                <i class="fas fa-sync-alt me-2"></i> {{ g.translate('try_again', 'Try Again') }}
-            </button>
         </div>
     </div>
 </div>
+
+<style>
+    .offline-icon {
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .fa-wifi-slash {
+        background: var(--premium-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .offline-actions {
+        max-width: 450px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Check connection status whenever the page is shown
+    window.addEventListener('online', () => {
+        window.location.reload();
+    });
+</script>
 {% endblock %}

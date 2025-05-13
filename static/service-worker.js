@@ -1,127 +1,90 @@
 // Service Worker for The Inner Architect PWA
 const CACHE_NAME = 'inner-architect-v1';
-
-// Assets to cache on install
-const PRECACHE_URLS = [
+const ASSETS_TO_CACHE = [
   '/',
   '/static/style.css',
   '/static/css/premium.css',
   '/static/js/subscription_handler.js',
-  '/static/manifest.json',
+  '/static/icons/icon-72x72.png',
+  '/static/icons/icon-96x96.png',
+  '/static/icons/icon-128x128.png',
+  '/static/icons/icon-144x144.png',
+  '/static/icons/icon-152x152.png',
   '/static/icons/icon-192x192.png',
+  '/static/icons/icon-384x384.png',
   '/static/icons/icon-512x512.png',
+  '/offline',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap'
 ];
 
-// Install event - precache static assets
+// Install event - cache assets
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
       .then(() => self.skipWaiting())
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  const currentCaches = [CACHE_NAME];
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return cacheNames.filter(cacheName => !currentCaches.includes(cacheName));
-      })
-      .then(cachesToDelete => {
-        return Promise.all(cachesToDelete.map(cacheToDelete => {
-          return caches.delete(cacheToDelete);
-        }));
-      })
-      .then(() => self.clients.claim())
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch event - network-first with fallback to cache
+// Fetch event - serve cached content when offline
 self.addEventListener('fetch', event => {
   // Skip cross-origin requests
-  if (event.request.url.startsWith(self.location.origin)) {
-    // For API calls and dynamic content, always try network first
-    if (event.request.url.includes('/api/') || 
-        event.request.url.includes('/chat') || 
-        event.request.method !== 'GET') {
-      // Network-first approach for dynamic content
-      event.respondWith(
-        fetch(event.request)
-          .catch(() => {
-            return caches.match(event.request)
-              .then(cachedResponse => {
-                if (cachedResponse) {
-                  return cachedResponse;
-                }
-                // If no cached version, return offline fallback
-                return caches.match('/offline.html');
-              });
-          })
-      );
-    } else {
-      // Cache-first approach for static assets
-      event.respondWith(
-        caches.match(event.request)
-          .then(cachedResponse => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            return fetch(event.request)
-              .then(response => {
-                // Cache valid responses for future use
-                if (response && response.status === 200) {
-                  const responseToCache = response.clone();
-                  caches.open(CACHE_NAME)
-                    .then(cache => {
-                      cache.put(event.request, responseToCache);
-                    });
-                }
-                return response;
-              })
-              .catch(() => {
-                // Fallback to offline page for navigation requests
-                if (event.request.mode === 'navigate') {
-                  return caches.match('/offline.html');
-                }
-                return new Response('Network error occurred', {
-                  status: 408,
-                  headers: { 'Content-Type': 'text/plain' }
-                });
-              });
-          })
-      );
-    }
+  if (!event.request.url.startsWith(self.location.origin) && 
+      !event.request.url.startsWith('https://cdn.jsdelivr.net') && 
+      !event.request.url.startsWith('https://cdnjs.cloudflare.com') &&
+      !event.request.url.startsWith('https://fonts.googleapis.com')) {
+    return;
   }
-});
 
-// Handle push notifications
-self.addEventListener('push', event => {
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: '/static/icons/icon-192x192.png',
-    badge: '/static/icons/badge-72x72.png',
-    data: {
-      url: data.url || '/'
-    }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-// Click event for push notifications
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
+  // For HTML navigation requests, provide offline page if network fails
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return caches.match('/offline');
+        })
+    );
+    return;
+  }
   
-  event.waitUntil(
-    clients.openWindow(event.notification.data.url)
+  // For other requests, try network first, then cache
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        // Cache the valid response
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });

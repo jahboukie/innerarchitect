@@ -2583,6 +2583,7 @@ def premium_features_route():
 
 # PWA Routes
 @app.route('/offline.html')
+@app.route('/offline')
 def offline_page():
     """
     Serve the offline fallback page for PWA.
