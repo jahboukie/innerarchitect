@@ -803,68 +803,74 @@ def create_checkout(plan):
                 "danger")
             return redirect(url_for('manage_subscription'))
             
-    except stripe.error.CardError as e:
-        # Card errors
-        error_message = e.user_message or str(e)
-        error(f"Card error for user {current_user.id}, plan {plan}: {error_message}")
-        flash(g.translate('card_error', f"Card error: {error_message}"), "danger")
-        return redirect(url_for('manage_subscription'))
-        
-    except stripe.error.RateLimitError:
-        # Too many requests
-        error(f"Rate limit error for user {current_user.id}, plan {plan}")
-        flash(g.translate('rate_limit_error', 
-            "Too many requests to the payment system. Please try again in a few minutes."), "warning")
-        return redirect(url_for('manage_subscription'))
-        
-    except stripe.error.InvalidRequestError as e:
-        # Invalid parameters
-        error_message = str(e)
-        error(f"Invalid request error for user {current_user.id}, plan {plan}: {error_message}")
-        if "price" in error_message.lower():
-            flash(g.translate('invalid_price', 
-                "This subscription plan is currently unavailable. Please contact support."), "danger")
-        else:
-            flash(g.translate('invalid_request', 
-                "There was an error with your request. Please try again."), "danger")
-        return redirect(url_for('manage_subscription'))
-        
-    except stripe.error.AuthenticationError:
-        # Authentication with Stripe's API failed
-        error(f"Stripe authentication error for user {current_user.id}, plan {plan}")
-        flash(g.translate('auth_error', 
-            "We're having trouble connecting to our payment provider. Please try again later."), "danger")
-        return redirect(url_for('profile'))
-        
-    except stripe.error.APIConnectionError:
-        # Network error
-        error(f"Stripe API connection error for user {current_user.id}, plan {plan}")
-        flash(g.translate('connection_error', 
-            "We're having trouble connecting to our payment provider. Please check your internet connection and try again."), "warning")
-        return redirect(url_for('manage_subscription'))
-        
-    except stripe.error.StripeError as e:
-        # Generic Stripe error
-        error_message = str(e)
-        error(f"Stripe error for user {current_user.id}, plan {plan}: {error_message}")
-        flash(g.translate('stripe_error', 
-            "An error occurred with our payment processor. Please try again later."), "danger")
-        return redirect(url_for('manage_subscription'))
-        
     except Exception as e:
-        # Handle unexpected errors
         error_type = type(e).__name__
         error_message = str(e)
-        error(f"Unexpected error ({error_type}) creating checkout session for user {current_user.id}, plan {plan}: {error_message}")
         
-        # Log traceback for detailed debugging
-        import traceback
-        debug(f"Checkout error traceback: {traceback.format_exc()}")
-        
-        flash(g.translate('checkout_error', 
-            "An unexpected error occurred while processing your request. Please try again later."), 
-            "danger")
-        return redirect(url_for('profile'))
+        # Handle card errors (specific Stripe errors are imported as constants)
+        if "CardError" in error_type:
+            # Card errors
+            error(f"Card error for user {current_user.id}, plan {plan}: {error_message}")
+            flash(g.translate('card_error', f"Card error: {error_message}"), "danger")
+            return redirect(url_for('manage_subscription'))
+            
+        # Rate limit errors    
+        elif "RateLimitError" in error_type:
+            # Too many requests
+            error(f"Rate limit error for user {current_user.id}, plan {plan}")
+            flash(g.translate('rate_limit_error', 
+                "Too many requests to the payment system. Please try again in a few minutes."), "warning")
+            return redirect(url_for('manage_subscription'))
+            
+        # Invalid request errors
+        elif "InvalidRequestError" in error_type:
+            # Invalid parameters
+            error(f"Invalid request error for user {current_user.id}, plan {plan}: {error_message}")
+            if "price" in error_message.lower():
+                flash(g.translate('invalid_price', 
+                    "This subscription plan is currently unavailable. Please contact support."), "danger")
+            else:
+                flash(g.translate('invalid_request', 
+                    "There was an error with your request. Please try again."), "danger")
+            return redirect(url_for('manage_subscription'))
+            
+        # Authentication errors
+        elif "AuthenticationError" in error_type:
+            # Authentication with Stripe's API failed
+            error(f"Stripe authentication error for user {current_user.id}, plan {plan}")
+            flash(g.translate('auth_error', 
+                "We're having trouble connecting to our payment provider. Please try again later."), "danger")
+            return redirect(url_for('profile'))
+            
+        # Connection errors
+        elif "APIConnectionError" in error_type:
+            # Network error
+            error(f"Stripe API connection error for user {current_user.id}, plan {plan}")
+            flash(g.translate('connection_error', 
+                "We're having trouble connecting to our payment provider. Please check your internet connection and try again."), "warning")
+            return redirect(url_for('manage_subscription'))
+            
+        # Generic Stripe errors
+        elif "StripeError" in error_type:
+            # Generic Stripe error
+            error(f"Stripe error for user {current_user.id}, plan {plan}: {error_message}")
+            flash(g.translate('stripe_error', 
+                "An error occurred with our payment processor. Please try again later."), "danger")
+            return redirect(url_for('manage_subscription'))
+            
+        # Any other unexpected errors
+        else:
+            # Log unexpected error
+            error(f"Unexpected error ({error_type}) creating checkout session for user {current_user.id}, plan {plan}: {error_message}")
+            
+            # Log traceback for detailed debugging
+            import traceback
+            debug(f"Checkout error traceback: {traceback.format_exc()}")
+            
+            flash(g.translate('checkout_error', 
+                "An unexpected error occurred while processing your request. Please try again later."), 
+                "danger")
+            return redirect(url_for('profile'))
 
 
 # Subscription success route

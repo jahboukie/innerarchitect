@@ -681,12 +681,13 @@ def create_stripe_checkout_session(user_id, plan_name):
             else:
                 # Create a new subscription record
                 info(f"Creating new subscription record for user {user_id}")
-                new_sub = Subscription(
-                    user_id=user_id,
-                    plan_name='free',  # Start with free plan
-                    status='inactive',
-                    stripe_customer_id=stripe_customer_id
-                )
+                # Create Subscription object and set attributes individually
+                # This avoids the constructor error
+                new_sub = Subscription()
+                new_sub.user_id = user_id
+                new_sub.plan_name = 'free'  # Start with free plan
+                new_sub.status = 'inactive'
+                new_sub.stripe_customer_id = stripe_customer_id
                 db.session.add(new_sub)
                 db.session.commit()
                 info(f"Created new subscription record for user {user_id}")
@@ -697,12 +698,24 @@ def create_stripe_checkout_session(user_id, plan_name):
             error_type = type(e).__name__
             error(f"Stripe error ({error_type}) creating customer: {error_message}")
             
-            # Log detailed error information
+            # Log detailed error information for Stripe errors
+            if hasattr(e, '__dict__'):
+                debug(f"Error attributes: {e.__dict__}")
+            
+            # Log additional details about the error without direct attribute access
+            debug(f"Error type: {error_type}")
+            
+            # Try to safely extract more details without depending on specific attributes
             try:
-                if hasattr(e, 'json_body'):
-                    debug(f"Stripe error details: {e.json_body}")
-            except:
-                pass
+                # Convert the error to a string representation for detailed logging
+                debug(f"Error details: {repr(e)}")
+                
+                # Try to extract any JSON data that might be present
+                error_str = str(e)
+                if '{' in error_str and '}' in error_str:
+                    debug(f"Possible JSON in error: {error_str}")
+            except Exception as extract_err:
+                debug(f"Error extracting error details: {extract_err}")
                 
             # Customize user feedback based on error type
             if "CardError" in error_type:
@@ -780,12 +793,24 @@ def create_stripe_checkout_session(user_id, plan_name):
         error_type = type(e).__name__
         error(f"Stripe error ({error_type}) creating checkout session: {error_message}")
         
-        # Log detailed error information
+        # Log detailed error information for Stripe errors
+        if hasattr(e, '__dict__'):
+            debug(f"Error attributes: {e.__dict__}")
+        
+        # Log additional details about the error without direct attribute access
+        debug(f"Error type: {error_type}")
+        
+        # Try to safely extract more details without depending on specific attributes
         try:
-            if hasattr(e, 'json_body'):
-                debug(f"Stripe error details: {e.json_body}")
-        except:
-            pass
+            # Convert the error to a string representation for detailed logging
+            debug(f"Error details: {repr(e)}")
+            
+            # Try to extract any JSON data that might be present
+            error_str = str(e)
+            if '{' in error_str and '}' in error_str:
+                debug(f"Possible JSON in error: {error_str}")
+        except Exception as extract_err:
+            debug(f"Error extracting error details: {extract_err}")
         
         # Customize user feedback based on error type
         if "CardError" in error_type:
