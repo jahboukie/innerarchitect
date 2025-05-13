@@ -3915,5 +3915,133 @@ def reset_context():
         })
 
 
+# Guided onboarding routes
+@app.route('/onboarding', defaults={'step': 1}, methods=['GET', 'POST'])
+@app.route('/onboarding/<int:step>', methods=['GET', 'POST'])
+def onboarding_route(step):
+    """
+    Guided onboarding process for new users.
+    
+    This multi-step process collects user preferences, goals, and customizes
+    the experience based on their inputs. The data is saved to the UserPreferences
+    model associated with the user's account.
+    
+    Args:
+        step: The current onboarding step (1-5)
+    """
+    from forms import OnboardingForm
+    from models import UserPreferences
+    
+    # Validate step number
+    if step < 1 or step > 5:
+        flash('Invalid step. Starting from the beginning.', 'warning')
+        return redirect(url_for('onboarding_route', step=1))
+    
+    # Check if user has already completed onboarding
+    if current_user.is_authenticated and hasattr(current_user, 'preferences') and current_user.preferences:
+        preferences = current_user.preferences
+        if preferences.onboarding_completed:
+            # Only redirect if they're starting from step 1 (allow returning to specific steps)
+            if step == 1:
+                flash('You have already completed the onboarding process.', 'info')
+                return redirect(url_for('index'))
+    else:
+        # Create preferences object if it doesn't exist
+        preferences = None
+        if current_user.is_authenticated:
+            preferences = UserPreferences.query.filter_by(user_id=current_user.id).first()
+            if not preferences:
+                preferences = UserPreferences(user_id=current_user.id, onboarding_step=step)
+                db.session.add(preferences)
+                db.session.commit()
+    
+    # Create form
+    form = OnboardingForm()
+    
+    # Handle form submission
+    if form.validate_on_submit():
+        try:
+            # Save form data based on current step
+            if current_user.is_authenticated and preferences:
+                if step == 1:  # Goals
+                    preferences.primary_goal = form.goals.data
+                    preferences.custom_goal = form.custom_goal.data
+                    preferences.onboarding_step = 2
+                
+                elif step == 2:  # Experience Level
+                    preferences.experience_level = form.experience_level.data
+                    preferences.onboarding_step = 3
+                
+                elif step == 3:  # Communication Preferences
+                    preferences.communication_style = form.communication_style.data
+                    preferences.show_explanations = form.show_explanations.data
+                    preferences.onboarding_step = 4
+                
+                elif step == 4:  # First Challenge
+                    preferences.first_challenge = form.challenge_description.data
+                    preferences.challenge_intensity = form.challenge_intensity.data
+                    preferences.onboarding_step = 5
+                
+                elif step == 5:  # Reminders
+                    preferences.enable_reminders = form.enable_reminders.data
+                    if preferences.enable_reminders:
+                        preferences.reminder_frequency = form.reminder_frequency.data
+                        preferences.preferred_time = form.preferred_time.data
+                    
+                    # Mark onboarding as completed
+                    preferences.onboarding_completed = True
+                    
+                    # Flash success message
+                    flash('Thank you for completing the onboarding process! Your preferences have been saved.', 'success')
+                    
+                    # Redirect to index after completion
+                    db.session.commit()
+                    return redirect(url_for('index'))
+                
+                # Save changes
+                db.session.commit()
+            
+            # Guest users or unsuccessful save - still allow navigation
+            if step < 5:
+                # Proceed to next step
+                return redirect(url_for('onboarding_route', step=step+1))
+            else:
+                # Redirect to index after completion even if not logged in
+                flash('Thank you for completing the onboarding process!', 'success')
+                return redirect(url_for('index'))
+                
+        except Exception as e:
+            # Log error and flash message
+            error(f"Error saving onboarding preferences: {str(e)}")
+            db.session.rollback()
+            flash('An error occurred while saving your preferences. Please try again.', 'danger')
+    
+    # Pre-fill form with existing data if available
+    if current_user.is_authenticated and preferences:
+        if step == 1 and preferences.primary_goal:
+            form.goals.data = preferences.primary_goal
+            form.custom_goal.data = preferences.custom_goal
+        elif step == 2 and preferences.experience_level:
+            form.experience_level.data = preferences.experience_level
+        elif step == 3 and preferences.communication_style:
+            form.communication_style.data = preferences.communication_style
+            form.show_explanations.data = preferences.show_explanations
+        elif step == 4 and preferences.first_challenge:
+            form.challenge_description.data = preferences.first_challenge
+            form.challenge_intensity.data = preferences.challenge_intensity
+        elif step == 5:
+            form.enable_reminders.data = preferences.enable_reminders
+            form.reminder_frequency.data = preferences.reminder_frequency
+            form.preferred_time.data = preferences.preferred_time
+    
+    # Render the appropriate step template
+    return render_template(
+        'onboarding.html',
+        form=form,
+        current_step=step,
+        total_steps=5
+    )
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
