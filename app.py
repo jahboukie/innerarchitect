@@ -5,7 +5,7 @@ import time
 import secrets
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
+from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g, send_from_directory
 from typing import Dict, Any, Optional, Union, List, Tuple
 from flask_login import current_user, login_required, logout_user, login_user
 from openai import OpenAI
@@ -2581,7 +2581,7 @@ def premium_features_route():
     """
     return render_template('premium_features.html')
 
-# Offline Page for PWA
+# PWA Routes
 @app.route('/offline.html')
 def offline_page():
     """
@@ -2589,6 +2589,13 @@ def offline_page():
     This route is accessed when the user is offline and tries to access a page not in the cache.
     """
     return render_template('offline.html')
+
+@app.route('/manifest.json')
+def manifest():
+    """
+    Serve the PWA manifest file.
+    """
+    return send_from_directory('static', 'manifest.json')
 
 # Progress Dashboard Routes
 @app.route('/progress/dashboard', methods=['GET'])

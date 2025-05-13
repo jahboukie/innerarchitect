@@ -23,4 +23,5 @@ dependencies = [
     "fpdf>=1.7.2",
     "wtforms>=3.2.1",
     "cairosvg>=2.8.0",
+    "pillow>=11.2.1",
 ]
