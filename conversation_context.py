@@ -10,7 +10,7 @@ import json
 import logging
 import re
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import List, Dict, Any, Optional, Tuple, Union, Set
 
 from sqlalchemy.exc import SQLAlchemyError
 from database import db, safe_commit, create_model, update_model, safe_query
@@ -22,17 +22,111 @@ from openai import OpenAI
 import os
 from language_util import safe_chat_completion
 
+# Emotional sentiment keywords for better context matching
+SENTIMENT_KEYWORDS = {
+    'happy': ['happy', 'joy', 'excited', 'pleased', 'delighted', 'content', 'satisfied', 'glad'],
+    'sad': ['sad', 'unhappy', 'depressed', 'upset', 'disappointed', 'down', 'gloomy', 'miserable'],
+    'angry': ['angry', 'frustrated', 'annoyed', 'irritated', 'mad', 'outraged', 'furious'],
+    'anxious': ['anxious', 'worried', 'nervous', 'concerned', 'afraid', 'scared', 'fearful', 'stressed'],
+    'confused': ['confused', 'unsure', 'uncertain', 'lost', 'puzzled', 'perplexed', 'disoriented'],
+    'hopeful': ['hopeful', 'optimistic', 'positive', 'encouraged', 'confident', 'expectant']
+}
+
 # Get module-specific logger
 logger = get_logger('conversation_context')
 
+def analyze_message_semantic(message: str) -> Tuple[Optional[str], List[str]]:
+    """
+    Analyze a message to detect sentiment and extract key topics.
+    
+    Args:
+        message: The message to analyze
+        
+    Returns:
+        Tuple of (detected sentiment or None, list of key topics)
+    """
+    # Quick keyword-based sentiment detection for faster processing
+    message_lower = message.lower()
+    
+    # Check for emotional keywords in the message
+    detected_sentiment = None
+    for sentiment, keywords in SENTIMENT_KEYWORDS.items():
+        if any(keyword in message_lower for keyword in keywords):
+            detected_sentiment = sentiment
+            break
+    
+    # Extract simple topics using keyword frequency (basic approach)
+    # Remove common stop words
+    stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 
+                 "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 
+                 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 
+                 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 
+                 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 
+                 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was',
+                 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 
+                 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 
+                 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 
+                 'about', 'against', 'between', 'into', 'through', 'during', 'before', 
+                 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 
+                 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 
+                 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 
+                 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 
+                 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 
+                 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll',
+                 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 
+                 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 
+                 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn', 
+                 "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 
+                 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"}
+    
+    # Tokenize and extract potential topics
+    words = re.findall(r'\b\w+\b', message_lower)
+    word_counts = {}
+    
+    for word in words:
+        if word not in stop_words and len(word) > 3:  # Skip stop words and very short words
+            word_counts[word] = word_counts.get(word, 0) + 1
+    
+    # Get the top topics by frequency
+    topics = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
+    top_topics = [word for word, count in topics[:5]]
+    
+    return detected_sentiment, top_topics
+
+
+def sentiment_in_text(text: str) -> str:
+    """
+    Detect sentiment keywords in a text.
+    
+    Args:
+        text: The text to analyze
+        
+    Returns:
+        Comma-separated string of detected sentiments or 'neutral'
+    """
+    text_lower = text.lower()
+    detected = []
+    
+    for sentiment, keywords in SENTIMENT_KEYWORDS.items():
+        if any(keyword in text_lower for keyword in keywords):
+            detected.append(sentiment)
+    
+    if detected:
+        return ', '.join(detected)
+    else:
+        return 'neutral'
+
 # Maximum number of messages to include in context
-MAX_CONTEXT_MESSAGES = 10  
+MAX_CONTEXT_MESSAGES = 15  # Increased from 10 for better conversation flow
 
 # Maximum number of memory items to include in a prompt
-MAX_MEMORY_ITEMS = 5
+MAX_MEMORY_ITEMS = 8  # Increased from 5 for more comprehensive memory
 
 # Memory relevance decay factor (per day)
-MEMORY_DECAY_FACTOR = 0.9
+MEMORY_DECAY_FACTOR = 0.95  # Increased from 0.9 for slower memory decay
+
+# User preference weight multiplier (increases priority of preference memories)
+USER_PREFERENCE_WEIGHT = 1.5
 
 
 def get_or_create_context(user_id: Optional[str], session_id: str) -> Optional[ConversationContext]:
@@ -449,66 +543,66 @@ def get_relevant_memories(
         List of memory dictionaries with memory_type, content, and relevance
     """
     try:
+        # Analyze user message for sentiment and key topics
+        message_sentiment, message_topics = analyze_message_semantic(current_message)
+        
         # Get memory items sorted by relevance * confidence
-        memory_items = ConversationMemoryItem.query.filter_by(context_id=context_id) \
-            .order_by((ConversationMemoryItem.relevance * ConversationMemoryItem.confidence).desc()) \
-            .limit(limit * 3) \
-            .all()
-            
+        # If we found sentiment, prioritize memories matching that sentiment
+        query = ConversationMemoryItem.query.filter_by(context_id=context_id)
+        
+        # Apply special weighting for preferences
+        memory_items = query.all()
+        
+        # If no memory items found, return empty list
         if not memory_items:
             return []
             
-        # If we have only a few items, return them all
-        if len(memory_items) <= limit:
+        # Apply custom weighting and scoring
+        weighted_items = []
+        for item in memory_items:
+            # Base score is relevance * confidence
+            base_score = item.relevance * item.confidence
+            
+            # Apply preference boosting for preference type memories
+            if item.memory_type == 'preference':
+                base_score *= USER_PREFERENCE_WEIGHT
+                
+            # Apply recency boost (newer memories get priority)
+            days_old = (datetime.utcnow() - item.created_at).days
+            recency_factor = max(0.5, 1.0 - (days_old * 0.01))  # Gentle decay
+            
+            # Apply sentiment matching bonus if we have detected sentiment
+            sentiment_match = 1.0
+            if message_sentiment and message_sentiment in item.content.lower():
+                sentiment_match = 1.25  # 25% boost for emotion-matching memories
+                
+            # Combine all factors
+            final_score = base_score * recency_factor * sentiment_match
+            
+            weighted_items.append((item, final_score))
+        
+        # Sort by final score descending
+        weighted_items.sort(key=lambda x: x[1], reverse=True)
+        
+        # If we have fewer items than limit, return all of them
+        if len(weighted_items) <= limit:
             return [{
                 'memory_type': item.memory_type,
                 'content': item.content,
                 'confidence': item.confidence,
                 'relevance': item.relevance,
                 'created_at': item.created_at.isoformat() if item.created_at else None
-            } for item in memory_items]
+            } for item, _ in weighted_items]
         
-        # For more items, use advanced semantic search to find the most relevant ones
-        # Enhanced prompt for better relevance matching
-        memories_text = "\n".join([
-            f"{i+1}. TYPE: {item.memory_type.upper()} | CONTENT: {item.content} | AGE: {(datetime.utcnow() - item.created_at).days} days" 
-            for i, item in enumerate(memory_items)
-        ])
-        
-        prompt = f"""TASK: Select the most relevant memory items for the current conversation.
-
-USER'S CURRENT MESSAGE:
-"{current_message}"
-
-AVAILABLE MEMORY ITEMS:
-{memories_text}
-
-INSTRUCTIONS:
-1. Analyze the user's current message carefully
-2. Consider these factors when assessing relevance:
-   - Semantic relevance to the current topic
-   - Recency (newer memories may be more relevant)
-   - Memory type (facts, preferences, and goals are often highly relevant)
-   - Emotional connection to current message
-3. Select exactly {limit} most relevant items
-4. For each selected item, provide a relevance score between 0.1-1.0
-
-RESPONSE FORMAT:
-Return ONLY a comma-separated list of the item numbers in order of relevance (most relevant first).
-Example: 3,7,1,9,2"""
-
-        messages = [
-            {"role": "system", "content": "You are an expert relevance ranking system helping to retrieve the most contextually appropriate information for an ongoing conversation."},
-            {"role": "user", "content": prompt}
-        ]
-        
-        response = safe_chat_completion(
-            messages=messages,
-            max_tokens=100,
-            temperature=0.2,
-            fallback_response=""
-        )
-        
+        # Pre-select items based on our weighting system
+        selected_items = weighted_items[:limit]
+        return [{
+            'memory_type': item.memory_type,
+            'content': item.content, 
+            'confidence': item.confidence,
+            'relevance': item.relevance,
+            'created_at': item.created_at.isoformat() if item.created_at else None
+        } for item, _ in selected_items]
         # Parse response as a list of indices
         try:
             # Extract indices from response
