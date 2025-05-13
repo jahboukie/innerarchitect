@@ -175,8 +175,9 @@ SUBSCRIPTION_PLANS = {
     },
     'premium': {
         'name': 'Premium',
-        'price_id': 'price_premium',  # Replace with actual Stripe price ID
+        'price_id': 'price_1PAKCbJdBDJztaofSRoTgdvq',  # Stripe test price ID for premium plan
         'amount': 999,  # $9.99 in cents
+        'interval': 'month',
         'features': [
             'All NLP techniques',
             'Unlimited chat interactions',
@@ -192,8 +193,9 @@ SUBSCRIPTION_PLANS = {
     },
     'professional': {
         'name': 'Professional',
-        'price_id': 'price_professional',  # Replace with actual Stripe price ID
+        'price_id': 'price_1PAKCpJdBDJztaofDJR2PQxL',  # Stripe test price ID for professional plan
         'amount': 1999,  # $19.99 in cents
+        'interval': 'month',
         'features': [
             'Everything in Premium',
             'Voice practice features',
@@ -603,9 +605,21 @@ def create_stripe_checkout_session(user_id, plan_name):
     Returns:
         str: The checkout session URL or None if failed
     """
+    info(f"Creating Stripe checkout session for user {user_id}, plan: {plan_name}")
+    
+    # Validate inputs
+    if not user_id:
+        error("Missing user_id in create_stripe_checkout_session")
+        return None
+        
+    if not plan_name:
+        error("Missing plan_name in create_stripe_checkout_session")
+        return None
+    
     # Get plan details
     plan_details = SUBSCRIPTION_PLANS.get(plan_name)
     if not plan_details:
+        error(f"Invalid plan name: {plan_name}")
         return None
     
     price_id = plan_details.get('price_id')
@@ -613,39 +627,83 @@ def create_stripe_checkout_session(user_id, plan_name):
         error(f"Missing price ID for plan {plan_name}")
         return None
     
+    # Check if the Stripe API key is configured
+    if not os.environ.get('STRIPE_SECRET_KEY'):
+        error("STRIPE_SECRET_KEY environment variable is not set")
+        flash("Payment system is not properly configured. Please contact support.", "danger")
+        return None
+    
+    # Get user information
     user = User.query.get(user_id)
     if not user:
+        error(f"User not found with ID: {user_id}")
+        return None
+    
+    if not user.email:
+        error(f"User {user_id} has no email address")
+        flash("Please add an email address to your profile before subscribing.", "warning")
         return None
     
     # Get existing subscription if any
     subscription = get_subscription(user_id)
     
+    # Check if user already has an active subscription
+    if subscription and subscription.status == 'active' and subscription.plan_name == plan_name:
+        warning(f"User {user_id} already has an active {plan_name} subscription")
+        flash(f"You already have an active {plan_details['name']} subscription.", "info")
+        return None
+    
     # Get or create Stripe customer
     stripe_customer_id = None
     if subscription and subscription.stripe_customer_id:
+        info(f"Using existing Stripe customer ID: {subscription.stripe_customer_id}")
         stripe_customer_id = subscription.stripe_customer_id
     else:
         # Create a new Stripe customer
         try:
+            info(f"Creating new Stripe customer for user {user_id}")
             customer = stripe.Customer.create(
                 email=user.email,
-                name=f"{user.first_name or ''} {user.last_name or ''}".strip(),
+                name=f"{user.first_name or ''} {user.last_name or ''}".strip() or user.email,
                 metadata={
-                    'user_id': user_id
+                    'user_id': user_id,
+                    'created_at': datetime.now(timezone.utc).isoformat()
                 }
             )
             stripe_customer_id = customer.id
+            info(f"Created Stripe customer {stripe_customer_id} for user {user_id}")
             
             # Update subscription record with customer ID
             if subscription:
                 subscription.stripe_customer_id = stripe_customer_id
                 db.session.commit()
+                info(f"Updated existing subscription record with Stripe customer ID")
+            else:
+                # Create a new subscription record
+                info(f"Creating new subscription record for user {user_id}")
+                new_sub = Subscription(
+                    user_id=user_id,
+                    plan_name='free',  # Start with free plan
+                    status='inactive',
+                    stripe_customer_id=stripe_customer_id
+                )
+                db.session.add(new_sub)
+                db.session.commit()
+                info(f"Created new subscription record for user {user_id}")
+                
         except Exception as e:
             # Handle all Stripe exceptions in a generic way
             error_message = str(e)
             error_type = type(e).__name__
             error(f"Stripe error ({error_type}) creating customer: {error_message}")
             
+            # Log detailed error information
+            try:
+                if hasattr(e, 'json_body'):
+                    debug(f"Stripe error details: {e.json_body}")
+            except:
+                pass
+                
             # Customize user feedback based on error type
             if "CardError" in error_type:
                 # Card error (declined, etc.)
@@ -669,7 +727,7 @@ def create_stripe_checkout_session(user_id, plan_name):
             else:
                 # Generic error
                 flash("An unexpected error occurred with our payment system. Please try again later.", "danger")
-            
+                
             return None
     
     # Get the domain for success and cancel URLs
@@ -689,7 +747,11 @@ def create_stripe_checkout_session(user_id, plan_name):
     if domain and not domain.startswith('http'):
         domain = f"https://{domain}"
     
+    info(f"Using domain for checkout: {domain}")
+    
+    # Create the checkout session
     try:
+        info(f"Creating Stripe checkout session with price ID: {price_id}")
         checkout_session = stripe.checkout.Session.create(
             customer=stripe_customer_id,
             payment_method_types=['card'],
@@ -704,15 +766,26 @@ def create_stripe_checkout_session(user_id, plan_name):
             cancel_url=f"{domain}/subscription/cancel",
             metadata={
                 'user_id': user_id,
-                'plan_name': plan_name
-            }
+                'plan_name': plan_name,
+                'application': 'Inner Architect',
+                'created_at': datetime.now(timezone.utc).isoformat()
+            },
+            allow_promotion_codes=True
         )
+        info(f"Created checkout session: {checkout_session.id}")
         return checkout_session.url
     except Exception as e:
         # Handle all Stripe exceptions in a generic way
         error_message = str(e)
         error_type = type(e).__name__
         error(f"Stripe error ({error_type}) creating checkout session: {error_message}")
+        
+        # Log detailed error information
+        try:
+            if hasattr(e, 'json_body'):
+                debug(f"Stripe error details: {e.json_body}")
+        except:
+            pass
         
         # Customize user feedback based on error type
         if "CardError" in error_type:
@@ -729,10 +802,12 @@ def create_stripe_checkout_session(user_id, plan_name):
             # Invalid parameters
             if "price" in error_message.lower():
                 flash("This subscription plan is currently unavailable. Please contact support.", "danger")
+                error(f"Invalid price ID: {price_id}")
             else:
                 flash("There was an error with your payment information. Please try again.", "danger")
         elif "AuthenticationError" in error_type:
             # Authentication with Stripe's API failed
+            error("Stripe authentication error - check STRIPE_SECRET_KEY")
             flash("We're having trouble connecting to our payment provider. Please try again later.", "danger")
         elif "APIConnectionError" in error_type:
             # Network error
