@@ -79,7 +79,7 @@ class UserSessionStorage(BaseStorage):
             blueprint.name
         )
         
-        # The BaseStorage.get method returns None
+        # Cast the return value to match the expected type
         return token
 
     def set(self, blueprint, token):
@@ -172,14 +172,32 @@ def make_replit_blueprint():
 
 
 def save_user(user_claims):
-    user = User()
-    user.id = user_claims['sub']
+    """
+    Save user data from OAuth claims.
+    Will create a new user or update an existing one based on the sub ID.
+    """
+    # Check if user already exists
+    user = User.query.filter_by(id=user_claims['sub']).first()
+    
+    if not user:
+        # Create a new user
+        user = User()
+        user.id = user_claims['sub']
+        user.auth_provider = 'replit_auth'  # Set auth provider for new users
+    
+    # Update user data
     user.email = user_claims.get('email')
     user.first_name = user_claims.get('first_name')
     user.last_name = user_claims.get('last_name')
     user.profile_image_url = user_claims.get('profile_image_url')
+    
+    # For existing users, don't change the auth_provider if already set
+    # This prevents accidentally changing it during a refresh or re-login
+    
+    # Save to database
     merged_user = db.session.merge(user)
     db.session.commit()
+    
     return merged_user
 
 
@@ -187,9 +205,25 @@ def save_user(user_claims):
 def logged_in(blueprint, token):
     user_claims = jwt.decode(token['id_token'],
                              options={"verify_signature": False})
+    
+    # Check if we're in the process of linking accounts
+    if session.get('linking_accounts') and session.get('original_user_id'):
+        # We're linking accounts - store the token
+        blueprint.token = token
+        
+        # Redirect to the account linking completion handler
+        return redirect(url_for('complete_account_linking'))
+    
+    # Normal login flow
     user = save_user(user_claims)
+    
+    # Set auth provider
+    user.auth_provider = 'replit_auth'
+    db.session.commit()
+    
     login_user(user)
     blueprint.token = token
+    
     next_url = session.pop("next_url", None)
     if next_url is not None:
         return redirect(next_url)
