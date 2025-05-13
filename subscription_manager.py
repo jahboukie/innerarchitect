@@ -162,6 +162,7 @@ UNLIMITED_QUOTA = 9999999  # Represents unlimited quota (instead of infinity)
 SUBSCRIPTION_PLANS = {
     'free': {
         'name': 'Free',
+        'price_id': 'price_1RO13ZELGHd3NbdJjXnzAZr0',  # Stripe price ID for free tier
         'features': [
             'Basic cognitive reframing',
             'Limited chat interactions (10 per day)',
@@ -175,7 +176,7 @@ SUBSCRIPTION_PLANS = {
     },
     'premium': {
         'name': 'Premium',
-        'price_id': 'price_1PAKCbJdBDJztaofSRoTgdvq',  # Stripe test price ID for premium plan
+        'price_id': 'price_1RO14rELGHd3NbdJ5euGu2lB',  # Stripe price ID for premium tier
         'amount': 999,  # $9.99 in cents
         'interval': 'month',
         'features': [
@@ -193,7 +194,7 @@ SUBSCRIPTION_PLANS = {
     },
     'professional': {
         'name': 'Professional',
-        'price_id': 'price_1PAKCpJdBDJztaofDJR2PQxL',  # Stripe test price ID for professional plan
+        'price_id': 'price_1RO16hELGHd3NbdJZqnOKIzW',  # Stripe price ID for professional tier
         'amount': 1999,  # $19.99 in cents
         'interval': 'month',
         'features': [
