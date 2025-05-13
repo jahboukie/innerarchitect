@@ -27,7 +27,8 @@ from logging_config import get_logger, info, error, debug, warning
 
 # Initialize login manager
 login_manager = LoginManager(app)
-login_manager.login_view = "login"  # Redirect to login page when login_required fails
+# Note: login_view is nullable in newer versions but we need it for proper redirects
+setattr(login_manager, 'login_view', "login")  # Redirect to login page when login_required fails
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
 
@@ -50,13 +51,16 @@ class ReplitSessionStorage(BaseStorage):
     """
     def get(self, blueprint):
         """Get the OAuth token for the current user and browser session."""
+        # Important: This method must return None or a dict to satisfy BaseStorage API
+        token_dict = None
+        
         if not current_user or not current_user.is_authenticated:
-            return None
+            return token_dict
             
         # Get user ID and browser session key
         user_id = current_user.get_id()
         if not user_id or not hasattr(g, 'browser_session_key'):
-            return None
+            return token_dict
             
         try:
             # Query the database for the token
@@ -66,13 +70,16 @@ class ReplitSessionStorage(BaseStorage):
                 provider=blueprint.name,
             ).one_or_none()
             
-            if oauth:
-                return oauth.token
-            return None
+            if oauth and hasattr(oauth, 'token'):
+                # Cast to dict to ensure proper type returned
+                token_dict = dict(oauth.token) if oauth.token else None
+            
+            return token_dict
+            
         except SQLAlchemyError as e:
             error(f"Database error retrieving OAuth token: {str(e)}")
             db.session.rollback()
-            return None
+            return token_dict
             
     def set(self, blueprint, token):
         """Store the OAuth token for the current user and browser session."""
@@ -96,12 +103,11 @@ class ReplitSessionStorage(BaseStorage):
             ).delete()
             
             # Create a new token
-            oauth = OAuth(
-                user_id=user_id,
-                browser_session_key=g.browser_session_key,
-                provider=blueprint.name,
-                token=token,
-            )
+            oauth = OAuth()
+            oauth.user_id = user_id
+            oauth.browser_session_key = g.browser_session_key
+            oauth.provider = blueprint.name
+            oauth.token = token
             db.session.add(oauth)
             db.session.commit()
         except SQLAlchemyError as e:

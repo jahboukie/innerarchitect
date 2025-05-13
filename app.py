@@ -131,7 +131,9 @@ with app.app_context():
     logger.info("Updated database schema")
 
 # Initialize login manager and replit auth after db init
-from replit_auth import make_replit_blueprint, require_login
+# Using improved replit auth implementation with better error handling
+from replit_auth_new import create_replit_blueprint as make_replit_blueprint 
+from replit_auth_new import require_auth as require_login
 
 # Subscription access decorators
 def require_premium(f):
