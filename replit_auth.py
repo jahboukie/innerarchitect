@@ -71,7 +71,12 @@ def get_oauth_token(user_id, browser_session_key, provider_name):
         return None
 
 class UserSessionStorage(BaseStorage):
-
+    """
+    Storage interface for OAuth tokens in the database.
+    
+    This implementation stores tokens in the database, associated with the current user
+    and browser session.
+    """
     def get(self, blueprint):
         """
         Get the OAuth token from storage for the specified blueprint.
@@ -94,15 +99,21 @@ class UserSessionStorage(BaseStorage):
                 debug("Missing user_id or browser_session_key for OAuth token retrieval")
                 return None
             
-            # Get token using the helper function
-            token = get_oauth_token(
-                user_id=user_id,
-                browser_session_key=g.browser_session_key,
-                provider_name=blueprint.name
-            )
-            
-            # We can safely return the token here as the helper already handles type casting
-            return token
+            # Get token using a direct query to avoid return type issues
+            try:
+                oauth_entry = db.session.query(OAuth).filter_by(
+                    user_id=user_id,
+                    browser_session_key=g.browser_session_key,
+                    provider=blueprint.name,
+                ).one_or_none()
+                
+                if oauth_entry and hasattr(oauth_entry, 'token'):
+                    # Return the token directly without type casting - Flask-Dance will handle it
+                    return oauth_entry.token
+                return None
+            except NoResultFound:
+                return None
+                
         except Exception as e:
             error(f"Error in OAuth get: {str(e)}")
             # Make sure to rollback any failed transaction
@@ -250,58 +261,130 @@ def save_user(user_claims):
     """
     Save user data from OAuth claims.
     Will create a new user or update an existing one based on the sub ID.
+    
+    Args:
+        user_claims: Dictionary containing user claims from JWT token
+        
+    Returns:
+        User object after saving to database
+        
+    Raises:
+        ValueError: If required claims are missing
+        Exception: On database errors
     """
-    # Check if user already exists
-    user = User.query.filter_by(id=user_claims['sub']).first()
+    # Validate required claims
+    if 'sub' not in user_claims:
+        error("Missing 'sub' in user claims")
+        raise ValueError("Missing required user identifier in authentication data")
     
-    if not user:
-        # Create a new user
-        user = User()
-        user.id = user_claims['sub']
-        user.auth_provider = 'replit_auth'  # Set auth provider for new users
-    
-    # Update user data
-    user.email = user_claims.get('email')
-    user.first_name = user_claims.get('first_name')
-    user.last_name = user_claims.get('last_name')
-    user.profile_image_url = user_claims.get('profile_image_url')
-    
-    # For existing users, don't change the auth_provider if already set
-    # This prevents accidentally changing it during a refresh or re-login
-    
-    # Save to database
-    merged_user = db.session.merge(user)
-    db.session.commit()
-    
-    return merged_user
+    try:    
+        # Check if user already exists
+        user = User.query.filter_by(id=user_claims['sub']).first()
+        
+        if not user:
+            # Create a new user
+            user = User()
+            user.id = user_claims['sub']
+            user.auth_provider = 'replit_auth'  # Set auth provider for new users
+            info(f"Creating new user with id {user_claims['sub']}")
+        else:
+            info(f"Updating existing user with id {user_claims['sub']}")
+        
+        # Update user data
+        user.email = user_claims.get('email')
+        user.first_name = user_claims.get('first_name')
+        user.last_name = user_claims.get('last_name')
+        user.profile_image_url = user_claims.get('profile_image_url')
+        
+        # For existing users, don't change the auth_provider if already set to email_auth
+        # This prevents accidentally changing it during a refresh or re-login
+        if user.auth_provider == 'email_auth':
+            debug(f"Preserving email_auth provider for user {user.id}")
+        else:
+            user.auth_provider = 'replit_auth'
+        
+        # Note: The actual commit happens in the calling function's transaction
+        # Save to database using merge to handle detached instances
+        merged_user = db.session.merge(user)
+        
+        return merged_user
+        
+    except Exception as e:
+        error(f"Error in save_user: {str(e)}")
+        db.session.rollback()
+        raise Exception(f"Failed to save user data: {str(e)}")
 
 
 @oauth_authorized.connect
 def logged_in(blueprint, token):
-    user_claims = jwt.decode(token['id_token'],
-                             options={"verify_signature": False})
-    
-    # Check if we're in the process of linking accounts
-    if session.get('linking_accounts') and session.get('original_user_id'):
-        # We're linking accounts - store the token
-        blueprint.token = token
+    try:
+        # Validate token contains id_token
+        if not token or 'id_token' not in token:
+            error("Invalid OAuth token received: missing id_token")
+            flash("Authentication failed: invalid token received", "danger")
+            return redirect(url_for('replit_auth.error'))
+            
+        # Decode user claims with error handling
+        try:
+            user_claims = jwt.decode(token['id_token'], 
+                                    options={"verify_signature": False})
+        except Exception as e:
+            error(f"Failed to decode JWT token: {str(e)}")
+            flash("Authentication failed: could not validate login information", "danger")
+            return redirect(url_for('replit_auth.error'))
         
-        # Redirect to the account linking completion handler
-        return redirect(url_for('complete_account_linking'))
+        # Validate required claim exists
+        if 'sub' not in user_claims:
+            error("Missing 'sub' claim in user token")
+            flash("Authentication failed: missing user identifier", "danger")
+            return redirect(url_for('replit_auth.error'))
+        
+        # Check if we're in the process of linking accounts
+        if session.get('linking_accounts') and session.get('original_user_id'):
+            try:
+                # We're linking accounts - store the token
+                blueprint.token = token
+                
+                # Redirect to the account linking completion handler
+                return redirect(url_for('complete_account_linking'))
+            except Exception as e:
+                error(f"Error during account linking: {str(e)}")
+                flash("Account linking failed", "danger")
+                return redirect(url_for('replit_auth.error'))
+        
+        # Normal login flow with transaction management
+        try:
+            # Save user data within transaction
+            with db.session.begin():
+                user = save_user(user_claims)
+                
+                # Set auth provider
+                user.auth_provider = 'replit_auth'
+                
+                # Commit handled by with block
+            
+            # Login the user
+            login_user(user)
+            
+            # Store token
+            blueprint.token = token
+            
+            # Redirect to next URL or default
+            next_url = session.pop("next_url", None)
+            if next_url is not None:
+                return redirect(next_url)
+                
+        except Exception as e:
+            error(f"Error during login flow: {str(e)}")
+            db.session.rollback()
+            flash("Login failed: could not complete authentication", "danger")
+            return redirect(url_for('replit_auth.error'))
     
-    # Normal login flow
-    user = save_user(user_claims)
-    
-    # Set auth provider
-    user.auth_provider = 'replit_auth'
-    db.session.commit()
-    
-    login_user(user)
-    blueprint.token = token
-    
-    next_url = session.pop("next_url", None)
-    if next_url is not None:
-        return redirect(next_url)
+    except Exception as e:
+        # Global exception handler
+        error(f"Unexpected error in OAuth login flow: {str(e)}")
+        flash("An unexpected error occurred during login", "danger")
+        return redirect(url_for('replit_auth.error'))
 
 
 @oauth_error.connect
