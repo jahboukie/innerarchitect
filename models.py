@@ -56,6 +56,9 @@ class User(UserMixin, db.Model):
     # Relationship with PrivacySettings
     privacy_settings = db.relationship('PrivacySettings', backref='user', uselist=False, lazy='joined', cascade='all, delete-orphan')
     
+    # Relationship with UserPreferences
+    preferences = db.relationship('UserPreferences', backref='user', uselist=False, lazy='joined', cascade='all, delete-orphan')
+    
     def __repr__(self):
         return f'<User {self.id}>'
         
@@ -270,6 +273,34 @@ class TechniqueUsageStats(db.Model):
     
     def __repr__(self):
         return f'<TechniqueUsageStats {self.technique} - Count: {self.usage_count}>'
+
+
+class UserPreferences(db.Model):
+    """Model for storing user preferences collected during onboarding."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
+    
+    # Onboarding data
+    primary_goal = db.Column(db.String(50), nullable=True)
+    custom_goal = db.Column(db.String(200), nullable=True)
+    experience_level = db.Column(db.String(20), nullable=True)
+    communication_style = db.Column(db.String(20), nullable=True)
+    show_explanations = db.Column(db.Boolean, default=True)
+    first_challenge = db.Column(db.Text, nullable=True)
+    challenge_intensity = db.Column(db.Integer, nullable=True)
+    
+    # Reminder preferences
+    enable_reminders = db.Column(db.Boolean, default=False)
+    reminder_frequency = db.Column(db.String(20), nullable=True)
+    preferred_time = db.Column(db.Time, nullable=True)
+    
+    # Onboarding status
+    onboarding_completed = db.Column(db.Boolean, default=False)
+    onboarding_step = db.Column(db.Integer, default=1)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<UserPreferences {self.id}>'
 
 
 class UsageQuota(db.Model):

@@ -5,8 +5,8 @@ This module defines WTForms classes for various forms used in the application.
 """
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, HiddenField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, HiddenField, RadioField, TimeField, IntegerField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional, NumberRange
 from models import User
 
 class LoginForm(FlaskForm):
@@ -116,3 +116,57 @@ class PrivacySettingsForm(FlaskForm):
     email_notifications = BooleanField('Email notifications')
     marketing_emails = BooleanField('Marketing emails')
     submit = SubmitField('Save Privacy Settings')
+
+
+class OnboardingForm(FlaskForm):
+    """Form for user onboarding process with multiple steps."""
+    
+    # Step 1: Goals
+    goals_choices = [
+        ('anxiety', 'Reduce Anxiety: I want to feel calmer and more in control'),
+        ('confidence', 'Build Confidence: I want to believe in myself more'),
+        ('relationships', 'Improve Relationships: I want better connections with others'),
+        ('performance', 'Enhance Performance: I want to achieve more in my work/studies'),
+        ('happiness', 'Increase Happiness: I want to enjoy life more fully'),
+        ('other', 'Something Else: I have another goal in mind')
+    ]
+    goals = RadioField('Primary Goal', choices=goals_choices, validators=[Optional()])
+    custom_goal = StringField('Custom Goal', validators=[Optional(), Length(max=200)])
+    
+    # Step 2: Experience Level
+    experience_choices = [
+        ('beginner', 'Complete Beginner: I know nothing about NLP techniques'),
+        ('intermediate', 'Some Knowledge: I understand the basics but haven\'t practiced much'),
+        ('advanced', 'Experienced User: I\'ve used NLP techniques regularly'),
+        ('professional', 'Professional: I\'m certified or trained in NLP'),
+        ('unsure', 'Not Sure: I don\'t know if I\'ve used NLP before')
+    ]
+    experience_level = RadioField('Experience Level', choices=experience_choices, validators=[Optional()])
+    
+    # Step 3: Communication Preferences
+    communication_choices = [
+        ('direct', 'Direct & Concise: Keep it brief and to the point'),
+        ('detailed', 'Detailed & Thorough: I like complete explanations'),
+        ('supportive', 'Supportive & Encouraging: I benefit from positive reinforcement'),
+        ('challenging', 'Challenging & Growth-focused: Push me to improve')
+    ]
+    communication_style = RadioField('Communication Style', choices=communication_choices, validators=[Optional()])
+    show_explanations = BooleanField('Show Technique Explanations')
+    
+    # Step 4: First Challenge
+    challenge_description = TextAreaField('Challenge Description', validators=[Optional(), Length(max=500)])
+    challenge_intensity = IntegerField('Intensity (1-10)', validators=[Optional(), NumberRange(min=1, max=10)])
+    
+    # Step 5: Reminders
+    enable_reminders = BooleanField('Enable Reminders')
+    frequency_choices = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('custom', 'Custom')
+    ]
+    reminder_frequency = RadioField('Reminder Frequency', choices=frequency_choices, validators=[Optional()])
+    preferred_time = TimeField('Preferred Time', validators=[Optional()])
+    
+    # Common fields for all steps
+    step = HiddenField('Current Step')
+    submit = SubmitField('Continue')

@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}Get Started - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='img/logo-color.png') }}" alt="Logo" class="mb-3" style="height: 80px;">
+                        <h1 class="h3">Welcome to The Inner Architect</h1>
+                        <p class="text-muted mb-0">Let's get you set up for a transformative experience</p>
+                    </div>
+                    
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ (current_step / total_steps) * 100 }}%"></div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('onboarding_route', step=current_step) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        {% if current_step == 1 %}
+                        <!-- Step 1: Collect Goals -->
+                        <div class="step-content">
+                            <h4 class="mb-3">What brings you here today?</h4>
+                            <p class="text-muted mb-4">Understanding your goals helps us personalize your experience</p>
+                            
+                            <div class="mb-4">
+                                <div class="d-flex flex-column gap-3">
+                                    {% for choice in form.goals_choices %}
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="goals" id="goal_{{ loop.index }}" value="{{ choice[0] }}" {% if loop.first %}checked{% endif %}>
+                                        <label class="form-check-label d-flex" for="goal_{{ loop.index }}">
+                                            <span class="rounded-circle bg-primary bg-opacity-10 p-2 me-3 text-primary">
+                                                {% if choice[0] == 'anxiety' %}
+                                                <i class="fas fa-cloud"></i>
+                                                {% elif choice[0] == 'confidence' %}
+                                                <i class="fas fa-crown"></i>
+                                                {% elif choice[0] == 'relationships' %}
+                                                <i class="fas fa-users"></i>
+                                                {% elif choice[0] == 'performance' %}
+                                                <i class="fas fa-chart-line"></i>
+                                                {% elif choice[0] == 'happiness' %}
+                                                <i class="fas fa-smile"></i>
+                                                {% else %}
+                                                <i class="fas fa-star"></i>
+                                                {% endif %}
+                                            </span>
+                                            <div>
+                                                <strong>{{ choice[1].split(':')[0] }}</strong>
+                                                <p class="text-muted mb-0 small">{{ choice[1].split(':')[1] }}</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="custom_goal" class="form-label">Or describe in your own words:</label>
+                                {{ form.custom_goal(class="form-control", id="custom_goal", placeholder="e.g., I want to overcome my fear of public speaking") }}
+                            </div>
+                        </div>
+                        
+                        {% elif current_step == 2 %}
+                        <!-- Step 2: Experience Level -->
+                        <div class="step-content">
+                            <h4 class="mb-3">What's your experience with NLP techniques?</h4>
+                            <p class="text-muted mb-4">This helps us adjust the level of guidance provided</p>
+                            
+                            <div class="mb-4">
+                                <div class="d-flex flex-column gap-3">
+                                    {% for choice in form.experience_choices %}
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="experience_level" id="exp_{{ loop.index }}" value="{{ choice[0] }}" {% if loop.first %}checked{% endif %}>
+                                        <label class="form-check-label d-flex" for="exp_{{ loop.index }}">
+                                            <span class="rounded-circle bg-primary bg-opacity-10 p-2 me-3 text-primary">
+                                                {% if choice[0] == 'beginner' %}
+                                                <i class="fas fa-seedling"></i>
+                                                {% elif choice[0] == 'intermediate' %}
+                                                <i class="fas fa-book-reader"></i>
+                                                {% elif choice[0] == 'advanced' %}
+                                                <i class="fas fa-graduation-cap"></i>
+                                                {% elif choice[0] == 'professional' %}
+                                                <i class="fas fa-award"></i>
+                                                {% else %}
+                                                <i class="fas fa-question-circle"></i>
+                                                {% endif %}
+                                            </span>
+                                            <div>
+                                                <strong>{{ choice[1].split(':')[0] }}</strong>
+                                                <p class="text-muted mb-0 small">{{ choice[1].split(':')[1] }}</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif current_step == 3 %}
+                        <!-- Step 3: Communication Preferences -->
+                        <div class="step-content">
+                            <h4 class="mb-3">How would you like us to communicate?</h4>
+                            <p class="text-muted mb-4">We can adjust our style to match your preferences</p>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Communication style:</label>
+                                <div class="row g-3">
+                                    {% for choice in form.communication_choices %}
+                                    <div class="col-md-6">
+                                        <div class="form-check card p-3 h-100 border">
+                                            <input class="form-check-input" type="radio" name="communication_style" id="comm_{{ loop.index }}" value="{{ choice[0] }}" {% if loop.first %}checked{% endif %}>
+                                            <label class="form-check-label d-flex flex-column h-100" for="comm_{{ loop.index }}">
+                                                <strong>{{ choice[1].split(':')[0] }}</strong>
+                                                <small class="text-muted mt-2">{{ choice[1].split(':')[1] }}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Would you like to see explanations of NLP techniques?</label>
+                                <div class="form-check">
+                                    {{ form.show_explanations(class="form-check-input") }}
+                                    <label class="form-check-label" for="show_explanations">
+                                        Yes, explain how techniques work as they're used
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif current_step == 4 %}
+                        <!-- Step 4: First Challenge -->
+                        <div class="step-content">
+                            <h4 class="mb-3">What's one challenge you'd like to work on first?</h4>
+                            <p class="text-muted mb-4">Describe a specific situation you'd like to improve</p>
+                            
+                            <div class="mb-4">
+                                <label for="challenge_description" class="form-label">Describe your challenge:</label>
+                                {{ form.challenge_description(class="form-control", id="challenge_description", rows=4, placeholder="e.g., I get very nervous when I have to speak in meetings at work") }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">How would you rate the intensity of this challenge?</label>
+                                <div class="range-container">
+                                    <input type="range" class="form-range" id="challenge_intensity" name="challenge_intensity" min="1" max="10" value="5">
+                                    <div class="range-labels d-flex justify-content-between">
+                                        <span>Mild</span>
+                                        <span>Moderate</span>
+                                        <span>Severe</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% elif current_step == 5 %}
+                        <!-- Step 5: Notification Preferences -->
+                        <div class="step-content">
+                            <h4 class="mb-3">Set your practice reminders</h4>
+                            <p class="text-muted mb-4">Regular practice yields the best results</p>
+                            
+                            <div class="form-check form-switch mb-4">
+                                {{ form.enable_reminders(class="form-check-input") }}
+                                <label class="form-check-label" for="enable_reminders">Enable practice reminders</label>
+                            </div>
+                            
+                            <div id="reminder-options" {% if not form.enable_reminders.data %}style="display: none;"{% endif %}>
+                                <div class="mb-3">
+                                    <label class="form-label">Reminder frequency:</label>
+                                    <div class="row g-3">
+                                        {% for choice in form.frequency_choices %}
+                                        <div class="col-md-4">
+                                            <div class="form-check card p-3 h-100 border">
+                                                <input class="form-check-input" type="radio" name="reminder_frequency" id="freq_{{ loop.index }}" value="{{ choice[0] }}" {% if loop.index == 2 %}checked{% endif %}>
+                                                <label class="form-check-label" for="freq_{{ loop.index }}">
+                                                    {{ choice[1] }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="preferred_time" class="form-label">Preferred reminder time:</label>
+                                    {{ form.preferred_time(class="form-control", id="preferred_time") }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            {% if current_step > 1 %}
+                            <a href="{{ url_for('onboarding_route', step=current_step-1) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                            {% else %}
+                            <div></div>
+                            {% endif %}
+                            
+                            {% if current_step < total_steps %}
+                            <button type="submit" class="btn btn-primary">
+                                Continue<i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success">
+                                Complete Setup<i class="fas fa-check ms-2"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if current_step < total_steps %}
+            <div class="text-center mt-3">
+                <a href="{{ url_for('index') }}" class="text-decoration-none small">Skip setup for now</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.custom-radio input[type="radio"] {
+    margin-top: 1.2rem;
+}
+.custom-radio label {
+    cursor: pointer;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+.custom-radio input[type="radio"]:checked + label {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+.step-content {
+    min-height: 300px;
+}
+.range-container {
+    padding: 0 10px;
+}
+.range-labels {
+    font-size: 0.8rem;
+    color: var(--bs-secondary);
+    padding: 0 5px;
+    margin-top: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle enabling/disabling reminder options
+    const enableReminders = document.getElementById('enable_reminders');
+    const reminderOptions = document.getElementById('reminder-options');
+    
+    if (enableReminders) {
+        enableReminders.addEventListener('change', function() {
+            if (this.checked) {
+                reminderOptions.style.display = 'block';
+            } else {
+                reminderOptions.style.display = 'none';
+            }
+        });
+    }
+    
+    // Initialize range slider value display
+    const challengeIntensity = document.getElementById('challenge_intensity');
+    if (challengeIntensity) {
+        const updateRangeValue = () => {
+            // Update styling based on value if needed
+        };
+        
+        challengeIntensity.addEventListener('input', updateRangeValue);
+        updateRangeValue();
+    }
+});
+</script>
+{% endblock %}
