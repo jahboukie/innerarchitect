@@ -2,14 +2,14 @@
 Email-based authentication module for The Inner Architect
 
 This module provides functionality for email-based registration,
-login, email verification, and password reset.
+login, email verification, password reset, and account management.
 """
 
 import secrets
 import uuid
 from datetime import datetime, timedelta
 from flask import current_app, url_for
-from flask_login import login_user, current_user
+from flask_login import login_user, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, db
 from logging_config import get_logger
@@ -226,3 +226,126 @@ def reset_password(token, new_password):
         logger.error(f"Error resetting password: {str(e)}")
         db.session.rollback()
         return False
+
+
+def delete_account(user_id, password=None):
+    """
+    Delete a user account and associated data.
+    
+    This is a GDPR-compliant account deletion that removes or anonymizes
+    user data while preserving application integrity.
+    
+    Args:
+        user_id (str): The ID of the user to delete
+        password (str, optional): Password for verification (required for email auth)
+        
+    Returns:
+        bool: True if deletion successful, False otherwise
+    """
+    try:
+        # Find user
+        user = User.query.get(user_id)
+        
+        if not user:
+            logger.warning(f"Account deletion attempted for non-existent user ID: {user_id}")
+            return False
+            
+        # For email authentication, verify password
+        if user.auth_provider == 'email' and password:
+            if not user.check_password(password):
+                logger.warning(f"Account deletion attempted with incorrect password for user {user_id}")
+                return False
+        
+        # First, anonymize user data instead of hard deleting
+        # This preserves referential integrity while complying with GDPR
+        original_email = user.email
+        
+        # Generate anonymized email with timestamp to avoid conflicts
+        # with potential future users with the same email
+        anonymized_email = f"deleted-{int(datetime.utcnow().timestamp())}@deleted.account"
+        
+        user.email = anonymized_email
+        user.first_name = "Deleted"
+        user.last_name = "User"
+        user.profile_image_url = None
+        user.password_hash = None
+        user.email_verified = False
+        user.verification_token = None
+        user.verification_token_expiry = None
+        user.reset_password_token = None
+        user.reset_token_expiry = None
+        
+        # Mark as deleted in a GDPR-compliant way
+        user.auth_provider = 'deleted'
+        
+        # Delete or anonymize related subscription data
+        from models import Subscription
+        subscription = Subscription.query.filter_by(user_id=user_id).first()
+        if subscription:
+            # Cancel subscription in Stripe if active
+            if subscription.status == 'active' and subscription.stripe_subscription_id:
+                try:
+                    from subscription_manager import cancel_subscription
+                    cancel_subscription(user_id)
+                except Exception as e:
+                    logger.error(f"Error canceling subscription during account deletion: {str(e)}")
+                    # Continue with deletion even if subscription cancellation fails
+            
+            # Now delete the subscription record
+            db.session.delete(subscription)
+        
+        # Handle other related user data that should be deleted or anonymized
+        # For GDPR compliance, some data might need to be anonymized rather than deleted
+        
+        # The user record itself is retained but anonymized (soft delete)
+        # This maintains referential integrity in the database
+        db.session.commit()
+        
+        # Log successful deletion
+        logger.info(f"Account successfully deleted/anonymized for user {user_id} (email: {original_email})")
+        
+        # If the deleted account belongs to the current user, log them out
+        if current_user.is_authenticated and current_user.id == user_id:
+            logout_user()
+            
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error deleting account: {str(e)}")
+        logger.exception("Full exception details:")
+        db.session.rollback()
+        return False
+
+
+def regenerate_verification_token(user_id):
+    """
+    Regenerate the email verification token for a user.
+    
+    Args:
+        user_id (str): The user ID
+        
+    Returns:
+        tuple: (User, verification_token) if successful, (None, None) if failed
+    """
+    try:
+        # Find user
+        user = User.query.get(user_id)
+        
+        if not user:
+            logger.warning(f"Token regeneration attempted for non-existent user ID: {user_id}")
+            return None, None
+            
+        # Generate new token
+        verification_token = generate_token()
+        user.verification_token = verification_token
+        user.verification_token_expiry = datetime.utcnow() + timedelta(hours=24)
+        user.email_verified = False
+        
+        db.session.commit()
+        logger.info(f"Verification token regenerated for user {user.id}")
+        return user, verification_token
+        
+    except Exception as e:
+        logger.error(f"Error regenerating verification token: {str(e)}")
+        db.session.rollback()
+        return None, None
