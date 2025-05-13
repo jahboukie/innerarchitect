@@ -10,6 +10,7 @@ from flask_login import current_user, login_required, logout_user, login_user
 from openai import OpenAI
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy.exc import SQLAlchemyError
 
 # Import email authentication modules
 from forms import LoginForm, RegistrationForm, RequestResetForm, ResetPasswordForm
@@ -470,76 +471,137 @@ def profile():
     """
     User profile page.
     """
-    # Get user stats
-    exercise_count = NLPExerciseProgress.query.filter_by(
-        user_id=current_user.id, 
-        completed=True
-    ).count()
+    try:
+        # Get subscription info using the subscription manager
+        from subscription_manager import get_subscription_details
+        
+        # Get detailed subscription information
+        subscription_details = get_subscription_details(current_user.id)
+        
+        # Format for template display
+        subscription_info = {
+            'plan_name': subscription_details['plan_name'].capitalize(),
+            'status': subscription_details['status'],
+            'current_period_end': subscription_details.get('current_period_end'),
+            'features': [],
+            'available_plans': [
+                {
+                    'name': 'Premium',
+                    'price': '$9.99/month',
+                    'description': 'All NLP techniques, unlimited chats, and progress tracking',
+                    'plan_id': 'premium'
+                },
+                {
+                    'name': 'Professional',
+                    'price': '$19.99/month',
+                    'description': 'Everything in Premium plus voice features, personalized journeys, and more',
+                    'plan_id': 'professional'
+                }
+            ]
+        }
+        
+        # Format features for display
+        for feature in subscription_details['features']:
+            # Convert snake_case to readable text
+            readable_feature = feature.replace('_', ' ').title()
+            subscription_info['features'].append(readable_feature)
+        
+        # Safely handle stats with error catching for type mismatches
+        try:
+            # Get user stats
+            exercise_count = NLPExerciseProgress.query.filter_by(
+                user_id=current_user.id, 
+                completed=True
+            ).count()
+        except (ValueError, TypeError, SQLAlchemyError) as e:
+            error(f"Error getting exercise count: {str(e)}")
+            exercise_count = 0
+        
+        try:
+            # Get unique techniques used
+            techniques = TechniqueEffectiveness.query.filter_by(
+                user_id=current_user.id
+            ).with_entities(TechniqueEffectiveness.technique).distinct().count()
+        except (ValueError, TypeError, SQLAlchemyError) as e:
+            error(f"Error getting technique count: {str(e)}")
+            techniques = 0
+            
+        # Get recent activity with error handling
+        activity = []
+        
+        try:
+            # Get recent activity (last 5 items)
+            recent_chats = ChatHistory.query.filter_by(
+                user_id=current_user.id
+            ).order_by(ChatHistory.created_at.desc()).limit(3).all()
+            
+            for chat in recent_chats:
+                activity.append({
+                    'title': 'Chat Interaction',
+                    'description': f"Used technique: {chat.nlp_technique or 'None'}",
+                    'date': chat.created_at.strftime('%b %d, %Y')
+                })
+        except (ValueError, TypeError, SQLAlchemyError) as e:
+            error(f"Error getting recent chats: {str(e)}")
+        
+        try:
+            recent_exercises = NLPExerciseProgress.query.filter_by(
+                user_id=current_user.id
+            ).order_by(NLPExerciseProgress.started_at.desc()).limit(2).all()
+            
+            for ex in recent_exercises:
+                status = "Completed" if ex.completed else f"In Progress (Step {ex.current_step})"
+                exercise = NLPExercise.query.get(ex.exercise_id)
+                if exercise:
+                    activity.append({
+                        'title': f"Exercise: {exercise.title}",
+                        'description': f"Status: {status}",
+                        'date': ex.started_at.strftime('%b %d, %Y')
+                    })
+        except (ValueError, TypeError, SQLAlchemyError) as e:
+            error(f"Error getting recent exercises: {str(e)}")
+        
+        # Sort by date (newest first)
+        if activity:
+            activity.sort(key=lambda x: x['date'], reverse=True)
+        
+        return render_template(
+            'profile.html',
+            exercise_count=exercise_count,
+            technique_count=techniques,
+            recent_activity=activity,
+            subscription=subscription_info,
+            show_upgrade=True
+        )
     
-    # Get unique techniques used
-    techniques = TechniqueEffectiveness.query.filter_by(
-        user_id=current_user.id
-    ).with_entities(TechniqueEffectiveness.technique).distinct().count()
-    
-    # Get subscription info using the subscription manager
-    from subscription_manager import get_subscription_details
-    
-    # Get detailed subscription information
-    subscription_details = get_subscription_details(current_user.id)
-    
-    # Format for template display
-    subscription_info = {
-        'plan_name': subscription_details['plan_name'].capitalize(),
-        'status': subscription_details['status'],
-        'current_period_end': subscription_details.get('current_period_end'),
-        'features': []
-    }
-    
-    # Format features for display
-    for feature in subscription_details['features']:
-        # Convert snake_case to readable text
-        readable_feature = feature.replace('_', ' ').title()
-        subscription_info['features'].append(readable_feature)
-    
-    # Get recent activity (last 5 items)
-    recent_chats = ChatHistory.query.filter_by(
-        user_id=current_user.id
-    ).order_by(ChatHistory.created_at.desc()).limit(3).all()
-    
-    recent_exercises = NLPExerciseProgress.query.filter_by(
-        user_id=current_user.id
-    ).order_by(NLPExerciseProgress.started_at.desc()).limit(2).all()
-    
-    # Format for display
-    activity = []
-    
-    for chat in recent_chats:
-        activity.append({
-            'title': 'Chat Interaction',
-            'description': f"Used technique: {chat.nlp_technique or 'None'}",
-            'date': chat.created_at.strftime('%b %d, %Y')
-        })
-    
-    for ex in recent_exercises:
-        status = "Completed" if ex.completed else f"In Progress (Step {ex.current_step})"
-        exercise = NLPExercise.query.get(ex.exercise_id)
-        if exercise:
-            activity.append({
-                'title': f"Exercise: {exercise.title}",
-                'description': f"Status: {status}",
-                'date': ex.started_at.strftime('%b %d, %Y')
-            })
-    
-    # Sort by date (newest first)
-    activity.sort(key=lambda x: x['date'], reverse=True)
-    
-    return render_template(
-        'profile.html',
-        exercise_count=exercise_count,
-        technique_count=techniques,
-        recent_activity=activity,
-        subscription=subscription_info
-    )
+    except Exception as e:
+        error_type = type(e).__name__
+        error(f"Profile page error ({error_type}): {str(e)}")
+        return render_template(
+            'profile.html',
+            error=True,
+            error_message=str(e),
+            subscription={
+                'plan_name': current_user.subscription_plan or 'Free',
+                'status': 'active',
+                'features': [],
+                'available_plans': [
+                    {
+                        'name': 'Premium',
+                        'price': '$9.99/month',
+                        'description': 'All NLP techniques, unlimited chats, and progress tracking',
+                        'plan_id': 'premium'
+                    },
+                    {
+                        'name': 'Professional',
+                        'price': '$19.99/month',
+                        'description': 'Everything in Premium plus voice features, personalized journeys, and more',
+                        'plan_id': 'professional'
+                    }
+                ]
+            },
+            show_upgrade=True
+        )
 
 # Landing page route
 @app.route('/landing')
