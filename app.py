@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import time
+import secrets
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g
@@ -278,11 +279,15 @@ with app.app_context():
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
-# Language middleware
+# Request middleware
 @app.before_request
 def before_request():
     # Make session permanent
     session.permanent = True
+    
+    # Create session ID if one doesn't exist
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
     
     # Set default language if not in session
     if 'language' not in session:
@@ -312,6 +317,49 @@ def before_request():
         return language_util.translate_ui_text(text_key, g.language, default)
     
     g.translate = translate
+    
+    # Auth provider integration
+    if current_user.is_authenticated:
+        # Import User model only when needed (to avoid circular imports)
+        from models import User
+            
+        # Store the auth provider used for this session
+        if 'auth_provider' not in session:
+            session['auth_provider'] = current_user.auth_provider
+            
+        # Add account linking suggestions for better user experience
+        try:
+            # Handle Replit auth users who might have an existing email account
+            if current_user.auth_provider == 'replit_auth' and current_user.email:
+                email_user = User.query.filter_by(
+                    email=current_user.email, 
+                    auth_provider='email'
+                ).first()
+                
+                if email_user and 'shown_auth_link_message' not in session:
+                    flash('We noticed you have logged in with Replit, but you also have an email account with us. ' +
+                         'You can link these accounts for a seamless experience.', 'info')
+                    session['shown_auth_link_message'] = True
+                    
+            # Handle email auth users who might have an existing Replit account
+            elif current_user.auth_provider == 'email':
+                replit_user = User.query.filter_by(
+                    email=current_user.email, 
+                    auth_provider='replit_auth'
+                ).first()
+                
+                if replit_user and 'shown_auth_link_message' not in session:
+                    flash('We noticed you have logged in with email, but you also have a Replit account with us. ' +
+                         'You can link these accounts for a seamless experience.', 'info')
+                    session['shown_auth_link_message'] = True
+        except Exception as e:
+            # Don't interrupt the user experience if this fails
+            # Use app.logger instead of separate logger import
+            app.logger.error(f"Error in auth provider integration: {str(e)}")
+            
+    # This helps with CSRF protection across auth methods
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(16)
 
 
 # Decorator to translate API responses
@@ -903,7 +951,10 @@ def reset_password_request():
     form = RequestResetForm()
     
     if form.validate_on_submit():
-        email = form.email.data.strip().lower()  # Normalize email
+        # Form validation should ensure email is not None
+        # WTForms EmailField validator will ensure this is a valid email
+        email = form.email.data or ""
+        email = email.strip().lower()  # Normalize email
         user, token = request_password_reset(email)
         
         if user and token:
@@ -913,10 +964,10 @@ def reset_password_request():
                 email_sent = send_password_reset_email(user, token, base_url)
                 
                 if email_sent:
-                    logger.info(f"Password reset email sent to {user.email}")
+                    app.logger.info(f"Password reset email sent to {user.email}")
                     flash('An email has been sent with instructions to reset your password. Please check your inbox.', 'info')
                 else:
-                    logger.error(f"Failed to send password reset email to {user.email}")
+                    app.logger.error(f"Failed to send password reset email to {user.email}")
                     flash('We could not send the reset email at this time. Please try again later.', 'warning')
                 
                 # Don't reveal whether a user with this email exists or not
