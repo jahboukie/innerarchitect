@@ -6,13 +6,13 @@ database errors.
 """
 
 from app import app, db
-from replit_auth_new import UserSessionStorage
+from replit_auth_new import ReplitSessionStorage
 from sqlalchemy.exc import NoResultFound
 from logging_config import get_logger, info, error
 
 logger = get_logger("auth_repair")
 
-class ImprovedUserSessionStorage(UserSessionStorage):
+class ImprovedSessionStorage(ReplitSessionStorage):
     """Enhanced storage with better transaction management."""
     
     def get(self, blueprint):
@@ -79,26 +79,26 @@ class ImprovedUserSessionStorage(UserSessionStorage):
                 pass
 
 def apply_auth_repairs():
-    """Apply the auth repair fixes to the replit_auth module."""
-    import replit_auth
+    """Apply the auth repair fixes to the replit_auth_new module."""
+    import replit_auth_new
     
     # Backup the original class for reference
-    original_storage = replit_auth.UserSessionStorage
+    original_storage = replit_auth_new.ReplitSessionStorage
     
     # Replace with our improved version
-    replit_auth.UserSessionStorage = ImprovedUserSessionStorage
+    replit_auth_new.ReplitSessionStorage = ImprovedSessionStorage
     
-    info("Applied auth repair: Enhanced UserSessionStorage with better transaction management")
+    info("Applied auth repair: Enhanced ReplitSessionStorage with better transaction management")
     
     # Return the original for rollback if needed
     return original_storage
 
 def rollback_auth_repairs(original_storage):
     """Rollback the auth repair fixes."""
-    import replit_auth
+    import replit_auth_new
     
     # Restore the original class
-    replit_auth.UserSessionStorage = original_storage
+    replit_auth_new.ReplitSessionStorage = original_storage
     
     info("Rolled back auth repair")
 
