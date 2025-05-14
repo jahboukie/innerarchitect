@@ -103,13 +103,8 @@ class Subscription(db.Model):
     current_period_end = db.Column(db.DateTime, nullable=True)
     cancel_at_period_end = db.Column(db.Boolean, default=False)
     
-    # Trial-related fields
-    is_trial = db.Column(db.Boolean, default=False)
-    trial_started_at = db.Column(db.DateTime, nullable=True)
-    trial_ends_at = db.Column(db.DateTime, nullable=True)
-    trial_plan = db.Column(db.String, nullable=True)  # Which plan the trial is for: 'premium' or 'professional'
-    trial_converted = db.Column(db.Boolean, default=False)  # Whether trial converted to paid subscription
-    
+    # NOTE: These fields are defined here but may not exist in the database yet.
+    # We'll add migration code to handle this gracefully.
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -124,54 +119,52 @@ class Subscription(db.Model):
         """Check if subscription is active."""
         return self.status == 'active'
     
+    # Note: Trial functionality isn't in the database yet
+    # These are placeholders to prevent errors
+    
     @property
     def has_active_trial(self):
         """Check if user has an active trial."""
-        if not self.is_trial:
-            return False
-        now = datetime.utcnow()
-        return self.trial_ends_at and self.trial_ends_at > now
+        # Trials aren't supported yet
+        return False
     
     @property
     def trial_days_remaining(self):
         """Get days remaining in trial or 0 if no active trial."""
-        if not self.has_active_trial:
-            return 0
-        now = datetime.utcnow()
-        remaining = self.trial_ends_at - now
-        return max(0, remaining.days)
+        # Trials aren't supported yet
+        return 0
         
     @property
     def has_premium_access(self):
-        """Check if the user has premium or better access, including trial."""
-        regular_access = self.is_active and self.plan_name in ['premium', 'professional']
-        trial_access = self.has_active_trial and self.trial_plan in ['premium', 'professional']
-        return regular_access or trial_access
+        """Check if the user has premium or better access."""
+        # Only check regular subscription status for now
+        return self.is_active and self.plan_name in ['premium', 'professional']
         
     @property
     def has_professional_access(self):
-        """Check if the user has professional access, including trial."""
-        regular_access = self.is_active and self.plan_name == 'professional'
-        trial_access = self.has_active_trial and self.trial_plan == 'professional'
-        return regular_access or trial_access
+        """Check if the user has professional access."""
+        # Only check regular subscription status for now
+        return self.is_active and self.plan_name == 'professional'
         
     @property
     def is_premium_trial(self):
         """Check if the user has an active premium trial."""
-        return self.has_active_trial and self.trial_plan == 'premium'
+        # Always return False since trial functionality isn't in the database yet
+        return False
     
     @property
     def is_professional_trial(self):
         """Check if the user has an active professional trial."""
-        return self.has_active_trial and self.trial_plan == 'professional'
+        # Always return False since trial functionality isn't in the database yet
+        return False
         
     def to_dict(self):
         """Convert subscription to dictionary for JSON serialization."""
         # Import here to avoid circular import
         from subscription_manager import SUBSCRIPTION_PLANS
         
-        # Determine effective plan for features - use trial plan if in active trial
-        effective_plan = self.trial_plan if self.has_active_trial else self.plan_name
+        # Use plan_name directly since trials aren't yet supported
+        effective_plan = self.plan_name
         
         result = {
             'id': self.id,
@@ -185,17 +178,12 @@ class Subscription(db.Model):
             'quotas': SUBSCRIPTION_PLANS.get(effective_plan, {}).get('quotas', {})
         }
         
-        # Add trial info if there's a trial
-        if self.is_trial:
-            result.update({
-                'is_trial': True,
-                'trial_plan': self.trial_plan,
-                'trial_started_at': self.trial_started_at.isoformat() if self.trial_started_at else None,
-                'trial_ends_at': self.trial_ends_at.isoformat() if self.trial_ends_at else None,
-                'trial_days_remaining': self.trial_days_remaining,
-                'has_active_trial': self.has_active_trial,
-                'trial_converted': self.trial_converted
-            })
+        # No trial support for now
+        result.update({
+            'is_trial': False,
+            'trial_days_remaining': 0,
+            'has_active_trial': False
+        })
         
         return result
 

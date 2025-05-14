@@ -135,6 +135,14 @@ with app.app_context():
 from replit_auth_new import create_replit_blueprint as make_replit_blueprint 
 from replit_auth_new import require_auth as require_login
 
+# Apply auth transaction fixes
+try:
+    from auth_repair import apply_auth_repairs
+    original_storage = apply_auth_repairs()
+    logger.info("Applied auth repair: Enhanced UserSessionStorage with better transaction management")
+except Exception as e:
+    logger.error(f"Failed to apply auth repair: {str(e)}")
+
 # Subscription access decorators
 def require_premium(f):
     """
