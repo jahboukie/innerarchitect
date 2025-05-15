@@ -1,5 +1,7 @@
 
 // Service Worker for The Inner Architect PWA
+'use strict';
+
 const CACHE_NAME = 'inner-architect-v1';
 const ASSETS_TO_CACHE = [
   '/',

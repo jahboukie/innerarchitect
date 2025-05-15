@@ -428,9 +428,14 @@ def handle_error(blueprint, error, error_description=None, error_uri=None):
 
     # Show a specific error message
     if error_description:
-        flash(f"Authentication error: {error_description}", "danger")
+        flash(f"Authentication error: {error_description}. Please try again.", "danger")
     else:
-        flash(f"Authentication error: {error}", "danger")
+        flash("Authentication failed. Please try clearing your browser cache and cookies, then try again.", "danger")
+
+    # Ensure any existing session is cleared
+    if hasattr(blueprint, 'token'):
+        del blueprint.token
+    db.session.rollback()
 
     return redirect(url_for('replit_auth.error'))
 
