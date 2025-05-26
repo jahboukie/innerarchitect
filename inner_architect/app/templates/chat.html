@@ -1,0 +1,691 @@
+{% extends "base.html" %}
+
+{% block title %}{{ g.translate('chat_title', 'Chat - The Inner Architect') }}{% endblock %}
+
+{% block extra_css %}
+<!-- No additional inline styles needed - using our CSS framework -->
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 mb-4 mb-md-0">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ g.translate('conversations', 'Conversations') }}</h5>
+                    <button id="newConversationBtn" class="btn btn-sm btn-primary rounded-circle">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Conversation Context List -->
+                    <div id="contextList" class="list-group list-group-flush">
+                        <!-- Will be populated by JavaScript -->
+                        <div class="p-3 text-center text-muted" id="noContextsMessage">
+                            <i class="fas fa-comments mb-2" style="font-size: 2rem;"></i>
+                            <p>{{ g.translate('start_conversation', 'Start a new conversation') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0" id="currentContextTitle">{{ g.translate('new_conversation', 'New Conversation') }}</h5>
+                    <div class="d-flex gap-2">
+                        <!-- Technique Selector -->
+                        <select class="form-select form-select-sm technique-selector" id="techniqueSelector">
+                            <option value="">{{ g.translate('auto_technique', 'Auto-select technique') }}</option>
+                            {% for technique_id, technique in techniques.items() %}
+                            <option value="{{ technique_id }}" {% if not has_premium and technique_id != 'reframing' %}disabled{% endif %}>
+                                {{ technique.name }}
+                                {% if not has_premium and technique_id != 'reframing' %}
+                                    ({{ g.translate('premium', 'Premium') }})
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        
+                        <!-- Context Menu Button -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" id="contextMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="contextMenuButton">
+                                <li>
+                                    <a class="dropdown-item" href="#" id="renameContextBtn">
+                                        <i class="fas fa-edit me-2"></i> {{ g.translate('rename', 'Rename') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="clearContextBtn">
+                                        <i class="fas fa-eraser me-2"></i> {{ g.translate('clear_chat', 'Clear chat') }}
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" id="deleteContextBtn">
+                                        <i class="fas fa-trash me-2"></i> {{ g.translate('delete', 'Delete') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="chat-container">
+                        <!-- Chat Messages -->
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Will be populated by JavaScript -->
+                            <div class="text-center p-5" id="emptyStateMessage">
+                                <i class="fas fa-brain mb-3 text-primary-light" style="font-size: 3rem;"></i>
+                                <h4>{{ g.translate('welcome_title', 'Welcome to The Inner Architect') }}</h4>
+                                <p class="text-muted">{{ g.translate('welcome_message', 'Start typing to begin a conversation using NLP techniques to improve your mental well-being.') }}</p>
+                            </div>
+                            
+                            <!-- Loading Indicator -->
+                            <div id="loadingIndicator" class="chat-message-ai">
+                                <div class="message-content typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Input Area -->
+                        <div class="chat-input-container">
+                            <form id="messageForm">
+                                <div class="position-relative">
+                                    <textarea id="messageInput" class="form-control chat-input" placeholder="{{ g.translate('type_message', 'Type your message...') }}" rows="2"></textarea>
+                                    <button type="submit" class="btn btn-primary chat-send-button">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Context Modal -->
+<div class="modal fade" id="renameContextModal" tabindex="-1" aria-labelledby="renameContextModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renameContextModalLabel">{{ g.translate('rename_conversation', 'Rename Conversation') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="renameContextForm">
+                    <div class="mb-3">
+                        <label for="newContextTitle" class="form-label">{{ g.translate('new_title', 'New Title') }}</label>
+                        <input type="text" class="form-control" id="newContextTitle" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('cancel', 'Cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="saveNewTitleBtn">{{ g.translate('save', 'Save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Context Confirmation Modal -->
+<div class="modal fade" id="deleteContextModal" tabindex="-1" aria-labelledby="deleteContextModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteContextModalLabel">{{ g.translate('delete_conversation', 'Delete Conversation') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ g.translate('delete_confirmation', 'Are you sure you want to delete this conversation? This action cannot be undone.') }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('cancel', 'Cancel') }}</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">{{ g.translate('delete', 'Delete') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Feature Modal -->
+<div class="modal fade" id="premiumFeatureModal" tabindex="-1" aria-labelledby="premiumFeatureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="premiumFeatureModalLabel">{{ g.translate('premium_feature', 'Premium Feature') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-crown text-accent mb-3" style="font-size: 3rem;"></i>
+                <h5>{{ g.translate('premium_required', 'Premium Subscription Required') }}</h5>
+                <p>{{ g.translate('premium_nlp_message', 'Advanced NLP techniques are available with a Premium or Professional subscription.') }}</p>
+                
+                <div class="bg-light p-3 rounded-lg mb-3">
+                    <h6 class="mb-2">{{ g.translate('premium_includes', 'Premium includes:') }}</h6>
+                    <ul class="list-unstyled text-start mb-0">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('all_techniques', 'All NLP techniques') }}</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('unlimited_chat', 'Unlimited chat interactions') }}</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('progress_tracking', 'Full progress tracking') }}</li>
+                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('communication_analysis', 'Communication analysis') }}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('cancel', 'Cancel') }}</button>
+                <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-primary">
+                    <i class="fas fa-crown me-1"></i> {{ g.translate('view_premium', 'View Premium Features') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Store the current context ID
+    let currentContextId = null;
+    let conversationHistory = [];
+    
+    // DOM elements
+    const chatMessages = document.getElementById('chatMessages');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const contextList = document.getElementById('contextList');
+    const techniqueSelector = document.getElementById('techniqueSelector');
+    const newConversationBtn = document.getElementById('newConversationBtn');
+    const currentContextTitle = document.getElementById('currentContextTitle');
+    const emptyStateMessage = document.getElementById('emptyStateMessage');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const noContextsMessage = document.getElementById('noContextsMessage');
+    
+    // Modal elements
+    const renameContextBtn = document.getElementById('renameContextBtn');
+    const renameContextModal = new bootstrap.Modal(document.getElementById('renameContextModal'));
+    const newContextTitle = document.getElementById('newContextTitle');
+    const saveNewTitleBtn = document.getElementById('saveNewTitleBtn');
+    
+    const deleteContextBtn = document.getElementById('deleteContextBtn');
+    const deleteContextModal = new bootstrap.Modal(document.getElementById('deleteContextModal'));
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    
+    const clearContextBtn = document.getElementById('clearContextBtn');
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        // Load contexts
+        loadContexts();
+        
+        // Event listeners
+        messageForm.addEventListener('submit', sendMessage);
+        newConversationBtn.addEventListener('click', createNewConversation);
+        renameContextBtn.addEventListener('click', openRenameModal);
+        saveNewTitleBtn.addEventListener('click', renameContext);
+        deleteContextBtn.addEventListener('click', openDeleteModal);
+        confirmDeleteBtn.addEventListener('click', deleteContext);
+        clearContextBtn.addEventListener('click', clearConversation);
+        
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+    
+    // Load conversation contexts
+    function loadContexts() {
+        fetch('/chat/contexts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const contexts = data.contexts;
+                    
+                    // Clear existing contexts
+                    contextList.innerHTML = '';
+                    
+                    // Show/hide no contexts message
+                    if (contexts.length === 0) {
+                        noContextsMessage.style.display = 'block';
+                    } else {
+                        noContextsMessage.style.display = 'none';
+                        
+                        // Add contexts to sidebar
+                        contexts.forEach(context => {
+                            const contextElement = document.createElement('div');
+                            contextElement.className = `list-group-item p-3 context-switcher ${context.is_active ? 'context-active' : ''}`;
+                            contextElement.setAttribute('data-context-id', context.id);
+                            
+                            let messageCount = context.message_count || 0;
+                            let messageText = messageCount === 1 ? '1 message' : `${messageCount} messages`;
+                            
+                            contextElement.innerHTML = `
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">${context.title}</h6>
+                                    <span class="badge bg-light text-secondary">${messageText}</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-clock me-1"></i>
+                                    ${new Date(context.updated_at).toLocaleDateString()}
+                                </small>
+                            `;
+                            
+                            contextElement.addEventListener('click', () => switchContext(context.id));
+                            contextList.appendChild(contextElement);
+                            
+                            // Set current context if active
+                            if (context.is_active) {
+                                currentContextId = context.id;
+                                currentContextTitle.textContent = context.title;
+                                loadChatHistory(context.id);
+                            }
+                        });
+                    }
+                    
+                    // Create new conversation if no active context
+                    if (!currentContextId && contexts.length === 0) {
+                        createNewConversation();
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading contexts:', error));
+    }
+    
+    // Load chat history for a context
+    function loadChatHistory(contextId) {
+        fetch(`/chat/history?context_id=${contextId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    conversationHistory = data.history;
+                    
+                    // Clear existing messages
+                    chatMessages.innerHTML = '';
+                    
+                    // Show/hide empty state message
+                    if (conversationHistory.length === 0) {
+                        chatMessages.appendChild(emptyStateMessage);
+                    } else {
+                        // Add messages to chat
+                        conversationHistory.forEach(message => {
+                            addMessageToChat(
+                                message.user_message,
+                                message.ai_response,
+                                message.technique,
+                                message.mood,
+                                new Date(message.timestamp)
+                            );
+                        });
+                        
+                        // Scroll to bottom
+                        scrollToBottom();
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading chat history:', error));
+    }
+    
+    // Switch to a different context
+    function switchContext(contextId) {
+        fetch(`/chat/switch-context/${contextId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update current context
+                currentContextId = contextId;
+                currentContextTitle.textContent = data.context.title;
+                
+                // Update sidebar active state
+                const contextElements = document.querySelectorAll('.context-switcher');
+                contextElements.forEach(el => {
+                    el.classList.remove('context-active');
+                    if (el.getAttribute('data-context-id') == contextId) {
+                        el.classList.add('context-active');
+                    }
+                });
+                
+                // Load chat history
+                loadChatHistory(contextId);
+            }
+        })
+        .catch(error => console.error('Error switching context:', error));
+    }
+    
+    // Create a new conversation
+    function createNewConversation() {
+        fetch('/chat/new-conversation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update current context
+                currentContextId = data.context_id;
+                currentContextTitle.textContent = data.title;
+                
+                // Clear chat messages
+                chatMessages.innerHTML = '';
+                chatMessages.appendChild(emptyStateMessage);
+                
+                // Reset conversation history
+                conversationHistory = [];
+                
+                // Update sidebar
+                loadContexts();
+            }
+        })
+        .catch(error => console.error('Error creating new conversation:', error));
+    }
+    
+    // Send a message
+    function sendMessage(event) {
+        event.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Get selected technique
+        const technique = techniqueSelector.value;
+        
+        // Check if premium technique is selected without premium access
+        if (technique && technique !== 'reframing' && techniqueSelector.options[techniqueSelector.selectedIndex].disabled) {
+            const premiumFeatureModal = new bootstrap.Modal(document.getElementById('premiumFeatureModal'));
+            premiumFeatureModal.show();
+            return;
+        }
+        
+        // Remove empty state message if present
+        if (emptyStateMessage.parentNode === chatMessages) {
+            emptyStateMessage.remove();
+        }
+        
+        // Add user message to chat immediately
+        const userMessageContainer = document.createElement('div');
+        userMessageContainer.className = 'chat-message chat-message-user';
+        
+        const userMessageElement = document.createElement('div');
+        userMessageElement.className = 'message-content';
+        userMessageElement.textContent = message;
+        
+        userMessageContainer.appendChild(userMessageElement);
+        
+        const userMessageMeta = document.createElement('div');
+        userMessageMeta.className = 'message-time text-end';
+        userMessageMeta.textContent = formatTime(new Date());
+        userMessageContainer.appendChild(userMessageMeta);
+        
+        chatMessages.appendChild(userMessageContainer);
+        
+        // Clear input
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        
+        // Show loading indicator
+        loadingIndicator.style.display = 'block';
+        chatMessages.appendChild(loadingIndicator);
+        
+        // Scroll to bottom
+        scrollToBottom();
+        
+        // Send message to server
+        fetch('/chat/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: message,
+                context_id: currentContextId,
+                technique: technique
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            loadingIndicator.style.display = 'none';
+            
+            if (data.success) {
+                // Add AI response to chat
+                addMessageToChat(message, data.message, data.technique.id, data.mood, new Date());
+                
+                // Scroll to bottom
+                scrollToBottom();
+                
+                // Update conversation history
+                conversationHistory.push({
+                    user_message: message,
+                    ai_response: data.message,
+                    technique: data.technique.id,
+                    mood: data.mood,
+                    timestamp: data.timestamp
+                });
+            } else {
+                // Show error message
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'alert alert-danger mt-3';
+                errorMessage.textContent = data.error || 'An error occurred while processing your message.';
+                chatMessages.appendChild(errorMessage);
+                
+                // Scroll to bottom
+                scrollToBottom();
+            }
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            
+            // Hide loading indicator
+            loadingIndicator.style.display = 'none';
+            
+            // Show error message
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'alert alert-danger mt-3';
+            errorMessage.textContent = 'An error occurred while sending your message. Please try again.';
+            chatMessages.appendChild(errorMessage);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        });
+    }
+    
+    // Add a message to the chat
+    function addMessageToChat(userMessage, aiResponse, technique, mood, timestamp) {
+        // Create user message element if not already added
+        const existingUserMessages = document.querySelectorAll('.chat-message-user');
+        const lastUserMessage = existingUserMessages[existingUserMessages.length - 1];
+        
+        if (!lastUserMessage || lastUserMessage.querySelector('.message-content').textContent !== userMessage) {
+            const userMessageContainer = document.createElement('div');
+            userMessageContainer.className = 'chat-message chat-message-user';
+            
+            const userMessageElement = document.createElement('div');
+            userMessageElement.className = 'message-content';
+            userMessageElement.textContent = userMessage;
+            
+            userMessageContainer.appendChild(userMessageElement);
+            
+            const userMessageMeta = document.createElement('div');
+            userMessageMeta.className = 'message-time text-end';
+            userMessageMeta.textContent = formatTime(timestamp);
+            userMessageContainer.appendChild(userMessageMeta);
+            
+            chatMessages.appendChild(userMessageContainer);
+        }
+        
+        // Create AI response element
+        const aiMessageContainer = document.createElement('div');
+        aiMessageContainer.className = 'chat-message chat-message-ai';
+        
+        const aiMessageElement = document.createElement('div');
+        aiMessageElement.className = 'message-content';
+        aiMessageElement.innerHTML = formatMessage(aiResponse);
+        aiMessageContainer.appendChild(aiMessageElement);
+        
+        // Create message meta
+        const aiMessageMeta = document.createElement('div');
+        aiMessageMeta.className = 'message-time';
+        
+        // Add technique badge
+        if (technique) {
+            const techniqueBadge = document.createElement('span');
+            techniqueBadge.className = 'badge bg-accent-light text-accent me-2';
+            
+            // Get technique name from the selector options
+            let techniqueName = technique;
+            for (const option of techniqueSelector.options) {
+                if (option.value === technique) {
+                    techniqueName = option.textContent.trim().split('(')[0].trim();
+                    break;
+                }
+            }
+            
+            techniqueBadge.innerHTML = `<i class="fas fa-brain me-1"></i> ${techniqueName}`;
+            aiMessageMeta.appendChild(techniqueBadge);
+        }
+        
+        // Add mood badge
+        if (mood) {
+            const moodBadge = document.createElement('span');
+            moodBadge.className = 'badge bg-light text-secondary me-2';
+            
+            // Get appropriate icon for mood
+            let moodIcon = 'fa-smile';
+            if (['sad', 'anxious', 'angry', 'frustrated'].includes(mood)) {
+                moodIcon = 'fa-frown';
+            } else if (['neutral', 'confused'].includes(mood)) {
+                moodIcon = 'fa-meh';
+            }
+            
+            moodBadge.innerHTML = `<i class="fas ${moodIcon} me-1"></i> ${mood}`;
+            aiMessageMeta.appendChild(moodBadge);
+        }
+        
+        // Add timestamp
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = formatTime(timestamp);
+        aiMessageMeta.appendChild(timeSpan);
+        
+        aiMessageContainer.appendChild(aiMessageMeta);
+        
+        // Add to chat
+        chatMessages.appendChild(aiMessageContainer);
+    }
+    
+    // Format message text (convert line breaks to <br>)
+    function formatMessage(text) {
+        return text.replace(/\n/g, '<br>');
+    }
+    
+    // Format timestamp
+    function formatTime(date) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Scroll to bottom of chat
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Rename context modal
+    function openRenameModal() {
+        newContextTitle.value = currentContextTitle.textContent;
+        renameContextModal.show();
+    }
+    
+    // Rename context
+    function renameContext() {
+        const title = newContextTitle.value.trim();
+        if (!title) return;
+        
+        fetch(`/chat/rename-context/${currentContextId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update title
+                currentContextTitle.textContent = title;
+                
+                // Update sidebar
+                const contextElement = document.querySelector(`.context-switcher[data-context-id="${currentContextId}"]`);
+                if (contextElement) {
+                    const titleElement = contextElement.querySelector('h6');
+                    if (titleElement) {
+                        titleElement.textContent = title;
+                    }
+                }
+                
+                // Close modal
+                renameContextModal.hide();
+            }
+        })
+        .catch(error => console.error('Error renaming context:', error));
+    }
+    
+    // Delete context modal
+    function openDeleteModal() {
+        deleteContextModal.show();
+    }
+    
+    // Delete context
+    function deleteContext() {
+        fetch(`/chat/delete-context/${currentContextId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                deleteContextModal.hide();
+                
+                // If a new context was created, switch to it
+                if (data.new_context) {
+                    currentContextId = data.new_context.id;
+                    currentContextTitle.textContent = data.new_context.title;
+                }
+                
+                // Clear chat
+                chatMessages.innerHTML = '';
+                chatMessages.appendChild(emptyStateMessage);
+                
+                // Reset conversation history
+                conversationHistory = [];
+                
+                // Update sidebar
+                loadContexts();
+            }
+        })
+        .catch(error => console.error('Error deleting context:', error));
+    }
+    
+    // Clear conversation
+    function clearConversation() {
+        if (confirm('Are you sure you want to clear this conversation?')) {
+            // Create a new context
+            createNewConversation();
+        }
+    }
+</script>
+{% endblock %}

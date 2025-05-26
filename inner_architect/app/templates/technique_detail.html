@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}{{ technique.name }} - {{ g.translate('nlp_techniques', 'NLP Techniques') }}{% endblock %}
+
+{% block extra_css %}
+<!-- No additional inline styles needed - using our CSS framework -->
+{% endblock %}
+
+{% block content %}
+<!-- Technique Header -->
+<div class="bg-gradient-primary text-light py-5 mb-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="d-flex justify-content-center align-items-center bg-opacity-20 bg-white rounded-circle mb-4 mx-auto" style="width: 80px; height: 80px;">
+                    {% if technique_id == 'reframing' %}
+                    <i class="fas fa-sync-alt fa-2x"></i>
+                    {% elif technique_id == 'pattern_interruption' %}
+                    <i class="fas fa-ban fa-2x"></i>
+                    {% elif technique_id == 'anchoring' %}
+                    <i class="fas fa-anchor fa-2x"></i>
+                    {% elif technique_id == 'future_pacing' %}
+                    <i class="fas fa-hourglass-half fa-2x"></i>
+                    {% elif technique_id == 'sensory_language' %}
+                    <i class="fas fa-eye fa-2x"></i>
+                    {% elif technique_id == 'meta_model' %}
+                    <i class="fas fa-question-circle fa-2x"></i>
+                    {% else %}
+                    <i class="fas fa-brain fa-2x"></i>
+                    {% endif %}
+                </div>
+                <h1 class="mb-3">{{ technique.name }}</h1>
+                <p class="lead mb-0">{{ technique.description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container py-4">
+    {% if technique_id != 'reframing' and not has_premium %}
+    <div class="premium-banner mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4><i class="fas fa-crown text-warning me-2"></i> {{ g.translate('premium_feature', 'Premium Feature') }}</h4>
+                <p class="mb-0">
+                    {{ g.translate('premium_required_detail', 'This advanced NLP technique is available with a Premium or Professional subscription. Upgrade to access all techniques and unlock unlimited chat interactions.') }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-light">
+                    <i class="fas fa-crown me-1"></i> {{ g.translate('upgrade', 'Upgrade Now') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Technique Navigation -->
+    <ul class="nav technique-tabs" id="techniqueTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                {{ g.translate('overview', 'Overview') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="examples-tab" data-bs-toggle="tab" data-bs-target="#examples" type="button" role="tab" aria-controls="examples" aria-selected="false">
+                {{ g.translate('examples', 'Examples') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="practice-tab" data-bs-toggle="tab" data-bs-target="#practice" type="button" role="tab" aria-controls="practice" aria-selected="false">
+                {{ g.translate('practice', 'Practice Tips') }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="science-tab" data-bs-toggle="tab" data-bs-target="#science" type="button" role="tab" aria-controls="science" aria-selected="false">
+                {{ g.translate('science', 'Science') }}
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content technique-tab-content" id="techniqueTabContent">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h3>{{ g.translate('about', 'About') }} {{ technique.name }}</h3>
+                    <p class="lead">{{ technique.description }}</p>
+                    
+                    <div class="mb-5">
+                        {{ technique_details.description|safe }}
+                    </div>
+                    
+                    <h4>{{ g.translate('key_concepts', 'Key Concepts') }}</h4>
+                    <div class="mb-5">
+                        {% for concept in technique_details.key_concepts %}
+                        <div class="key-concept">
+                            <p class="mb-0">{{ concept }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <h4>{{ g.translate('benefits', 'Benefits') }}</h4>
+                    <div class="mb-5">
+                        {% for benefit in technique_details.benefits %}
+                        <div class="benefit-item">
+                            <i class="fas fa-check-circle benefit-icon"></i>
+                            <div>{{ benefit }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-5">
+                        <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
+                           {% if technique_id != 'reframing' and not has_premium %}
+                           data-bs-toggle="modal" data-bs-target="#premiumFeatureModal"
+                           {% endif %}>
+                            <i class="fas fa-comments me-2"></i> {{ g.translate('try_technique', 'Try This Technique') }}
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 mt-4 mt-lg-0">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">{{ g.translate('when_to_use', 'When to Use') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                {% for prompt in technique.prompts %}
+                                <li class="mb-2">{{ prompt }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">{{ g.translate('other_techniques', 'Other Techniques') }}</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                {% for other_id, other in other_techniques.items() %}
+                                <a href="{{ url_for('main.technique_detail', technique_id=other_id) }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                                    <span class="me-3">
+                                        {% if other_id == 'reframing' %}
+                                        <i class="fas fa-sync-alt text-primary"></i>
+                                        {% elif other_id == 'pattern_interruption' %}
+                                        <i class="fas fa-ban text-primary"></i>
+                                        {% elif other_id == 'anchoring' %}
+                                        <i class="fas fa-anchor text-primary"></i>
+                                        {% elif other_id == 'future_pacing' %}
+                                        <i class="fas fa-hourglass-half text-primary"></i>
+                                        {% elif other_id == 'sensory_language' %}
+                                        <i class="fas fa-eye text-primary"></i>
+                                        {% elif other_id == 'meta_model' %}
+                                        <i class="fas fa-question-circle text-primary"></i>
+                                        {% else %}
+                                        <i class="fas fa-brain text-primary"></i>
+                                        {% endif %}
+                                    </span>
+                                    {{ other.name }}
+                                    
+                                    {% if other_id != 'reframing' and not has_premium %}
+                                    <span class="badge bg-warning text-dark ms-auto">{{ g.translate('premium', 'Premium') }}</span>
+                                    {% endif %}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Examples Tab -->
+        <div class="tab-pane fade" id="examples" role="tabpanel" aria-labelledby="examples-tab">
+            <h3 class="mb-4">{{ g.translate('examples', 'Examples of') }} {{ technique.name }}</h3>
+            
+            {% for example in technique_details.examples %}
+            <div class="example-card">
+                <h5>{{ example.situation }}</h5>
+                
+                {% if technique_id == 'reframing' %}
+                <div class="before-after">
+                    <div class="before-box">
+                        <h6><i class="fas fa-times-circle text-danger me-2"></i> {{ g.translate('negative_frame', 'Negative Frame') }}</h6>
+                        <p class="mb-0">{{ example.negative_frame }}</p>
+                    </div>
+                    <div class="after-box">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i> {{ g.translate('positive_reframe', 'Positive Reframe') }}</h6>
+                        <p class="mb-0">{{ example.positive_reframe }}</p>
+                    </div>
+                </div>
+                {% elif technique_id == 'pattern_interruption' %}
+                <p><strong>{{ g.translate('pattern', 'Pattern') }}:</strong> {{ example.pattern }}</p>
+                <p><strong>{{ g.translate('interruption', 'Interruption') }}:</strong> {{ example.interruption }}</p>
+                <p><strong>{{ g.translate('new_pattern', 'New Pattern') }}:</strong> {{ example.new_pattern }}</p>
+                {% elif technique_id == 'anchoring' %}
+                <p><strong>{{ g.translate('desired_state', 'Desired State') }}:</strong> {{ example.desired_state }}</p>
+                <p><strong>{{ g.translate('anchor_creation', 'Anchor Creation') }}:</strong> {{ example.anchor_creation }}</p>
+                <p><strong>{{ g.translate('anchor_use', 'Anchor Use') }}:</strong> {{ example.anchor_use }}</p>
+                {% elif technique_id == 'future_pacing' %}
+                <p><strong>{{ g.translate('process', 'Process') }}:</strong> {{ example.process }}</p>
+                <p><strong>{{ g.translate('sensory_elements', 'Sensory Elements') }}:</strong> {{ example.sensory_elements }}</p>
+                <p><strong>{{ g.translate('outcome', 'Outcome') }}:</strong> {{ example.outcome }}</p>
+                {% elif technique_id == 'sensory_language' %}
+                <p><strong>{{ g.translate('modality', 'Modality') }}:</strong> {{ example.modality }}</p>
+                <p><strong>{{ g.translate('predicates', 'Predicates') }}:</strong> {{ example.predicates }}</p>
+                <p><strong>{{ g.translate('phrases', 'Example Phrases') }}:</strong> {{ example.phrases }}</p>
+                <p><strong>{{ g.translate('effective_for', 'Effective For') }}:</strong> {{ example.effective_for }}</p>
+                {% elif technique_id == 'meta_model' %}
+                <p><strong>{{ g.translate('pattern', 'Pattern') }}:</strong> {{ example.pattern }}</p>
+                <p><strong>{{ g.translate('example', 'Example') }}:</strong> {{ example.example }}</p>
+                <p><strong>{{ g.translate('challenging_question', 'Challenging Question') }}:</strong> {{ example.challenging_question }}</p>
+                <p><strong>{{ g.translate('purpose', 'Purpose') }}:</strong> {{ example.purpose }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <div class="text-center mt-5">
+                <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
+                   {% if technique_id != 'reframing' and not has_premium %}
+                   data-bs-toggle="modal" data-bs-target="#premiumFeatureModal"
+                   {% endif %}>
+                    <i class="fas fa-comments me-2"></i> {{ g.translate('try_it_yourself', 'Try It Yourself') }}
+                </a>
+            </div>
+        </div>
+        
+        <!-- Practice Tips Tab -->
+        <div class="tab-pane fade" id="practice" role="tabpanel" aria-labelledby="practice-tab">
+            <h3 class="mb-4">{{ g.translate('practice_tips', 'Practice Tips for') }} {{ technique.name }}</h3>
+            
+            <div class="mb-5">
+                {% for tip in technique_details.practice_tips %}
+                <div class="practice-tip">
+                    <i class="fas fa-lightbulb practice-icon"></i>
+                    <div>{{ tip }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <h4 class="mb-3">{{ g.translate('common_pitfalls', 'Common Pitfalls to Avoid') }}</h4>
+            <div class="alert alert-warning">
+                <ul class="mb-0">
+                    {% for pitfall in technique_details.common_pitfalls %}
+                    <li class="mb-2">{{ pitfall }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
+                   {% if technique_id != 'reframing' and not has_premium %}
+                   data-bs-toggle="modal" data-bs-target="#premiumFeatureModal"
+                   {% endif %}>
+                    <i class="fas fa-comments me-2"></i> {{ g.translate('try_technique', 'Try This Technique') }}
+                </a>
+            </div>
+        </div>
+        
+        <!-- Science Tab -->
+        <div class="tab-pane fade" id="science" role="tabpanel" aria-labelledby="science-tab">
+            <h3 class="mb-4">{{ g.translate('scientific_basis', 'Scientific Basis of') }} {{ technique.name }}</h3>
+            
+            <div class="science-box mb-5">
+                {{ technique_details.scientific_basis|safe }}
+            </div>
+            
+            <h4 class="mb-3">{{ g.translate('related_fields', 'Related Fields and Approaches') }}</h4>
+            <div class="row g-4">
+                {% if technique_id == 'reframing' %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('cbt', 'Cognitive-Behavioral Therapy') }}</h5>
+                            <p class="mb-0">{{ g.translate('cbt_description', 'CBT focuses on identifying and changing negative thought patterns and behaviors, with reframing as a core technique.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('positive_psychology', 'Positive Psychology') }}</h5>
+                            <p class="mb-0">{{ g.translate('positive_psychology_description', 'Positive psychology emphasizes reframing challenges as opportunities for growth and finding meaning in difficult experiences.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% elif technique_id == 'pattern_interruption' %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('behavioral_psychology', 'Behavioral Psychology') }}</h5>
+                            <p class="mb-0">{{ g.translate('behavioral_psychology_description', 'Behavioral psychology studies how habits form and can be changed through interruption and reinforcement.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('mindfulness', 'Mindfulness Practices') }}</h5>
+                            <p class="mb-0">{{ g.translate('mindfulness_description', 'Mindfulness creates awareness of patterns and provides a pause between stimulus and response, enabling pattern interruption.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% elif technique_id == 'anchoring' %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('classical_conditioning', 'Classical Conditioning') }}</h5>
+                            <p class="mb-0">{{ g.translate('classical_conditioning_description', 'Developed by Pavlov, classical conditioning shows how neutral stimuli can become associated with specific responses through repeated pairing.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('sports_psychology', 'Sports Psychology') }}</h5>
+                            <p class="mb-0">{{ g.translate('sports_psychology_description', 'Athletes use anchoring techniques to quickly access optimal performance states during competition.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% elif technique_id == 'future_pacing' %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('visualization', 'Visualization Research') }}</h5>
+                            <p class="mb-0">{{ g.translate('visualization_description', 'Scientific studies show that mental imagery activates many of the same neural pathways as physical practice.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('goal_setting', 'Goal Setting Theory') }}</h5>
+                            <p class="mb-0">{{ g.translate('goal_setting_description', 'Research on goal setting shows that mental rehearsal of future success increases motivation and likelihood of achievement.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% elif technique_id == 'sensory_language' %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('linguistics', 'Cognitive Linguistics') }}</h5>
+                            <p class="mb-0">{{ g.translate('linguistics_description', 'Explores how language reflects and shapes our mental processes and sensory experiences of the world.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('neuroscience', 'Sensory Neuroscience') }}</h5>
+                            <p class="mb-0">{{ g.translate('neuroscience_description', 'Studies how different sensory words and descriptions activate corresponding sensory processing regions in the brain.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% elif technique_id == 'meta_model' %}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('linguistics', 'Transformational Grammar') }}</h5>
+                            <p class="mb-0">{{ g.translate('linguistics_description', 'Explores how surface structure language often represents deeper linguistic structures with deletions and transformations.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5><i class="fas fa-brain text-primary me-2"></i> {{ g.translate('socratic_method', 'Socratic Method') }}</h5>
+                            <p class="mb-0">{{ g.translate('socratic_method_description', 'This ancient questioning technique helps reveal inconsistencies in thinking and expands awareness through targeted questions.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Try This Technique Section -->
+<div class="bg-gradient-subtle py-5 mt-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="mb-4">{{ g.translate('ready_to_try', 'Ready to Try') }} {{ technique.name }}?</h2>
+                <p class="lead mb-4">
+                    {{ g.translate('technique_prompt', 'Start a conversation with The Inner Architect and apply this technique to your own situations.') }}
+                </p>
+                <div class="d-flex justify-content-center">
+                    <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
+                       {% if technique_id != 'reframing' and not has_premium %}
+                       data-bs-toggle="modal" data-bs-target="#premiumFeatureModal"
+                       {% endif %}>
+                        <i class="fas fa-comments me-2"></i> {{ g.translate('start_conversation', 'Start a Conversation') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Feature Modal -->
+<div class="modal fade" id="premiumFeatureModal" tabindex="-1" aria-labelledby="premiumFeatureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="premiumFeatureModalLabel">{{ g.translate('premium_feature', 'Premium Feature') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-crown text-warning mb-3" style="font-size: 3rem;"></i>
+                <h5>{{ g.translate('premium_required', 'Premium Subscription Required') }}</h5>
+                <p>{{ g.translate('premium_nlp_message', 'Advanced NLP techniques are available with a Premium or Professional subscription.') }}</p>
+                
+                <div class="bg-light p-3 rounded mb-3">
+                    <h6>{{ g.translate('premium_includes', 'Premium includes:') }}</h6>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('all_techniques', 'All NLP techniques') }}</li>
+                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('unlimited_chat', 'Unlimited chat interactions') }}</li>
+                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('progress_tracking', 'Full progress tracking') }}</li>
+                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('communication_analysis', 'Communication analysis') }}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('cancel', 'Cancel') }}</button>
+                <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-primary">
+                    <i class="fas fa-crown me-1"></i> {{ g.translate('view_premium', 'View Premium Features') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

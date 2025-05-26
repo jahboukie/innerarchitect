@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="{{ g.language }}" data-bs-theme="light" {% if g.is_rtl %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="A tool for cognitive reframing and emotional well-being">
+    <meta name="theme-color" content="#6e8efb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Inner Architect">
+    
+    <!-- PWA Links -->
+    <link rel="manifest" href="{{ url_for('main.manifest') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS Framework -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-light shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-light py-3">
+            <div class="container">
+                <!-- Branding -->
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+                    <i class="fas fa-brain me-2 text-primary"></i>
+                    <span>{{ g.translate('app_name', 'The Inner Architect') }}</span>
+                </a>
+
+                <!-- Hamburger menu for mobile -->
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Navigation items -->
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <!-- Main navigation -->
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-1">
+                        <!-- Features dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="featuresDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-book me-1"></i> {{ g.translate('features', 'Features') }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="featuresDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('main.techniques') }}">
+                                        <i class="fas fa-book me-1"></i> {{ g.translate('techniques', 'Techniques') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/communication-analysis">
+                                        <i class="fas fa-comments me-1"></i> {{ g.translate('communications', 'Communication') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/personalized-journeys">
+                                        <i class="fas fa-map-signs me-1"></i> {{ g.translate('journeys', 'Journeys') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/voice-practice">
+                                        <i class="fas fa-microphone me-1"></i> {{ g.translate('voice_practice', 'Voice') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/practice-reminders">
+                                        <i class="fas fa-bell me-1"></i> {{ g.translate('practice_reminders', 'Reminders') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/belief-change">
+                                        <i class="fas fa-sync-alt me-1"></i> {{ g.translate('belief_change', 'Belief Change') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <!-- Premium Features link -->
+                        <li class="nav-item">
+                            <a class="nav-link premium-nav-link" href="{{ url_for('main.premium_features_route') }}">
+                                <i class="fas fa-crown me-1"></i> {{ g.translate('premium_features', 'Premium') }}
+                                {% if current_user.is_authenticated and current_user.subscription and current_user.subscription.has_active_trial %}
+                                    <span class="badge rounded-pill bg-warning text-dark ms-1 small">
+                                        <i class="fas fa-clock small"></i> {{ g.translate('trial', 'Trial') }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <!-- Dashboard link -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                                <i class="fas fa-chart-line me-1"></i> {{ g.translate('dashboard', 'Dashboard') }}
+                            </a>
+                        </li>
+                        <!-- Pricing link -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#pricing">
+                                <i class="fas fa-tag me-1"></i> {{ g.translate('pricing', 'Pricing') }}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="d-flex align-items-center ms-lg-4">
+                        <!-- Language Dropdown -->
+                        <div class="dropdown me-2">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle rounded-pill" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe me-1"></i> {{ g.language|upper }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-light" aria-labelledby="languageDropdown">
+                                {% for code, name in g.languages.items() %}
+                                <li>
+                                    <a class="dropdown-item {% if g.language == code %}active{% endif %}" href="{{ url_for('main.set_language', lang_code=code) }}">
+                                        {{ name }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        <!-- Authentication -->
+                        {% if current_user.is_authenticated %}
+                        <div class="dropdown ms-2">
+                            <button class="btn btn-sm btn-primary dropdown-toggle rounded-pill" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if current_user.profile_image_url %}
+                                <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle me-1" style="width: 24px; height: 24px; object-fit: cover;">
+                                {% else %}
+                                <i class="fas fa-user-circle me-1"></i>
+                                {% endif %}
+                                {% if current_user.first_name %}{{ current_user.first_name }}{% else %}{{ g.translate('account', 'Account') }}{% endif %}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-light" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('main.profile') }}">
+                                        <i class="fas fa-id-card me-2"></i> {{ g.translate('profile', 'Profile') }}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('main.privacy_settings') }}">
+                                        <i class="fas fa-shield-alt me-2"></i> {{ g.translate('privacy', 'Privacy') }}
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i> {{ g.translate('logout', 'Logout') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm rounded-pill me-2 px-3">
+                            <i class="fas fa-sign-in-alt me-1"></i> {{ g.translate('login', 'Login') }}
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Version badge -->
+                        <div class="badge bg-light text-primary-emphasis px-3 py-2 d-none d-md-block">
+                            <i class="fas fa-code me-1"></i> v0.1.0
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    {% block content %}{% endblock %}
+    
+    <!-- Footer -->
+    <footer class="bg-gradient-subtle py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-secondary">© 2025 {{ g.translate('app_name', 'The Inner Architect') }}</p>
+                    <p class="text-muted text-sm">{{ g.translate('nlp_description', 'A tool for cognitive reframing and emotional well-being') }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-secondary">
+                        <i class="fas fa-brain me-1"></i> {{ g.translate('nlp_techniques', 'Powered by Claude AI') }}
+                    </p>
+                    <p class="text-muted text-sm">
+                        <i class="fas fa-code me-1"></i> Version 0.1.0
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{{ url_for('static', filename='js/service-worker.js') }}", { scope: '/' })
+                    .then(registration => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

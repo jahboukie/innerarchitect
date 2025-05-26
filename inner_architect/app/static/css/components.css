@@ -1,0 +1,525 @@
+/**
+ * Component Styles - The Inner Architect
+ * 
+ * This file contains styles for specific UI components used throughout the application.
+ * It depends on variables.css and base.css for core design tokens and base styling.
+ */
+
+@import 'variables.css';
+@import 'base.css';
+
+/* Technique Cards */
+.technique-card {
+    height: 100%;
+    transition: transform var(--transition-default);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.technique-card:hover {
+    transform: translateY(-5px);
+}
+
+.technique-card .card-img-top {
+    height: 160px;
+    object-fit: cover;
+    background: var(--subtle-gradient);
+}
+
+.technique-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.technique-card .card-title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+.technique-card .card-text {
+    color: var(--text-secondary);
+    flex-grow: 1;
+}
+
+.technique-card .card-footer {
+    background: transparent;
+    border-top: 1px solid var(--border-color);
+}
+
+.technique-card .premium-badge {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    background-color: var(--accent-color);
+    color: var(--text-dark);
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Technique Detail Tabs */
+.technique-tabs {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.technique-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: var(--spacing-md) var(--spacing-lg);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.technique-tabs .nav-link:hover,
+.technique-tabs .nav-link:focus {
+    border-color: var(--primary-color-light);
+    color: var(--primary-color);
+}
+
+.technique-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-color: var(--primary-color);
+}
+
+.technique-tab-content {
+    padding: var(--spacing-lg) 0;
+}
+
+/* Chat Interface */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: calc(100vh - 200px);
+    min-height: 500px;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+    background-color: var(--bg-light);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.chat-message {
+    display: flex;
+    margin-bottom: var(--spacing-md);
+}
+
+.chat-message-user {
+    justify-content: flex-end;
+}
+
+.chat-message-user .message-content {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius) var(--border-radius) 0 var(--border-radius);
+}
+
+.chat-message-ai .message-content {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+}
+
+.message-content {
+    padding: var(--spacing-md);
+    max-width: 70%;
+    box-shadow: var(--shadow-soft);
+}
+
+.message-time {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.chat-input-container {
+    margin-top: var(--spacing-md);
+    position: relative;
+}
+
+.chat-input {
+    border-radius: var(--border-radius-lg);
+    padding-right: 60px;
+    resize: none;
+}
+
+.chat-send-button {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    border-radius: var(--border-radius-circle);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.technique-selector {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Progress Tracker */
+.progress-container {
+    margin-bottom: var(--spacing-lg);
+}
+
+.progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-soft);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.progress-chart {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: var(--spacing-lg);
+}
+
+.activity-timeline {
+    position: relative;
+}
+
+.timeline-entry {
+    position: relative;
+    padding-left: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+}
+
+.timeline-entry:before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background-color: var(--border-color);
+}
+
+.timeline-entry:last-child:before {
+    height: 15px;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--border-radius-circle);
+    background-color: var(--primary-color);
+    z-index: 1;
+}
+
+.timeline-content {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-soft);
+}
+
+.timeline-date {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Account and Profile Components */
+.profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--border-radius-circle);
+    background-color: var(--primary-color-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    color: var(--primary-color);
+    margin-right: var(--spacing-lg);
+}
+
+.profile-info h2 {
+    margin-bottom: var(--spacing-xs);
+}
+
+.profile-stats {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.profile-membership {
+    display: inline-block;
+    background-color: var(--accent-color-light);
+    color: var(--accent-color-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+}
+
+.settings-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.settings-section h3 {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Premium Features and Trial Components */
+.premium-banner {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-medium);
+}
+
+.premium-banner h3 {
+    color: white;
+    margin-bottom: var(--spacing-sm);
+}
+
+.premium-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--accent-color);
+    color: var(--text-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+}
+
+.premium-badge i {
+    margin-right: var(--spacing-xs);
+}
+
+.trial-banner {
+    background-color: var(--accent-color-light);
+    border-left: 4px solid var(--accent-color);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border-radius: var(--border-radius-sm);
+}
+
+.pricing-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-xl) 0;
+}
+
+.pricing-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: transform var(--transition-default), box-shadow var(--transition-default);
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-medium);
+}
+
+.pricing-card.featured {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-medium);
+}
+
+.pricing-header {
+    background-color: var(--bg-light);
+    padding: var(--spacing-lg);
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.featured .pricing-header {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.featured .pricing-header h3 {
+    color: white;
+}
+
+.pricing-price {
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-bold);
+    margin: var(--spacing-md) 0;
+}
+
+.pricing-price small {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+}
+
+.pricing-features {
+    padding: var(--spacing-lg);
+}
+
+.pricing-feature {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.pricing-feature i {
+    margin-right: var(--spacing-sm);
+    color: var(--success-color);
+}
+
+.pricing-footer {
+    padding: var(--spacing-lg);
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Tooltip and Popover Components */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    text-align: center;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    position: absolute;
+    z-index: var(--z-index-tooltip);
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity var(--transition-default);
+    font-size: var(--font-size-sm);
+}
+
+.custom-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--bg-dark) transparent transparent transparent;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Spinner and Loading Components */
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-circle);
+    border: 4px solid rgba(var(--primary-rgb), 0.1);
+    border-top-color: var(--primary-color);
+    animation: spinner 1s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+.loader-text {
+    color: var(--text-secondary);
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-sm);
+}
+
+/* Pagination Component */
+.custom-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-lg);
+}
+
+.page-item {
+    margin: 0 var(--spacing-xs);
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-circle);
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.page-link:hover {
+    background-color: var(--primary-color-light);
+    color: var(--primary-color);
+    border-color: var(--primary-color-light);
+}
+
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    color: var(--text-muted);
+    pointer-events: none;
+    background-color: var(--bg-light);
+}

@@ -1,0 +1,116 @@
+/**
+ * CSS Variables - The Inner Architect
+ * 
+ * This file contains all global CSS variables used throughout the application.
+ * These variables ensure visual consistency across all components and templates.
+ */
+
+:root {
+    /* Primary Colors */
+    --primary-color: #4a6cf7;
+    --primary-color-light: #e0e7ff;
+    --primary-color-dark: #3451b2;
+    --primary-rgb: 74, 108, 247;
+    
+    /* Accent Colors */
+    --accent-color: #f7c04a;
+    --accent-color-light: #fff8e0;
+    --accent-color-dark: #d9a53e;
+    
+    /* Status Colors */
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    
+    /* Background Colors */
+    --bg-light: #f8f9fa;
+    --bg-medium: #e9ecef;
+    --bg-dark: #343a40;
+    
+    /* Text Colors */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-light: #f8f9fa;
+    --text-dark: #343a40;
+    --text-muted: #6c757d;
+    
+    /* Border Colors */
+    --border-color: #dee2e6;
+    --border-color-light: #f8f9fa;
+    
+    /* Gradients */
+    --primary-gradient: linear-gradient(135deg, #4a6cf7 0%, #3451b2 100%);
+    --subtle-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 .125rem .25rem rgba(0, 0, 0, .075);
+    --shadow-medium: 0 .5rem 1rem rgba(0, 0, 0, .15);
+    --shadow-large: 0 1rem 3rem rgba(0, 0, 0, .175);
+    
+    /* Border Radius */
+    --border-radius-sm: 0.25rem;
+    --border-radius: 0.5rem;
+    --border-radius-lg: 1rem;
+    --border-radius-xl: 1.5rem;
+    --border-radius-circle: 50%;
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 3rem;
+    
+    /* Font Sizes */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-xxl: 2rem;
+    
+    /* Font Weights */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Z-index */
+    --z-index-dropdown: 1000;
+    --z-index-sticky: 1020;
+    --z-index-fixed: 1030;
+    --z-index-modal-backdrop: 1040;
+    --z-index-modal: 1050;
+    --z-index-popover: 1060;
+    --z-index-tooltip: 1070;
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-default: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    /* Animation */
+    --animation-timing-default: ease;
+    --animation-timing-bounce: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* Dark Mode Variables (for future implementation) */
+[data-bs-theme="dark"] {
+    --primary-color: #6e8efb;
+    --primary-color-light: #3451b2;
+    --primary-color-dark: #e0e7ff;
+    
+    --bg-light: #343a40;
+    --bg-medium: #495057;
+    --bg-dark: #212529;
+    
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --text-dark: #f8f9fa;
+    
+    --border-color: #495057;
+    
+    --subtle-gradient: linear-gradient(135deg, #343a40 0%, #212529 100%);
+}

@@ -1,0 +1,50 @@
+/**
+ * Main CSS - The Inner Architect
+ * 
+ * This is the main CSS entry point that imports all component parts of the CSS framework.
+ * Include this single file in your HTML templates to get access to the entire CSS framework.
+ */
+
+/* Import core variables and design tokens */
+@import 'variables.css';
+
+/* Import base styles for common elements */
+@import 'base.css';
+
+/* Import layout system */
+@import 'layout.css';
+
+/* Import component-specific styles */
+@import 'components.css';
+
+/* Import utility classes */
+@import 'utilities.css';
+
+/**
+ * Any app-wide styles that don't fit in the categories above can go here.
+ * Try to keep this file minimal and use the appropriate framework files instead.
+ */
+
+/* Themes - additional theme classes can be added here */
+.dark-theme {
+    /* Override variables for dark theme if needed */
+}
+
+.high-contrast-theme {
+    /* Override variables for high contrast theme if needed */
+}
+
+/* Print styles that override framework defaults */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12pt;
+    }
+    
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+}

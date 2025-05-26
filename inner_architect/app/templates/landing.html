@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('app_name', 'The Inner Architect') }} - {{ g.translate('welcome', 'Welcome') }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-3">{{ g.translate('hero_title', 'Transform Your Thinking with The Inner Architect') }}</h1>
+                <p class="lead mb-4">{{ g.translate('hero_subtitle', 'Powerful NLP techniques to improve communication, emotional intelligence, and overall well-being.') }}</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 py-2">
+                        {{ g.translate('get_started', 'Get Started') }}
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg px-4 py-2">
+                        {{ g.translate('login', 'Login') }}
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 mt-5 mt-lg-0">
+                <img src="{{ url_for('static', filename='images/hero-illustration.svg') }}" alt="NLP Techniques Illustration" class="img-fluid rounded shadow-lg">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('features_title', 'Powerful NLP Techniques') }}</h2>
+            <p class="lead text-muted">{{ g.translate('features_subtitle', 'Discover tools to transform your communication and thinking patterns') }}</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Feature 1: Cognitive Reframing -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-primary bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-sync-alt text-primary fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('reframing_title', 'Cognitive Reframing') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('reframing_description', 'Learn to identify negative thought patterns and create positive alternatives.') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feature 2: Pattern Interruption -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-primary bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-random text-primary fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('pattern_interruption_title', 'Pattern Interruption') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('pattern_interruption_description', 'Break free from limiting patterns and create new neural pathways.') }}</p>
+                        <span class="premium-badge mt-2">{{ g.translate('premium', 'Premium') }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feature 3: Anchoring -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-primary bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-anchor text-primary fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('anchoring_title', 'Emotional Anchoring') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('anchoring_description', 'Create powerful anchors to access positive emotional states when needed.') }}</p>
+                        <span class="premium-badge mt-2">{{ g.translate('premium', 'Premium') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('how_it_works_title', 'How It Works') }}</h2>
+            <p class="lead text-muted">{{ g.translate('how_it_works_subtitle', 'Simple steps to transform your thinking patterns') }}</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Step 1 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+                            <h3 class="mb-0">1</h3>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('step1_title', 'Share Your Thoughts') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('step1_description', 'Express your challenges, thoughts, or situations you want to improve.') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+                            <h3 class="mb-0">2</h3>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('step2_title', 'Apply NLP Techniques') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('step2_description', 'Our AI coach applies the most appropriate NLP technique for your situation.') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
+                            <h3 class="mb-0">3</h3>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('step3_title', 'Track Your Progress') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('step3_description', 'Monitor your growth with detailed insights and effectiveness ratings.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="py-5" id="pricing">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('pricing_title', 'Simple, Transparent Pricing') }}</h2>
+            <p class="lead text-muted">{{ g.translate('pricing_subtitle', 'Choose the plan that fits your needs') }}</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Free Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold">{{ g.translate('free_plan_title', 'Free') }}</h5>
+                        <div class="my-3">
+                            <span class="display-5 fw-bold">$0</span>
+                            <span class="text-muted">/{{ g.translate('month', 'month') }}</span>
+                        </div>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('free_feature1', 'Basic cognitive reframing') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('free_feature2', 'Limited chat interactions (10/day)') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('free_feature3', 'Basic dashboard') }}
+                            </li>
+                            <li class="text-muted mb-2">
+                                <i class="fas fa-times text-danger me-2"></i>
+                                {{ g.translate('free_feature4', 'Advanced NLP techniques') }}
+                            </li>
+                            <li class="text-muted mb-2">
+                                <i class="fas fa-times text-danger me-2"></i>
+                                {{ g.translate('free_feature5', 'Progress tracking') }}
+                            </li>
+                        </ul>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">
+                            {{ g.translate('get_started', 'Get Started') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Premium Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow position-relative">
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge bg-primary px-3 py-2 rounded-pill">
+                            {{ g.translate('most_popular', 'Most Popular') }}
+                        </span>
+                    </div>
+                    <div class="card-body p-4 mt-3">
+                        <h5 class="card-title fw-bold">{{ g.translate('premium_plan_title', 'Premium') }}</h5>
+                        <div class="my-3">
+                            <span class="display-5 fw-bold">$9.99</span>
+                            <span class="text-muted">/{{ g.translate('month', 'month') }}</span>
+                        </div>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('premium_feature1', 'All NLP techniques') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('premium_feature2', 'Unlimited chat interactions') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('premium_feature3', 'Full progress tracking') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('premium_feature4', 'Communication analysis') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('premium_feature5', 'Priority support') }}
+                            </li>
+                            <li class="text-muted mb-2">
+                                <i class="fas fa-times text-danger me-2"></i>
+                                {{ g.translate('premium_feature6', 'Voice practice features') }}
+                            </li>
+                        </ul>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">
+                            {{ g.translate('get_started', 'Get Started') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Professional Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold">{{ g.translate('professional_plan_title', 'Professional') }}</h5>
+                        <div class="my-3">
+                            <span class="display-5 fw-bold">$19.99</span>
+                            <span class="text-muted">/{{ g.translate('month', 'month') }}</span>
+                        </div>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('professional_feature1', 'Everything in Premium') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('professional_feature2', 'Voice practice features') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('professional_feature3', 'Personalized journeys') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('professional_feature4', 'Belief change protocol') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('professional_feature5', 'Practice reminders') }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ g.translate('professional_feature6', 'Priority support') }}
+                            </li>
+                        </ul>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100">
+                            {{ g.translate('get_started', 'Get Started') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">{{ g.translate('testimonials_title', 'What Our Users Say') }}</h2>
+            <p class="lead text-muted">{{ g.translate('testimonials_subtitle', 'Hear from people whose lives have been transformed') }}</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Testimonial 1 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text mb-4">"{{ g.translate('testimonial1', 'The cognitive reframing techniques have completely changed how I deal with stress. I now automatically look for positive perspectives.') }}"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <span>JD</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ g.translate('testimonial1_name', 'Jessica D.') }}</h6>
+                                <small class="text-muted">{{ g.translate('testimonial1_location', 'Marketing Manager') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 2 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text mb-4">"{{ g.translate('testimonial2', 'As someone with social anxiety, the anchoring technique has been a game-changer. I can now access confidence when I need it most.') }}"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <span>MT</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ g.translate('testimonial2_name', 'Michael T.') }}</h6>
+                                <small class="text-muted">{{ g.translate('testimonial2_location', 'Software Developer') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Testimonial 3 -->
+            <div class="col-md-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text mb-4">"{{ g.translate('testimonial3', 'The progress tracking feature helps me see how far I\'ve come. I\'ve noticed significant improvements in my communication skills.') }}"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <span>SP</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">{{ g.translate('testimonial3_name', 'Sarah P.') }}</h6>
+                                <small class="text-muted">{{ g.translate('testimonial3_location', 'Teacher') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">{{ g.translate('cta_title', 'Start Your Transformation Today') }}</h2>
+        <p class="lead mb-4">{{ g.translate('cta_subtitle', 'Join thousands of users improving their mental well-being and communication skills') }}</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">
+                {{ g.translate('get_started', 'Get Started') }}
+            </a>
+            <a href="{{ url_for('main.techniques') }}" class="btn btn-outline-light btn-lg px-4">
+                {{ g.translate('learn_more', 'Learn More') }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

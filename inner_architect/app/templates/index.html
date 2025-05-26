@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('app_name', 'The Inner Architect') }} - {{ g.translate('home', 'Home') }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="sidebar card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-comment-alt me-2"></i> {{ g.translate('conversations', 'Conversations') }}
+                    </h5>
+                    
+                    <!-- New chat button -->
+                    <button id="new-chat-btn" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-plus me-2"></i> {{ g.translate('new_chat', 'New Chat') }}
+                    </button>
+                    
+                    <!-- Conversations list -->
+                    <div id="conversations-list" class="mt-4">
+                        {% if active_context %}
+                            <a href="#" class="sidebar-link active">
+                                <i class="fas fa-comment me-2"></i>
+                                {{ active_context.title or g.translate('new_conversation', 'New Conversation') }}
+                            </a>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-comments mb-3" style="font-size: 2rem;"></i>
+                                <p>{{ g.translate('no_conversations', 'No conversations yet') }}</p>
+                                <p class="small">{{ g.translate('start_new_chat', 'Start a new chat to begin') }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="col-md-9">
+            <div class="card h-100">
+                <div class="card-body p-0">
+                    <div class="chat-container">
+                        <!-- Chat Header -->
+                        <div class="chat-header p-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ active_context.title if active_context else g.translate('new_conversation', 'New Conversation') }}</h5>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary me-2" id="rename-chat-btn" title="{{ g.translate('rename_chat', 'Rename chat') }}" {% if not active_context %}disabled{% endif %}>
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" id="clear-chat-btn" title="{{ g.translate('clear_chat', 'Clear chat') }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Messages -->
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Welcome message -->
+                            <div class="message message-ai">
+                                <div class="message-content">
+                                    <h5>{{ g.translate('welcome_title', 'Welcome to The Inner Architect!') }}</h5>
+                                    <p>{{ g.translate('welcome_message', 'I\'m here to help you with cognitive reframing and NLP techniques to improve your well-being and communication skills. How can I assist you today?') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Input -->
+                        <div class="chat-input">
+                            <form id="chat-form">
+                                <div class="row g-0">
+                                    <div class="col-md-9 col-sm-8">
+                                        <div class="position-relative">
+                                            <textarea id="message-input" class="form-control" rows="2" placeholder="{{ g.translate('type_message', 'Type your message...') }}" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-sm-4">
+                                        <div class="d-flex h-100 align-items-center ps-2">
+                                            <select id="technique-select" class="form-select me-2">
+                                                <option value="">{{ g.translate('auto_select', 'Auto-select') }}</option>
+                                                {% for technique_id, technique in techniques.items() %}
+                                                    <option value="{{ technique_id }}" data-description="{{ technique.description }}">
+                                                        {{ technique.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Technique Info Panel -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card" id="current-technique-info" style="display: none;">
+                <div class="card-body">
+                    <!-- Technique info will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load chat history on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load conversations
+        loadConversations();
+        
+        // Load chat history for active conversation
+        loadChatHistory();
+        
+        // Set up event listeners
+        document.getElementById('new-chat-btn').addEventListener('click', createNewChat);
+        document.getElementById('rename-chat-btn').addEventListener('click', renameChat);
+        document.getElementById('clear-chat-btn').addEventListener('click', clearChat);
+    });
+    
+    // Load conversations
+    function loadConversations() {
+        fetch('/chat/contexts')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.contexts && data.contexts.length > 0) {
+                    const conversationsList = document.getElementById('conversations-list');
+                    conversationsList.innerHTML = '';
+                    
+                    data.contexts.forEach(context => {
+                        const link = document.createElement('a');
+                        link.href = '#';
+                        link.className = `sidebar-link ${context.is_active ? 'active' : ''}`;
+                        link.dataset.contextId = context.id;
+                        link.innerHTML = `
+                            <i class="fas fa-comment me-2"></i>
+                            ${context.title || 'Untitled Conversation'}
+                        `;
+                        
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            switchContext(context.id);
+                        });
+                        
+                        conversationsList.appendChild(link);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading conversations:', error));
+    }
+    
+    // Load chat history
+    function loadChatHistory() {
+        fetch('/chat/history')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.history && data.history.length > 0) {
+                    const chatMessages = document.getElementById('chat-messages');
+                    chatMessages.innerHTML = '';
+                    
+                    data.history.forEach(message => {
+                        // Add user message
+                        addMessageToChat('user', message.user_message);
+                        
+                        // Add AI response
+                        addMessageToChat('ai', message.ai_response, {
+                            technique: {
+                                name: message.technique || 'Auto-selected'
+                            },
+                            mood: message.mood
+                        });
+                    });
+                    
+                    // Update chat header with context title
+                    if (data.context && data.context.title) {
+                        document.querySelector('.chat-header h5').textContent = data.context.title;
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading chat history:', error));
+    }
+    
+    // Create new chat
+    function createNewChat() {
+        fetch('/chat/new-conversation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to start fresh
+                window.location.reload();
+            }
+        })
+        .catch(error => console.error('Error creating new chat:', error));
+    }
+    
+    // Switch context
+    function switchContext(contextId) {
+        fetch(`/chat/switch-context/${contextId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to show the new context
+                window.location.reload();
+            }
+        })
+        .catch(error => console.error('Error switching context:', error));
+    }
+    
+    // Rename chat
+    function renameChat() {
+        const newTitle = prompt('Enter a new name for this conversation:');
+        
+        if (newTitle && newTitle.trim()) {
+            const contextId = document.querySelector('.sidebar-link.active').dataset.contextId;
+            
+            fetch(`/chat/rename-context/${contextId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: newTitle.trim()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update title in UI
+                    document.querySelector('.chat-header h5').textContent = newTitle.trim();
+                    document.querySelector('.sidebar-link.active').innerHTML = `
+                        <i class="fas fa-comment me-2"></i>
+                        ${newTitle.trim()}
+                    `;
+                }
+            })
+            .catch(error => console.error('Error renaming chat:', error));
+        }
+    }
+    
+    // Clear chat (delete context)
+    function clearChat() {
+        if (confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+            const contextId = document.querySelector('.sidebar-link.active').dataset.contextId;
+            
+            fetch(`/chat/delete-context/${contextId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show the new context
+                    window.location.reload();
+                }
+            })
+            .catch(error => console.error('Error deleting chat:', error));
+        }
+    }
+</script>
+{% endblock %}

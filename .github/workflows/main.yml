@@ -1,0 +1,172 @@
+name: InnerArchitect CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: inner_architect_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    strategy:
+      matrix:
+        python-version: [3.11]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pytest pytest-cov flake8 black isort mypy
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install -e ".[dev]"; fi
+    
+    - name: Run linters
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # check code formatting
+        black --check .
+        # check import order
+        isort --check-only --profile black .
+        # check typing
+        mypy .
+    
+    - name: Run tests with coverage
+      env:
+        SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/inner_architect_test
+        TESTING: true
+        SECRET_KEY: testing_key
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      run: |
+        pytest --cov=inner_architect --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  build:
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install build wheel
+    
+    - name: Build package
+      run: |
+        python -m build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: dist/
+
+  deploy-staging:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.innerarchitect.app
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist/
+    
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    - name: Deploy to staging server
+      env:
+        SERVER_IP: ${{ secrets.STAGING_SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        # Add server to known hosts
+        mkdir -p ~/.ssh
+        ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+        
+        # Deploy application
+        scp -r dist/* $SERVER_USER@$SERVER_IP:/var/www/innerarchitect/staging/
+        ssh $SERVER_USER@$SERVER_IP 'cd /var/www/innerarchitect/staging && bash deploy.sh'
+
+  deploy-production:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://innerarchitect.app
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist/
+    
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    - name: Deploy to production server
+      env:
+        SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        # Add server to known hosts
+        mkdir -p ~/.ssh
+        ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+        
+        # Deploy application
+        scp -r dist/* $SERVER_USER@$SERVER_IP:/var/www/innerarchitect/production/
+        ssh $SERVER_USER@$SERVER_IP 'cd /var/www/innerarchitect/production && bash deploy.sh'

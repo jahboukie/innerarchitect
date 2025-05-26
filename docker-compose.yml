@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: innerarchitect_web
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - static_data:/app/static_build
+      - logs:/app/logs
+    depends_on:
+      - db
+    networks:
+      - app_network
+    command: gunicorn --config gunicorn_config.py inner_architect.wsgi:app
+
+  db:
+    image: postgres:13
+    container_name: innerarchitect_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.23
+    container_name: innerarchitect_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - static_data:/var/www/static
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - web
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7
+    container_name: innerarchitect_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    command: redis-server --appendonly yes
+
+  worker:
+    build: .
+    container_name: innerarchitect_worker
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app_network
+    command: celery -A inner_architect.app.celery worker --loglevel=info
+
+  monitor:
+    build: .
+    container_name: innerarchitect_monitor
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app_network
+    command: celery -A inner_architect.app.celery flower --port=5555
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  static_data:
+  logs:
+  redis_data:

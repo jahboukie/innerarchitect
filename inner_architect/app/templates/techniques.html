@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}{{ g.translate('nlp_techniques', 'NLP Techniques - The Inner Architect') }}{% endblock %}
+
+{% block extra_css %}
+<!-- No additional inline styles needed - using our CSS framework -->
+{% endblock %}
+
+{% block content %}
+<!-- Techniques Overview -->
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="mb-3">{{ g.translate('nlp_techniques_title', 'NLP Techniques') }}</h1>
+            <p class="lead text-secondary">
+                {{ g.translate('nlp_techniques_description', 'Explore the Neuro-Linguistic Programming techniques used in The Inner Architect to improve communication, emotional well-being, and mental resilience.') }}
+            </p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        {% for technique_id, technique in techniques.items() %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card technique-card">
+                {% if technique_id != 'reframing' and not has_premium %}
+                <span class="premium-badge">
+                    <i class="fas fa-crown me-1"></i> {{ g.translate('premium', 'Premium') }}
+                </span>
+                {% endif %}
+                
+                <div class="bg-gradient-primary text-white p-4">
+                    <div class="d-flex justify-content-center align-items-center bg-white bg-opacity-20 rounded-circle mb-3 mx-auto" style="width: 64px; height: 64px;">
+                        {% if technique_id == 'reframing' %}
+                        <i class="fas fa-sync-alt fa-2x"></i>
+                        {% elif technique_id == 'pattern_interruption' %}
+                        <i class="fas fa-ban fa-2x"></i>
+                        {% elif technique_id == 'anchoring' %}
+                        <i class="fas fa-anchor fa-2x"></i>
+                        {% elif technique_id == 'future_pacing' %}
+                        <i class="fas fa-hourglass-half fa-2x"></i>
+                        {% elif technique_id == 'sensory_language' %}
+                        <i class="fas fa-eye fa-2x"></i>
+                        {% elif technique_id == 'meta_model' %}
+                        <i class="fas fa-question-circle fa-2x"></i>
+                        {% else %}
+                        <i class="fas fa-brain fa-2x"></i>
+                        {% endif %}
+                    </div>
+                    <h3 class="mb-2">{{ technique.name }}</h3>
+                    <p class="mb-0">{{ technique.description }}</p>
+                </div>
+                
+                <div class="card-body">
+                    <h5>{{ g.translate('key_concepts', 'Key Concepts') }}</h5>
+                    <div class="mb-4">
+                        {% for prompt in technique.prompts[:2] %}
+                        <div class="bg-light rounded p-3 mb-2">{{ prompt }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{{ url_for('main.technique_detail', technique_id=technique_id) }}" class="btn btn-outline-primary">
+                            {{ g.translate('learn_more', 'Learn More') }}
+                        </a>
+                        
+                        <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary ms-2"
+                           {% if technique_id != 'reframing' and not has_premium %}
+                           data-bs-toggle="modal" data-bs-target="#premiumFeatureModal"
+                           {% endif %}>
+                            {{ g.translate('try_it', 'Try It') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- What is NLP Section -->
+<div class="bg-gradient-subtle py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="mb-4 text-center">{{ g.translate('what_is_nlp', 'What is Neuro-Linguistic Programming?') }}</h2>
+                
+                <p>
+                    {{ g.translate('nlp_definition', 'Neuro-Linguistic Programming (NLP) is an approach to communication, personal development, and psychotherapy created in the 1970s. It explores the relationships between how we think (neuro), how we communicate (linguistic), and our patterns of behavior and emotion (programming).') }}
+                </p>
+                
+                <p>
+                    {{ g.translate('nlp_purpose', 'The core premise of NLP is that our thoughts, feelings, and behaviors are not fixed traits but learned patterns that can be changed. By understanding and modifying these patterns, we can improve communication, manage emotions more effectively, and create positive behavioral changes.') }}
+                </p>
+                
+                <div class="row mt-5">
+                    <div class="col-md-4 text-center mb-4 mb-md-0">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="bg-primary-light rounded-circle p-3 d-inline-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px;">
+                                    <i class="fas fa-brain text-primary fa-2x"></i>
+                                </div>
+                                <h5>{{ g.translate('neuro', 'Neuro') }}</h5>
+                                <p class="mb-0 text-secondary text-sm">
+                                    {{ g.translate('neuro_explanation', 'How we process and filter information through our senses and how this affects our mental and physical state.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center mb-4 mb-md-0">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="bg-primary-light rounded-circle p-3 d-inline-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px;">
+                                    <i class="fas fa-comments text-primary fa-2x"></i>
+                                </div>
+                                <h5>{{ g.translate('linguistic', 'Linguistic') }}</h5>
+                                <p class="mb-0 text-secondary text-sm">
+                                    {{ g.translate('linguistic_explanation', 'How we use language to communicate with others and, importantly, with ourselves, and how this affects our experiences.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="bg-primary-light rounded-circle p-3 d-inline-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px;">
+                                    <i class="fas fa-cogs text-primary fa-2x"></i>
+                                </div>
+                                <h5>{{ g.translate('programming', 'Programming') }}</h5>
+                                <p class="mb-0 text-secondary text-sm">
+                                    {{ g.translate('programming_explanation', 'The habitual patterns of thought, feeling, and behavior that we have learned and can modify to achieve specific goals.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Benefits Section -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center">
+            <h2 class="mb-4">{{ g.translate('nlp_benefits', 'Benefits of NLP Techniques') }}</h2>
+            <p class="text-secondary mb-5">
+                {{ g.translate('nlp_benefits_description', 'NLP techniques can have a profound impact on various aspects of your life, helping you develop greater self-awareness, emotional intelligence, and communication skills.') }}
+            </p>
+        </div>
+    </div>
+    
+    <div class="grid-layout-3 gap-lg">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-light rounded-circle p-3 me-3">
+                        <i class="fas fa-comments text-primary"></i>
+                    </div>
+                    <h5 class="mb-0">{{ g.translate('improved_communication', 'Improved Communication') }}</h5>
+                </div>
+                <p class="text-secondary">
+                    {{ g.translate('improved_communication_description', 'Enhance your ability to express yourself clearly and understand others more deeply, leading to better relationships.') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-light rounded-circle p-3 me-3">
+                        <i class="fas fa-heart text-primary"></i>
+                    </div>
+                    <h5 class="mb-0">{{ g.translate('emotional_management', 'Emotional Management') }}</h5>
+                </div>
+                <p class="text-secondary">
+                    {{ g.translate('emotional_management_description', 'Develop techniques to manage negative emotions, reduce anxiety, and create more positive emotional states.') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-light rounded-circle p-3 me-3">
+                        <i class="fas fa-bullseye text-primary"></i>
+                    </div>
+                    <h5 class="mb-0">{{ g.translate('goal_achievement', 'Goal Achievement') }}</h5>
+                </div>
+                <p class="text-secondary">
+                    {{ g.translate('goal_achievement_description', 'Align your thoughts and behaviors with your goals, overcome limiting beliefs, and create lasting positive changes.') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-light rounded-circle p-3 me-3">
+                        <i class="fas fa-brain text-primary"></i>
+                    </div>
+                    <h5 class="mb-0">{{ g.translate('cognitive_flexibility', 'Cognitive Flexibility') }}</h5>
+                </div>
+                <p class="text-secondary">
+                    {{ g.translate('cognitive_flexibility_description', 'Develop the ability to see situations from multiple perspectives and adapt your thinking to changing circumstances.') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-light rounded-circle p-3 me-3">
+                        <i class="fas fa-user-friends text-primary"></i>
+                    </div>
+                    <h5 class="mb-0">{{ g.translate('social_connections', 'Social Connections') }}</h5>
+                </div>
+                <p class="text-secondary">
+                    {{ g.translate('social_connections_description', 'Build stronger relationships by understanding different communication styles and developing deeper empathy.') }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary-light rounded-circle p-3 me-3">
+                        <i class="fas fa-shield-alt text-primary"></i>
+                    </div>
+                    <h5 class="mb-0">{{ g.translate('resilience', 'Mental Resilience') }}</h5>
+                </div>
+                <p class="text-secondary">
+                    {{ g.translate('resilience_description', 'Develop the ability to bounce back from setbacks, manage stress effectively, and maintain a positive outlook.') }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Get Started Section -->
+<div class="bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="mb-4">{{ g.translate('get_started', 'Ready to Get Started?') }}</h2>
+                <p class="lead mb-4">
+                    {{ g.translate('get_started_description', 'Begin your journey with The Inner Architect to discover how NLP techniques can transform your thinking, communication, and emotional well-being.') }}
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ url_for('chat.index') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-comments me-2"></i> {{ g.translate('start_chat', 'Start a Chat') }}
+                    </a>
+                    
+                    <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-crown me-2"></i> {{ g.translate('explore_premium', 'Explore Premium') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Feature Modal -->
+<div class="modal fade" id="premiumFeatureModal" tabindex="-1" aria-labelledby="premiumFeatureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="premiumFeatureModalLabel">{{ g.translate('premium_feature', 'Premium Feature') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-crown text-accent mb-3" style="font-size: 3rem;"></i>
+                <h5>{{ g.translate('premium_required', 'Premium Subscription Required') }}</h5>
+                <p>{{ g.translate('premium_nlp_message', 'Advanced NLP techniques are available with a Premium or Professional subscription.') }}</p>
+                
+                <div class="bg-light rounded p-3 mb-3">
+                    <h6 class="mb-2">{{ g.translate('premium_includes', 'Premium includes:') }}</h6>
+                    <ul class="list-unstyled text-start mb-0">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('all_techniques', 'All NLP techniques') }}</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('unlimited_chat', 'Unlimited chat interactions') }}</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('progress_tracking', 'Full progress tracking') }}</li>
+                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('communication_analysis', 'Communication analysis') }}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('cancel', 'Cancel') }}</button>
+                <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-primary">
+                    <i class="fas fa-crown me-1"></i> {{ g.translate('view_premium', 'View Premium Features') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

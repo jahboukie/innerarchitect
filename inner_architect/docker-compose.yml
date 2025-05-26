@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db/inner_architect
+      - SECRET_KEY=dev_secret_key
+      - FLASK_APP=wsgi.py
+      - FLASK_ENV=development
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=inner_architect
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

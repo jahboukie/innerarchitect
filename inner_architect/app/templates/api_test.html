@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}API Fallback Test - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">API Fallback Test Interface</h5>
+                </div>
+                <div class="card-body">
+                    <p>This interface allows you to test the API fallback mechanism that automatically switches between AI providers when one becomes unavailable.</p>
+                    
+                    <!-- Provider Status -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Provider Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="providerStatus">
+                                <div class="spinner-container">
+                                    <div class="spinner"></div>
+                                    <p class="loader-text">Loading provider status...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-sm btn-outline-primary" id="refreshProviderStatus">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh Status
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" id="resetProviders">
+                                <i class="fas fa-undo me-1"></i> Reset All Providers
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulate Provider Failure -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Simulate Provider Failure</h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="simulateFailureForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="providerSelect" class="form-label">Provider</label>
+                                        <select class="form-select" id="providerSelect" required>
+                                            <option value="claude">Claude</option>
+                                            <option value="openai">OpenAI</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="errorTypeSelect" class="form-label">Error Type</label>
+                                        <select class="form-select" id="errorTypeSelect" required>
+                                            <option value="timeout">Timeout</option>
+                                            <option value="connection">Connection</option>
+                                            <option value="response">Response</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> Simulate Failure
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Test Chat Completion -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Test Chat Completion</h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="chatForm">
+                                <div class="mb-3">
+                                    <label for="messageInput" class="form-label">Message</label>
+                                    <textarea class="form-control" id="messageInput" rows="3" required placeholder="Enter your message here..."></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="techniqueSelect" class="form-label">NLP Technique (optional)</label>
+                                        <select class="form-select" id="techniqueSelect">
+                                            <option value="">Auto-select technique</option>
+                                            <option value="reframing">Reframing</option>
+                                            <option value="pattern_interruption">Pattern Interruption</option>
+                                            <option value="anchoring">Anchoring</option>
+                                            <option value="future_pacing">Future Pacing</option>
+                                            <option value="sensory_language">Sensory Language</option>
+                                            <option value="meta_model">Meta Model</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="simulateErrorSelect" class="form-label">Simulate Error (optional)</label>
+                                        <select class="form-select" id="simulateErrorSelect">
+                                            <option value="">No error simulation</option>
+                                            <option value="timeout">Timeout</option>
+                                            <option value="connection">Connection</option>
+                                            <option value="response">Response</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-1"></i> Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Display -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Response</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="responseContainer">
+                                <p class="text-muted text-center">Send a message to see the response here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get provider status on page load
+        getProviderStatus();
+        
+        // Refresh provider status button
+        document.getElementById('refreshProviderStatus').addEventListener('click', function() {
+            getProviderStatus();
+        });
+        
+        // Reset providers button
+        document.getElementById('resetProviders').addEventListener('click', function() {
+            resetProviders();
+        });
+        
+        // Simulate provider failure form
+        document.getElementById('simulateFailureForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const provider = document.getElementById('providerSelect').value;
+            const errorType = document.getElementById('errorTypeSelect').value;
+            
+            simulateProviderFailure(provider, errorType);
+        });
+        
+        // Chat form
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const message = document.getElementById('messageInput').value;
+            const technique = document.getElementById('techniqueSelect').value;
+            const simulateError = document.getElementById('simulateErrorSelect').value;
+            
+            sendChatMessage(message, technique, simulateError);
+        });
+    });
+    
+    // Get provider status
+    function getProviderStatus() {
+        const statusContainer = document.getElementById('providerStatus');
+        
+        // Show loading spinner
+        statusContainer.innerHTML = `
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <p class="loader-text">Loading provider status...</p>
+            </div>
+        `;
+        
+        fetch('/api-test/provider-status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Format provider data
+                    let providersHtml = '';
+                    
+                    for (const [name, info] of Object.entries(data.providers)) {
+                        const statusClass = info.available ? 'bg-success' : 'bg-danger';
+                        const statusText = info.available ? 'Available' : 'Unavailable';
+                        const isActive = name === data.active_provider;
+                        const activeClass = isActive ? 'border-primary' : '';
+                        const activeBadge = isActive ? '<span class="badge bg-primary ms-2">Active</span>' : '';
+                        
+                        providersHtml += `
+                            <div class="card mb-3 ${activeClass}">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">${name.charAt(0).toUpperCase() + name.slice(1)} ${activeBadge}</h6>
+                                    <span class="badge ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Priority:</span>
+                                            <span>${info.priority}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Failure Count:</span>
+                                            <span>${info.failure_count}</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Cooldown Period:</span>
+                                            <span>${info.cooldown_period}s</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Max Failures:</span>
+                                            <span>${info.max_failures}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    statusContainer.innerHTML = providersHtml;
+                } else {
+                    statusContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${data.error || 'Failed to load provider status'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                statusContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message || 'Failed to load provider status'}
+                    </div>
+                `;
+            });
+    }
+    
+    // Reset providers
+    function resetProviders() {
+        fetch('/api-test/reset-providers')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const statusContainer = document.getElementById('providerStatus');
+                    statusContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            ${data.message}
+                        </div>
+                    `;
+                    
+                    // Refresh provider status after a short delay
+                    setTimeout(getProviderStatus, 1000);
+                } else {
+                    alert(`Error: ${data.error || 'Failed to reset providers'}`);
+                }
+            })
+            .catch(error => {
+                alert(`Error: ${error.message || 'Failed to reset providers'}`);
+            });
+    }
+    
+    // Simulate provider failure
+    function simulateProviderFailure(provider, errorType) {
+        fetch('/api-test/simulate-provider-failure', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                provider: provider,
+                error_type: errorType
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message and refresh provider status
+                    alert(`Successfully simulated ${errorType} error for ${provider} provider.`);
+                    getProviderStatus();
+                } else {
+                    alert(`Error: ${data.error || 'Failed to simulate provider failure'}`);
+                }
+            })
+            .catch(error => {
+                alert(`Error: ${error.message || 'Failed to simulate provider failure'}`);
+            });
+    }
+    
+    // Send chat message
+    function sendChatMessage(message, technique, simulateError) {
+        const responseContainer = document.getElementById('responseContainer');
+        
+        // Show loading spinner
+        responseContainer.innerHTML = `
+            <div class="spinner-container">
+                <div class="spinner"></div>
+                <p class="loader-text">Processing your message...</p>
+            </div>
+        `;
+        
+        fetch('/api-test/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: message,
+                technique: technique,
+                simulate_error: simulateError
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Format response
+                    const isFallback = data.is_fallback;
+                    const fallbackClass = isFallback ? 'alert-warning' : '';
+                    const fallbackBadge = isFallback ? '<span class="badge bg-warning text-dark ms-2">Fallback Response</span>' : '';
+                    
+                    responseContainer.innerHTML = `
+                        <div class="card ${fallbackClass}">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Response ${fallbackBadge}</h6>
+                                    <div>
+                                        ${data.provider ? `<span class="badge bg-info me-2">${data.provider}</span>` : ''}
+                                        ${data.technique ? `<span class="badge bg-primary me-2">${data.technique}</span>` : ''}
+                                        ${data.mood ? `<span class="badge bg-secondary">${data.mood}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p>${data.message.replace(/\n/g, '<br>')}</p>
+                            </div>
+                            ${data.model ? `
+                            <div class="card-footer">
+                                <small class="text-muted">Model: ${data.model}</small>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    // Refresh provider status
+                    getProviderStatus();
+                } else {
+                    responseContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${data.error || 'Failed to process message'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                responseContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: ${error.message || 'Failed to process message'}
+                    </div>
+                `;
+            });
+    }
+</script>
+{% endblock %}

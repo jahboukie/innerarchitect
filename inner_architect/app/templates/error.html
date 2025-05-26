@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error_code|default('Error') }} - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto text-center">
+            <div class="error-container mt-5">
+                <div class="mb-4">
+                    {% if error_code == 404 %}
+                        <i class="fas fa-search fa-4x text-primary mb-4"></i>
+                        <h1 class="display-1 text-muted">404</h1>
+                        <h2 class="mb-4">{{ error_message|default('Page not found') }}</h2>
+                        <p class="lead text-muted mb-5">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+                    {% elif error_code == 403 %}
+                        <i class="fas fa-lock fa-4x text-warning mb-4"></i>
+                        <h1 class="display-1 text-muted">403</h1>
+                        <h2 class="mb-4">{{ error_message|default('Access denied') }}</h2>
+                        <p class="lead text-muted mb-5">You don't have permission to access this page. Please contact an administrator if you believe this is a mistake.</p>
+                    {% elif error_code == 500 %}
+                        <i class="fas fa-exclamation-circle fa-4x text-danger mb-4"></i>
+                        <h1 class="display-1 text-muted">500</h1>
+                        <h2 class="mb-4">{{ error_message|default('Internal server error') }}</h2>
+                        <p class="lead text-muted mb-5">Something went wrong on our end. Our team has been notified and we're working to fix the issue.</p>
+                    {% else %}
+                        <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                        <h1 class="display-1 text-muted">{{ error_code|default('Error') }}</h1>
+                        <h2 class="mb-4">{{ error_message|default('Something went wrong') }}</h2>
+                        <p class="lead text-muted mb-5">We encountered an unexpected error. Please try again later or contact support if the problem persists.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i> Return to Home
+                    </a>
+                    
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Go Back
+                    </a>
+                </div>
+                
+                {% if error_code == 500 and request.remote_addr == '127.0.0.1' %}
+                <div class="card mt-5 text-start">
+                    <div class="card-header">
+                        <h5 class="mb-0">Technical Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Request ID:</strong> {{ request_id }}</p>
+                        {% if error_detail %}
+                        <div class="bg-light p-3 rounded">
+                            <pre><code>{{ error_detail }}</code></pre>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
