@@ -8,7 +8,7 @@ from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, flash, redirect, url_for, g, send_from_directory
 from typing import Dict, Any, Optional, Union, List, Tuple
 from flask_login import current_user, login_required, logout_user, login_user
-from openai import OpenAI
+from anthropic import Anthropic
 import stripe
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy.exc import SQLAlchemyError
@@ -45,6 +45,9 @@ if TYPE_CHECKING:
 
 # Import standardized logging
 from logging_config import get_logger, info, error, debug, warning, critical, exception
+
+# Import analytics dashboard
+from analytics.dashboard import analytics
 
 # Get module-specific logger
 logger = get_logger('app')
@@ -94,8 +97,11 @@ SUBSCRIPTION_PLANS = {
     }
 }
 
-# Import language utilities
-import language_util
+# Import language utilities (Claude-based version)
+import language_util_claude as language_util
+
+# Import enhanced i18n framework
+from i18n_integration import init_i18n, register_jinja_extensions
 
 # Import models
 from models import User, OAuth, Subscription
@@ -118,6 +124,15 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize database
 from database import db
 db.init_app(app)
+
+# Initialize HIPAA security module
+from security import init_app as init_security
+security_components = init_security(app)
+logger.info("Initialized HIPAA-compliant security module")
+
+# Register blueprints
+app.register_blueprint(analytics)
+logger.info("Registered analytics dashboard blueprint")
 
 # Run database migrations
 with app.app_context():
@@ -284,10 +299,28 @@ with app.app_context():
     except Exception as e:
         error(f"Error initializing subscription manager: {str(e)}")
         exception("Full traceback for subscription manager initialization error:")
+    
+    # Initialize i18n framework
+    try:
+        i18n = init_i18n(app)
+        register_jinja_extensions(app)
+        info("Internationalization framework initialized")
+    except Exception as e:
+        error(f"Error initializing i18n framework: {str(e)}")
+        exception("Full traceback for i18n framework initialization error:")
+        
+    # Initialize PIPEDA compliance module
+    try:
+        from privacy.routes import init_app as init_privacy
+        init_privacy(app)
+        info("PIPEDA compliance module initialized")
+    except Exception as e:
+        error(f"Error initializing PIPEDA compliance module: {str(e)}")
+        exception("Full traceback for PIPEDA compliance initialization error:")
 
-# Initialize OpenAI client
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+# Initialize Anthropic Claude client
+CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY")
+claude_client = Anthropic(api_key=CLAUDE_API_KEY) if CLAUDE_API_KEY else None
 
 # Request middleware
 @app.before_request
@@ -681,6 +714,17 @@ def landing():
         session['session_id'] = str(uuid.uuid4())
         
     return render_template('landing.html')
+
+# I18n demo route
+@app.route('/i18n-demo')
+def i18n_demo():
+    """
+    Render the internationalization demo page.
+    """
+    # Get current datetime for demonstration
+    now = datetime.now()
+    
+    return render_template('i18n_demo.html', now=now)
 
 # Account Management Routes
 @app.route('/delete-account', methods=['GET', 'POST'])
@@ -2176,15 +2220,15 @@ def chat():
     # Log the received message for debugging
     debug(f"Received message: {message} (Mood: {mood}, Technique: {technique}, Session: {session_id})")
     
-    # Check if OpenAI API key is available
-    if not OPENAI_API_KEY:
-        error("OpenAI API key is missing")
+    # Check if Claude API key is available
+    if not CLAUDE_API_KEY:
+        error("Claude API key is missing")
         return jsonify({
-            'response': "I'm sorry, but I'm not fully configured yet. Please provide an OpenAI API key to enable AI responses."
+            'response': "I'm sorry, but I'm not fully configured yet. Please provide a Claude API key to enable AI responses."
         })
     
     try:
-        # Prepare the base system prompt for OpenAI with NLP techniques
+        # Prepare the base system prompt for Claude with NLP techniques
         base_system_prompt = f"""You are The Inner Architect, a supportive self-help guide with expertise in Neuro-Linguistic Programming (NLP).
         
 Your goal is to help users reframe negative thoughts and build more positive mental patterns using NLP techniques including:
@@ -2226,47 +2270,48 @@ Keep responses concise (2-3 short paragraphs maximum) and conversational. Use th
             error(f"Error enhancing prompt with context: {str(context_error)}")
             system_prompt = base_system_prompt
         
-        # Make the API call to OpenAI
-        # Check if OpenAI client is initialized
-        if openai_client is None:
-            error("OpenAI API key not configured")
+        # Make the API call to Claude
+        # Check if Claude client is initialized
+        if claude_client is None:
+            error("Claude API key not configured")
             return jsonify({
-                'error': 'OpenAI API not configured. Please contact support.',
+                'error': 'Claude API not configured. Please contact support.',
                 'technique': technique
             }), 500
             
         # Import the API error handling tools
         from api_fallback import with_retry_and_timeout, APIError, get_fallback_response, show_user_friendly_error
         
-        # Get the response from OpenAI with error handling
+        # Get the response from Claude with error handling
         ai_response = ""
         response = None
         try:
-            # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-            # do not change this unless explicitly requested by the user
+            # Using Claude Sonnet model for consistent, high-quality responses.
+            # Only change this model if explicitly requested by the user
             @with_retry_and_timeout(timeout=20, retries=2)
-            def get_openai_response(prompt, user_content, model="gpt-4o", max_tokens=500, timeout=20):
-                return openai_client.chat.completions.create(
+            def get_claude_response(prompt, user_content, model="claude-3-sonnet-20240229", max_tokens=500, timeout=20):
+                return claude_client.messages.create(
                     model=model,
-                    messages=[
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": user_content}
-                    ],
+                    system=prompt,
                     max_tokens=max_tokens,
-                    timeout=timeout  # Pass through timeout parameter
+                    timeout=timeout,  # Pass through timeout parameter
+                    messages=[
+                        {"role": "user", "content": user_content}
+                    ]
                 )
             
             # Call the enhanced function with retry logic
-            response = get_openai_response(
+            response = get_claude_response(
                 prompt=system_prompt,
                 user_content=f"User mood: {mood}\nUser message: {message}\nRequested NLP technique: {technique}"
             )
             
-            # Extract the AI response with proper null checking
-            if response and hasattr(response, 'choices') and response.choices:
-                message_content = getattr(response.choices[0].message, 'content', None)
-                if message_content is not None:
-                    ai_response = message_content.strip()
+            # Extract the AI response from Claude API response
+            if response:
+                # Extract content from Claude response (structure is different from OpenAI)
+                if response and response.content:
+                    content_blocks = [block.text for block in response.content if hasattr(block, 'text')]
+                    ai_response = ''.join(content_blocks).strip()
             debug(f"AI response: {ai_response}")
             
         except APIError as api_err:
@@ -2873,11 +2918,11 @@ def analyze_communication():
     # Limit to last 5 entries for context
     history = []  # We can extend this to use actual chat history
     
-    # Use OpenAI if available, otherwise fallback to rule-based
-    use_gpt = openai_client is not None
+    # Use Claude if available, otherwise fallback to rule-based
+    use_claude = claude_client is not None
     
     # Perform analysis
-    analysis = analyze_communication_style(message, history, use_gpt)
+    analysis = analyze_communication_style(message, history, use_claude)
     
     return jsonify(analysis)
 

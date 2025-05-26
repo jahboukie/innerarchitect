@@ -1,0 +1,118 @@
+{# Internationalization Components for Templates #}
+
+{# Language selector dropdown #}
+{% macro language_selector(current_lang=g.language, languages=g.languages, 
+                           class_name="dropdown", 
+                           button_class="btn btn-sm btn-outline-primary dropdown-toggle rounded-pill", 
+                           dropdown_class="dropdown-menu dropdown-menu-end shadow-sm border-light", 
+                           item_class="dropdown-item", 
+                           active_class="active", 
+                           icon_class="fas fa-globe me-1") %}
+<div class="{{ class_name }}">
+  <button class="{{ button_class }}" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="{{ icon_class }}"></i> {{ current_lang|upper }}
+  </button>
+  <ul class="{{ dropdown_class }}" aria-labelledby="languageDropdown">
+    {% for code, name_tuple in languages.items() %}
+      {% set name = name_tuple[1] %}  {# Use native name #}
+      <li>
+        <a class="{{ item_class }} {% if code == current_lang %}{{ active_class }}{% endif %}" 
+           href="{{ url_for('set_language', lang_code=code) }}">
+          {{ name }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endmacro %}
+
+{# Format a date according to locale conventions #}
+{% macro format_date_component(date_value, format_str=None) %}
+  {% set formatted = format_date(date_value, format_str, g.language) %}
+  <time {% if date_value is defined and date_value is not string %}title="{{ date_value.isoformat() if date_value is not none }}"{% endif %}>
+    {{ formatted }}
+  </time>
+{% endmacro %}
+
+{# Format a time according to locale conventions #}
+{% macro format_time_component(time_value, format_str=None) %}
+  {% set formatted = format_time(time_value, format_str, g.language) %}
+  <time {% if time_value is defined and time_value is not string %}title="{{ time_value.isoformat() if time_value is not none }}"{% endif %}>
+    {{ formatted }}
+  </time>
+{% endmacro %}
+
+{# Format a datetime according to locale conventions #}
+{% macro format_datetime_component(datetime_value, format_str=None) %}
+  {% set formatted = format_datetime(datetime_value, format_str, g.language) %}
+  <time {% if datetime_value is defined and datetime_value is not string %}title="{{ datetime_value.isoformat() if datetime_value is not none }}"{% endif %}>
+    {{ formatted }}
+  </time>
+{% endmacro %}
+
+{# Format a number according to locale conventions #}
+{% macro format_number_component(number, decimal_places=None) %}
+  {% set formatted = format_number(number, decimal_places, g.language) %}
+  <span class="number" {% if number is defined and number is not string %}title="{{ number }}"{% endif %}>
+    {{ formatted }}
+  </span>
+{% endmacro %}
+
+{# Format a currency amount according to locale conventions #}
+{% macro format_currency_component(amount, currency=None) %}
+  {% set formatted = format_currency(amount, currency, g.language) %}
+  <span class="currency" {% if amount is defined and amount is not string %}title="{{ amount }}"{% endif %}>
+    {{ formatted }}
+  </span>
+{% endmacro %}
+
+{# Format a percentage according to locale conventions #}
+{% macro format_percent_component(value, decimal_places=1) %}
+  {% set formatted = format_percent(value, decimal_places, g.language) %}
+  <span class="percent" {% if value is defined and value is not string %}title="{{ value }}"{% endif %}>
+    {{ formatted }}
+  </span>
+{% endmacro %}
+
+{# Render a multilingual text block with all translations (shown/hidden based on user's language) #}
+{% macro multilingual_text(translations, default_lang='en', class_name='multilingual-text') %}
+  <span class="{{ class_name }}">
+    {% for lang, text in translations.items() %}
+      {% set is_current = lang == g.language %}
+      {% set direction = 'dir="rtl"' if is_rtl(lang) else 'dir="ltr"' %}
+      <span lang="{{ lang }}" {{ direction|safe }} class="lang-{{ lang }}" 
+            style="display: {{ 'inline' if is_current else 'none' }};">
+        {{ text }}
+      </span>
+    {% endfor %}
+  </span>
+{% endmacro %}
+
+{# Display a translated help text with tooltip #}
+{% macro help_tooltip(key, default=None, placement="top") %}
+  {% set text = t(key, default) %}
+  <span class="help-tooltip" data-bs-toggle="tooltip" data-bs-placement="{{ placement }}" title="{{ text }}">
+    <i class="fas fa-question-circle text-muted"></i>
+  </span>
+{% endmacro %}
+
+{# Display content conditionally based on language #}
+{% macro language_specific(lang_code) %}
+  {% if g.language == lang_code %}
+    {{ caller() }}
+  {% endif %}
+{% endmacro %}
+
+{# Display content for RTL languages only #}
+{% macro rtl_only() %}
+  {% if g.is_rtl %}
+    {{ caller() }}
+  {% endif %}
+{% endmacro %}
+
+{# Display content for LTR languages only #}
+{% macro ltr_only() %}
+  {% if not g.is_rtl %}
+    {{ caller() }}
+  {% endif %}
+{% endmacro %}

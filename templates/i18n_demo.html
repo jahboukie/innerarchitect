@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% import 'i18n_components.html' as i18n %}
+
+{% block title %}{{ t('i18n_demo', 'Internationalization Demo') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-5">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-body">
+                    <h1 class="display-5 fw-bold">{{ t('i18n_demo', 'Internationalization Demo') }}</h1>
+                    <p class="lead mb-4">{{ t('i18n_demo_description', 'This page demonstrates the internationalization features of The Inner Architect.') }}</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ t('i18n_demo_instructions', 'Change the language using the dropdown in the navigation bar to see how the content adapts.') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3>{{ t('basic_translations', 'Basic Translations') }}</h3>
+                </div>
+                <div class="card-body">
+                    <p>{{ t('basic_translation_example', 'This text is translated using the basic translation system.') }}</p>
+                    
+                    <h5>{{ t('navigation_items', 'Navigation Items') }}</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item">{{ t('home', 'Home') }}</li>
+                        <li class="list-group-item">{{ t('dashboard', 'Dashboard') }}</li>
+                        <li class="list-group-item">{{ t('techniques', 'Techniques') }}</li>
+                        <li class="list-group-item">{{ t('exercises', 'Exercises') }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3>{{ t('multilingual_content', 'Multilingual Content') }}</h3>
+                </div>
+                <div class="card-body">
+                    <h5>{{ t('multilingual_example', 'Multiple Languages in One Component') }}</h5>
+                    
+                    {{ i18n.multilingual_text({
+                        'en': 'This text appears only in English',
+                        'es': 'Este texto aparece solo en español',
+                        'fr': 'Ce texte apparaît uniquement en français',
+                        'de': 'Dieser Text erscheint nur auf Deutsch',
+                        'zh': '这段文字只在中文显示',
+                        'ja': 'このテキストは日本語でのみ表示されます',
+                        'ru': 'Этот текст отображается только на русском языке',
+                        'pt': 'Este texto aparece apenas em português',
+                        'ar': 'هذا النص يظهر فقط باللغة العربية'
+                    }) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3>{{ t('date_formatting', 'Date Formatting') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5>{{ t('today', 'Today') }}</h5>
+                        {{ i18n.format_date_component(now) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>{{ t('current_time', 'Current Time') }}</h5>
+                        {{ i18n.format_time_component(now) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>{{ t('full_datetime', 'Full Date and Time') }}</h5>
+                        {{ i18n.format_datetime_component(now) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3>{{ t('number_formatting', 'Number Formatting') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5>{{ t('large_number', 'Large Number') }}</h5>
+                        {{ i18n.format_number_component(1234567.89) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>{{ t('currency', 'Currency') }}</h5>
+                        {{ i18n.format_currency_component(1234.56) }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>{{ t('percentage', 'Percentage') }}</h5>
+                        {{ i18n.format_percent_component(0.7523) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-header bg-light">
+                    <h3>{{ t('rtl_support', 'Right-to-Left Support') }}</h3>
+                </div>
+                <div class="card-body">
+                    <p>{{ t('rtl_explanation', 'The framework automatically handles right-to-left languages like Arabic.') }}</p>
+                    
+                    <div class="card card-body bg-light mb-3">
+                        <!-- Arabic sample text -->
+                        {{ i18n.multilingual_text({
+                            'en': 'This text will be displayed left-to-right in English.',
+                            'ar': 'سيتم عرض هذا النص من اليمين إلى اليسار باللغة العربية.'
+                        }) }}
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ t('rtl_note', 'Note: When viewing in Arabic, the entire interface will switch to right-to-left layout.') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-header bg-light">
+                    <h3>{{ t('language_specific_content', 'Language-Specific Content') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% call i18n.language_specific('en') %}
+                        <div class="alert alert-success mb-3">
+                            <strong>English-only content:</strong> This content only appears when the language is set to English.
+                        </div>
+                    {% endcall %}
+                    
+                    {% call i18n.language_specific('es') %}
+                        <div class="alert alert-success mb-3">
+                            <strong>Contenido solo en español:</strong> Este contenido solo aparece cuando el idioma está configurado en español.
+                        </div>
+                    {% endcall %}
+                    
+                    {% call i18n.language_specific('fr') %}
+                        <div class="alert alert-success mb-3">
+                            <strong>Contenu uniquement en français:</strong> Ce contenu n'apparaît que lorsque la langue est définie sur le français.
+                        </div>
+                    {% endcall %}
+                    
+                    {% call i18n.language_specific('de') %}
+                        <div class="alert alert-success mb-3">
+                            <strong>Nur deutschsprachiger Inhalt:</strong> Dieser Inhalt erscheint nur, wenn die Sprache auf Deutsch eingestellt ist.
+                        </div>
+                    {% endcall %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

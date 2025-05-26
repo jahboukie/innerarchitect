@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+{# Import i18n components #}
+{% import 'i18n_components.html' as i18n %}
 <html lang="{{ g.language }}" data-bs-theme="light" {% if g.is_rtl %}dir="rtl"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}</title>
+    <title>{% block title %}{{ t('app_name', 'The Inner Architect') }}{% endblock %}</title>
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="A tool for cognitive reframing and emotional well-being">
@@ -33,6 +35,9 @@
     
     <!-- Premium feature styling -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css') }}">
+    
+    <!-- Internationalization styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/i18n.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -121,20 +126,7 @@
 
                     <div class="d-flex align-items-center ms-lg-4">
                         <!-- Language Dropdown -->
-                        <div class="dropdown me-2">
-                            <button class="btn btn-sm btn-outline-primary dropdown-toggle rounded-pill" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-globe me-1"></i> {{ g.language|upper }}
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-light" aria-labelledby="languageDropdown">
-                                {% for code, name in g.languages.items() %}
-                                <li>
-                                    <a class="dropdown-item {% if g.language == code %}active{% endif %}" href="{{ url_for('set_language', lang_code=code) }}">
-                                        {{ name }}
-                                    </a>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+                        {{ i18n.language_selector() }}
                         
                         <!-- Authentication -->
                         {% if current_user.is_authenticated %}
