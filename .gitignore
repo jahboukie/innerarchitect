@@ -130,4 +130,4 @@ node_modules/
 # Temporary files
 *.tmp
 *.swp
-*~
+*~.github/workflows/
