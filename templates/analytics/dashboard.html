@@ -1,0 +1,1822 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard - The Inner Architect{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<style>
+.dashboard-card {
+    height: 100%;
+    transition: all 0.3s;
+}
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+.metric-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.metric-trend {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+}
+.metric-trend-up {
+    background-color: rgba(var(--success-color-rgb), 0.15);
+    color: var(--success-color);
+}
+.metric-trend-down {
+    background-color: rgba(var(--danger-color-rgb), 0.15);
+    color: var(--danger-color);
+}
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+.dashboard-nav .nav-link {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    border-radius: 10px;
+    margin: 0 5px;
+    transition: all 0.2s;
+}
+.dashboard-nav .nav-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+}
+.dashboard-nav .nav-link.active {
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Analytics Dashboard</h1>
+        
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Last 30 Days
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="timeRangeDropdown">
+                <li><a class="dropdown-item" href="?time_range=7d">Last 7 Days</a></li>
+                <li><a class="dropdown-item" href="?time_range=30d">Last 30 Days</a></li>
+                <li><a class="dropdown-item" href="?time_range=90d">Last 90 Days</a></li>
+                <li><a class="dropdown-item" href="?time_range=1y">Last Year</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <ul class="nav dashboard-nav mb-4">
+        <li class="nav-item">
+            <a class="nav-link active" id="overview-tab" data-bs-toggle="tab" href="#overview">Overview</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="user-engagement-tab" data-bs-toggle="tab" href="#user-engagement">User Engagement</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="technique-effectiveness-tab" data-bs-toggle="tab" href="#technique-effectiveness">Technique Effectiveness</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="user-progress-tab" data-bs-toggle="tab" href="#user-progress">User Progress</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="business-metrics-tab" data-bs-toggle="tab" href="#business-metrics">Business Metrics</a>
+        </li>
+    </ul>
+    
+    <div class="tab-content">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview">
+            <div class="row g-4">
+                <!-- Key Metrics -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Active Users</div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="metric-value" id="active-users">--</div>
+                                <div class="metric-trend metric-trend-up" id="active-users-trend">
+                                    <i class="fas fa-arrow-up me-1"></i> <span>--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Message Count</div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="metric-value" id="message-count">--</div>
+                                <div class="metric-trend metric-trend-up" id="message-count-trend">
+                                    <i class="fas fa-arrow-up me-1"></i> <span>--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Technique Effectiveness</div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="metric-value" id="technique-rating">--</div>
+                                <div class="metric-trend metric-trend-up" id="technique-rating-trend">
+                                    <i class="fas fa-arrow-up me-1"></i> <span>--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Premium Conversion</div>
+                            <div class="d-flex align-items-baseline">
+                                <div class="metric-value" id="premium-conversion">--</div>
+                                <div class="metric-trend metric-trend-up" id="premium-conversion-trend">
+                                    <i class="fas fa-arrow-up me-1"></i> <span>--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Activity Chart -->
+                <div class="col-lg-8">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">User Activity</h5>
+                            <div class="chart-container">
+                                <canvas id="userActivityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Technique Distribution Chart -->
+                <div class="col-lg-4">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Technique Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="techniqueDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Segments -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">User Segments</h5>
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-3">By Engagement</h6>
+                                    <div id="engagement-segments">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Active</span>
+                                            <span id="active-segment">--</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Engaged</span>
+                                            <span id="engaged-segment">--</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Dormant</span>
+                                            <span id="dormant-segment">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-3">By Subscription</h6>
+                                    <div id="subscription-segments">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Free</span>
+                                            <span id="free-segment">--</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Premium</span>
+                                            <span id="premium-segment">--</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Professional</span>
+                                            <span id="professional-segment">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <h6 class="text-muted mb-3">By Onboarding</h6>
+                                    <div id="onboarding-segments">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Completed</span>
+                                            <span id="completed-segment">--</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Incomplete</span>
+                                            <span id="incomplete-segment">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Latest Insights -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Latest Insights</h5>
+                            <div id="insights-container" class="mt-3">
+                                <div class="insight-item p-3 rounded mb-3 bg-light">
+                                    <h6>Conversion Opportunities</h6>
+                                    <p class="mb-1">Users with high engagement who are still on the free tier</p>
+                                    <div class="small text-muted">Top user: <span class="fw-medium">user123@example.com</span> (75 messages)</div>
+                                </div>
+                                
+                                <div class="insight-item p-3 rounded mb-3 bg-light">
+                                    <h6>Churn Risk</h6>
+                                    <p class="mb-1">Premium users with decreasing engagement</p>
+                                    <div class="small text-muted">Top concern: <span class="fw-medium">premium@example.com</span> (5 msgs, down from 35)</div>
+                                </div>
+                                
+                                <div class="insight-item p-3 rounded mb-3 bg-light">
+                                    <h6>Most Improved Users</h6>
+                                    <p class="mb-1">Users with the biggest improvement in exercise completion rate</p>
+                                    <div class="small text-muted">Best progress: <span class="fw-medium">improving@example.com</span> (80% up from 30%)</div>
+                                </div>
+                            </div>
+                            <a href="/analytics/user-insights" class="btn btn-sm btn-outline-primary mt-2">View All Insights</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Engagement Tab -->
+        <div class="tab-pane fade" id="user-engagement">
+            <div class="row g-4">
+                <!-- Metrics -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Active Users</div>
+                            <div class="metric-value" id="ue-active-users">--</div>
+                            <div class="small text-muted mt-2">Out of <span id="ue-total-users">--</span> total users</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Active Rate</div>
+                            <div class="metric-value" id="ue-active-rate">--</div>
+                            <div class="small text-muted mt-2">Users active in selected period</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Avg. Sessions</div>
+                            <div class="metric-value" id="ue-avg-sessions">--</div>
+                            <div class="small text-muted mt-2">Per active user</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Avg. Duration</div>
+                            <div class="metric-value" id="ue-avg-duration">--</div>
+                            <div class="small text-muted mt-2">Per session</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Engagement Chart -->
+                <div class="col-lg-8">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">User Engagement Trends</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" data-metric="active-users">Active Users</button>
+                                    <button type="button" class="btn btn-outline-primary" data-metric="message-counts">Message Count</button>
+                                    <button type="button" class="btn btn-outline-primary" data-metric="avg-messages">Avg. Messages</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="userEngagementChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- New Users Chart -->
+                <div class="col-lg-4">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">New Users</h5>
+                            <div class="chart-container">
+                                <canvas id="newUsersChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Message Distribution by Hour -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Message Distribution by Hour</h5>
+                            <div class="chart-container">
+                                <canvas id="messageDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Retention -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">User Retention</h5>
+                            <div class="chart-container">
+                                <canvas id="userRetentionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Technique Effectiveness Tab -->
+        <div class="tab-pane fade" id="technique-effectiveness">
+            <div class="row g-4">
+                <!-- Metrics -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Most Used Technique</div>
+                            <div class="metric-value text-truncate" id="te-most-used">--</div>
+                            <div class="small text-muted mt-2">Used <span id="te-most-used-count">--</span> times</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Highest Rated</div>
+                            <div class="metric-value text-truncate" id="te-highest-rated">--</div>
+                            <div class="small text-muted mt-2">Average rating: <span id="te-highest-rating">--</span>/5</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Overall Rating</div>
+                            <div class="metric-value" id="te-overall-rating">--</div>
+                            <div class="small text-muted mt-2">Average across all techniques</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Techniques Used</div>
+                            <div class="metric-value" id="te-techniques-count">--</div>
+                            <div class="small text-muted mt-2">Different techniques applied</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Technique Usage Chart -->
+                <div class="col-lg-8">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Technique Usage & Effectiveness</h5>
+                            <div class="chart-container">
+                                <canvas id="techniqueUsageChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rating Distribution -->
+                <div class="col-lg-4">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Rating Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="ratingDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Technique by Mood -->
+                <div class="col-12">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Technique Effectiveness by Mood</h5>
+                            <div class="chart-container">
+                                <canvas id="techniqueMoodChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Progress Tab -->
+        <div class="tab-pane fade" id="user-progress">
+            <div class="row g-4">
+                <!-- Metrics -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Completed Exercises</div>
+                            <div class="metric-value" id="up-completed-exercises">--</div>
+                            <div class="small text-muted mt-2">In selected time period</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Completion Rate</div>
+                            <div class="metric-value" id="up-completion-rate">--</div>
+                            <div class="small text-muted mt-2">Started vs. completed</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Avg. Completion Time</div>
+                            <div class="metric-value" id="up-avg-completion-time">--</div>
+                            <div class="small text-muted mt-2">Per exercise</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Most Popular Exercise</div>
+                            <div class="metric-value text-truncate" id="up-most-popular">--</div>
+                            <div class="small text-muted mt-2">Most started exercise</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exercise Completion Trend -->
+                <div class="col-lg-8">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Exercise Completion Trend</h5>
+                            <div class="chart-container">
+                                <canvas id="exerciseCompletionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Completion Rates by Exercise -->
+                <div class="col-lg-4">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Completion Rates by Exercise</h5>
+                            <div class="chart-container">
+                                <canvas id="exerciseCompletionRateChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Completion Time by Exercise -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Completion Time by Exercise</h5>
+                            <div class="chart-container">
+                                <canvas id="exerciseTimeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Distribution -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">User Progress Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="progressDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Business Metrics Tab -->
+        <div class="tab-pane fade" id="business-metrics">
+            <div class="row g-4">
+                <!-- Metrics -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Total Users</div>
+                            <div class="metric-value" id="bm-total-users">--</div>
+                            <div class="small text-muted mt-2">All time</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">New Users</div>
+                            <div class="metric-value" id="bm-new-users">--</div>
+                            <div class="small text-muted mt-2">In selected time period</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Premium Subscriptions</div>
+                            <div class="metric-value" id="bm-premium-subscriptions">--</div>
+                            <div class="small text-muted mt-2">Active premium or professional</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="metric-label">Premium Conversion</div>
+                            <div class="metric-value" id="bm-premium-conversion">--</div>
+                            <div class="small text-muted mt-2">Of total users</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Growth Trends -->
+                <div class="col-lg-8">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">Growth Trends</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" data-metric="new-users">New Users</button>
+                                    <button type="button" class="btn btn-outline-primary" data-metric="new-premium">New Premium</button>
+                                    <button type="button" class="btn btn-outline-primary" data-metric="conversion-rate">Conversion Rate</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="growthTrendsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Subscription Distribution -->
+                <div class="col-lg-4">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Subscription Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="subscriptionDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Retention Cohort Analysis -->
+                <div class="col-12">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">User Retention Cohort Analysis</h5>
+                            <div class="chart-container">
+                                <canvas id="retentionCohortChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Key Business Metrics -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Key Business Metrics</h5>
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-medium">User Retention Rate</span>
+                                    <span class="badge bg-primary" id="bm-retention-rate">--</span>
+                                </div>
+                                <div class="progress mb-4" style="height: 8px;">
+                                    <div class="progress-bar" id="bm-retention-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-medium">New Premium Subscriptions</span>
+                                    <span class="badge bg-success" id="bm-new-premium-subs">--</span>
+                                </div>
+                                <div class="progress mb-4" style="height: 8px;">
+                                    <div class="progress-bar bg-success" id="bm-new-premium-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-medium">Premium Conversion Rate</span>
+                                    <span class="badge bg-info" id="bm-conversion-rate">--</span>
+                                </div>
+                                <div class="progress mb-4" style="height: 8px;">
+                                    <div class="progress-bar bg-info" id="bm-conversion-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Subscription Forecast -->
+                <div class="col-lg-6">
+                    <div class="card dashboard-card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="card-title">Subscription Forecast</h5>
+                            <div class="chart-container">
+                                <canvas id="subscriptionForecastChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Initialize charts and load data
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart.js global configuration
+        Chart.defaults.font.family = 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.color = '#6c757d';
+        Chart.defaults.scale.grid.color = 'rgba(0, 0, 0, 0.05)';
+        
+        // Set color palette
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+        const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+        const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim();
+        const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim();
+        const infoColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color').trim();
+        const warningColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim();
+        
+        // Opacity variants
+        const primaryColorLight = `${primaryColor}40`;
+        const secondaryColorLight = `${secondaryColor}40`;
+        const successColorLight = `${successColor}40`;
+        const dangerColorLight = `${dangerColor}40`;
+        const infoColorLight = `${infoColor}40`;
+        const warningColorLight = `${warningColor}40`;
+        
+        // Get the time range from URL or default to 30d
+        const urlParams = new URLSearchParams(window.location.search);
+        const timeRange = urlParams.get('time_range') || '30d';
+        
+        // Update dropdown text
+        const timeRangeDropdown = document.getElementById('timeRangeDropdown');
+        if (timeRangeDropdown) {
+            if (timeRange === '7d') {
+                timeRangeDropdown.textContent = 'Last 7 Days';
+            } else if (timeRange === '90d') {
+                timeRangeDropdown.textContent = 'Last 90 Days';
+            } else if (timeRange === '1y') {
+                timeRangeDropdown.textContent = 'Last Year';
+            } else {
+                timeRangeDropdown.textContent = 'Last 30 Days';
+            }
+        }
+        
+        // Load overview data
+        loadOverviewData();
+        
+        // Initialize tab change listeners
+        const tabEls = document.querySelectorAll('.nav-link[data-bs-toggle="tab"]');
+        tabEls.forEach(el => {
+            el.addEventListener('shown.bs.tab', function (event) {
+                const targetId = event.target.getAttribute('href').substring(1);
+                
+                // Load data for the selected tab
+                if (targetId === 'user-engagement') {
+                    loadUserEngagementData();
+                } else if (targetId === 'technique-effectiveness') {
+                    loadTechniqueEffectivenessData();
+                } else if (targetId === 'user-progress') {
+                    loadUserProgressData();
+                } else if (targetId === 'business-metrics') {
+                    loadBusinessMetricsData();
+                }
+            });
+        });
+        
+        // Initialize overview tab charts
+        initOverviewCharts();
+        
+        // Functions to load data and initialize charts for each tab
+        function loadOverviewData() {
+            // Simulate API calls to load data
+            // In a real implementation, these would be actual API calls
+            
+            // Set sample key metrics
+            document.getElementById('active-users').textContent = '547';
+            document.getElementById('active-users-trend').innerHTML = '<i class="fas fa-arrow-up me-1"></i> <span>12%</span>';
+            
+            document.getElementById('message-count').textContent = '12,854';
+            document.getElementById('message-count-trend').innerHTML = '<i class="fas fa-arrow-up me-1"></i> <span>8%</span>';
+            
+            document.getElementById('technique-rating').textContent = '4.3';
+            document.getElementById('technique-rating-trend').innerHTML = '<i class="fas fa-arrow-up me-1"></i> <span>0.2</span>';
+            
+            document.getElementById('premium-conversion').textContent = '18.5%';
+            document.getElementById('premium-conversion-trend').innerHTML = '<i class="fas fa-arrow-up me-1"></i> <span>2.3%</span>';
+            
+            // Set user segments
+            document.getElementById('active-segment').textContent = '547';
+            document.getElementById('engaged-segment').textContent = '328';
+            document.getElementById('dormant-segment').textContent = '425';
+            
+            document.getElementById('free-segment').textContent = '1,065';
+            document.getElementById('premium-segment').textContent = '178';
+            document.getElementById('professional-segment').textContent = '57';
+            
+            document.getElementById('completed-segment').textContent = '1,125';
+            document.getElementById('incomplete-segment').textContent = '175';
+            
+            // Update chart data
+            updateUserActivityChart();
+            updateTechniqueDistributionChart();
+        }
+        
+        function loadUserEngagementData() {
+            // Set metrics
+            document.getElementById('ue-active-users').textContent = '547';
+            document.getElementById('ue-total-users').textContent = '1,300';
+            document.getElementById('ue-active-rate').textContent = '42.1%';
+            document.getElementById('ue-avg-sessions').textContent = '3.8';
+            document.getElementById('ue-avg-duration').textContent = '12.5 min';
+            
+            // Update chart data
+            updateUserEngagementChart();
+            updateNewUsersChart();
+            updateMessageDistributionChart();
+            updateUserRetentionChart();
+        }
+        
+        function loadTechniqueEffectivenessData() {
+            // Set metrics
+            document.getElementById('te-most-used').textContent = 'Reframing';
+            document.getElementById('te-most-used-count').textContent = '4,582';
+            document.getElementById('te-highest-rated').textContent = 'Anchoring';
+            document.getElementById('te-highest-rating').textContent = '4.7';
+            document.getElementById('te-overall-rating').textContent = '4.3/5';
+            document.getElementById('te-techniques-count').textContent = '8';
+            
+            // Update chart data
+            updateTechniqueUsageChart();
+            updateRatingDistributionChart();
+            updateTechniqueMoodChart();
+        }
+        
+        function loadUserProgressData() {
+            // Set metrics
+            document.getElementById('up-completed-exercises').textContent = '2,547';
+            document.getElementById('up-completion-rate').textContent = '68.3%';
+            document.getElementById('up-avg-completion-time').textContent = '18.5 min';
+            document.getElementById('up-most-popular').textContent = 'Confidence Anchor';
+            
+            // Update chart data
+            updateExerciseCompletionChart();
+            updateExerciseCompletionRateChart();
+            updateExerciseTimeChart();
+            updateProgressDistributionChart();
+        }
+        
+        function loadBusinessMetricsData() {
+            // Set metrics
+            document.getElementById('bm-total-users').textContent = '1,300';
+            document.getElementById('bm-new-users').textContent = '245';
+            document.getElementById('bm-premium-subscriptions').textContent = '235';
+            document.getElementById('bm-premium-conversion').textContent = '18.1%';
+            
+            // Set business KPIs
+            document.getElementById('bm-retention-rate').textContent = '76.8%';
+            document.getElementById('bm-retention-progress').style.width = '76.8%';
+            document.getElementById('bm-retention-progress').setAttribute('aria-valuenow', '76.8');
+            
+            document.getElementById('bm-new-premium-subs').textContent = '45';
+            document.getElementById('bm-new-premium-progress').style.width = '45%';
+            document.getElementById('bm-new-premium-progress').setAttribute('aria-valuenow', '45');
+            
+            document.getElementById('bm-conversion-rate').textContent = '18.1%';
+            document.getElementById('bm-conversion-progress').style.width = '18.1%';
+            document.getElementById('bm-conversion-progress').setAttribute('aria-valuenow', '18.1');
+            
+            // Update chart data
+            updateGrowthTrendsChart();
+            updateSubscriptionDistributionChart();
+            updateRetentionCohortChart();
+            updateSubscriptionForecastChart();
+        }
+        
+        // Initialize overview tab charts
+        function initOverviewCharts() {
+            // Initialize charts with empty data
+            // They will be updated when data is loaded
+            
+            // User Activity Chart
+            const userActivityCtx = document.getElementById('userActivityChart').getContext('2d');
+            window.userActivityChart = new Chart(userActivityCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Active Users',
+                        data: [],
+                        borderColor: primaryColor,
+                        backgroundColor: primaryColorLight,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Technique Distribution Chart
+            const techniqueDistributionCtx = document.getElementById('techniqueDistributionChart').getContext('2d');
+            window.techniqueDistributionChart = new Chart(techniqueDistributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            primaryColor,
+                            successColor,
+                            infoColor,
+                            warningColor,
+                            dangerColor,
+                            secondaryColor,
+                            primaryColorLight,
+                            successColorLight
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+            
+            // Initialize other charts for tabs
+            initUserEngagementCharts();
+            initTechniqueEffectivenessCharts();
+            initUserProgressCharts();
+            initBusinessMetricsCharts();
+        }
+        
+        // Initialize User Engagement tab charts
+        function initUserEngagementCharts() {
+            // User Engagement Chart
+            const userEngagementCtx = document.getElementById('userEngagementChart').getContext('2d');
+            window.userEngagementChart = new Chart(userEngagementCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Active Users',
+                        data: [],
+                        borderColor: primaryColor,
+                        backgroundColor: primaryColorLight,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // New Users Chart
+            const newUsersCtx = document.getElementById('newUsersChart').getContext('2d');
+            window.newUsersChart = new Chart(newUsersCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [],
+                        backgroundColor: successColor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Message Distribution Chart
+            const messageDistributionCtx = document.getElementById('messageDistributionChart').getContext('2d');
+            window.messageDistributionChart = new Chart(messageDistributionCtx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Messages',
+                        data: [],
+                        backgroundColor: infoColor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // User Retention Chart
+            const userRetentionCtx = document.getElementById('userRetentionChart').getContext('2d');
+            window.userRetentionChart = new Chart(userRetentionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 3', 'Day 7', 'Day 14', 'Day 30', 'Day 60', 'Day 90'],
+                    datasets: [{
+                        label: 'Retention Rate',
+                        data: [],
+                        borderColor: primaryColor,
+                        backgroundColor: primaryColorLight,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize Technique Effectiveness tab charts
+        function initTechniqueEffectivenessCharts() {
+            // Technique Usage Chart
+            const techniqueUsageCtx = document.getElementById('techniqueUsageChart').getContext('2d');
+            window.techniqueUsageChart = new Chart(techniqueUsageCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Usage Count',
+                            data: [],
+                            backgroundColor: primaryColor,
+                            order: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Avg. Rating',
+                            data: [],
+                            backgroundColor: 'rgba(0, 0, 0, 0)',
+                            borderColor: successColor,
+                            borderWidth: 2,
+                            type: 'line',
+                            order: 0,
+                            yAxisID: 'y1',
+                            pointBackgroundColor: successColor
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Usage Count'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            min: 0,
+                            max: 5,
+                            title: {
+                                display: true,
+                                text: 'Avg. Rating (0-5)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Rating Distribution Chart
+            const ratingDistributionCtx = document.getElementById('ratingDistributionChart').getContext('2d');
+            window.ratingDistributionChart = new Chart(ratingDistributionCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Reframing', 'Anchoring', 'Pattern Interruption', 'Future Pacing', 'Sensory Language'],
+                    datasets: [{
+                        label: 'Avg. Rating',
+                        data: [],
+                        backgroundColor: primaryColorLight,
+                        borderColor: primaryColor,
+                        pointBackgroundColor: primaryColor,
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: primaryColor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Technique by Mood Chart
+            const techniqueMoodCtx = document.getElementById('techniqueMoodChart').getContext('2d');
+            window.techniqueMoodChart = new Chart(techniqueMoodCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize User Progress tab charts
+        function initUserProgressCharts() {
+            // Exercise Completion Chart
+            const exerciseCompletionCtx = document.getElementById('exerciseCompletionChart').getContext('2d');
+            window.exerciseCompletionChart = new Chart(exerciseCompletionCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Started',
+                            data: [],
+                            borderColor: primaryColor,
+                            backgroundColor: 'rgba(0, 0, 0, 0)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Completed',
+                            data: [],
+                            borderColor: successColor,
+                            backgroundColor: 'rgba(0, 0, 0, 0)',
+                            borderWidth: 2,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Exercise Completion Rate Chart
+            const exerciseCompletionRateCtx = document.getElementById('exerciseCompletionRateChart').getContext('2d');
+            window.exerciseCompletionRateChart = new Chart(exerciseCompletionRateCtx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Completion Rate',
+                        data: [],
+                        backgroundColor: [
+                            primaryColor,
+                            successColor,
+                            infoColor,
+                            warningColor,
+                            dangerColor
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Exercise Time Chart
+            const exerciseTimeCtx = document.getElementById('exerciseTimeChart').getContext('2d');
+            window.exerciseTimeChart = new Chart(exerciseTimeCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Avg. Completion Time (min)',
+                        data: [],
+                        backgroundColor: infoColor
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Progress Distribution Chart
+            const progressDistributionCtx = document.getElementById('progressDistributionChart').getContext('2d');
+            window.progressDistributionChart = new Chart(progressDistributionCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Not Started', 'In Progress', 'Completed'],
+                    datasets: [{
+                        data: [30, 40, 30],
+                        backgroundColor: [
+                            dangerColorLight,
+                            warningColor,
+                            successColor
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize Business Metrics tab charts
+        function initBusinessMetricsCharts() {
+            // Growth Trends Chart
+            const growthTrendsCtx = document.getElementById('growthTrendsChart').getContext('2d');
+            window.growthTrendsChart = new Chart(growthTrendsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [],
+                        borderColor: primaryColor,
+                        backgroundColor: primaryColorLight,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Subscription Distribution Chart
+            const subscriptionDistributionCtx = document.getElementById('subscriptionDistributionChart').getContext('2d');
+            window.subscriptionDistributionChart = new Chart(subscriptionDistributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Free', 'Premium', 'Professional'],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            secondaryColor,
+                            primaryColor,
+                            successColor
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+            
+            // Retention Cohort Chart
+            const retentionCohortCtx = document.getElementById('retentionCohortChart').getContext('2d');
+            window.retentionCohortChart = new Chart(retentionCohortCtx, {
+                type: 'heatmap',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+                    datasets: [{
+                        label: 'Cohort 1',
+                        data: []
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+            
+            // Subscription Forecast Chart
+            const subscriptionForecastCtx = document.getElementById('subscriptionForecastChart').getContext('2d');
+            window.subscriptionForecastChart = new Chart(subscriptionForecastCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Current', '+1 Month', '+2 Months', '+3 Months', '+4 Months', '+5 Months', '+6 Months'],
+                    datasets: [{
+                        label: 'Premium Subscriptions',
+                        data: [235, 260, 290, 325, 365, 410, 460],
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(0, 0, 0, 0)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update chart data functions
+        function updateUserActivityChart() {
+            // Simulate API data
+            const labels = ['Jun 1', 'Jun 2', 'Jun 3', 'Jun 4', 'Jun 5', 'Jun 6', 'Jun 7', 'Jun 8', 'Jun 9', 'Jun 10', 'Jun 11', 'Jun 12', 'Jun 13', 'Jun 14'];
+            const data = [320, 345, 380, 410, 390, 405, 425, 450, 475, 490, 510, 500, 520, 547];
+            
+            window.userActivityChart.data.labels = labels;
+            window.userActivityChart.data.datasets[0].data = data;
+            window.userActivityChart.update();
+        }
+        
+        function updateTechniqueDistributionChart() {
+            // Simulate API data
+            const labels = ['Reframing', 'Anchoring', 'Pattern Interruption', 'Future Pacing', 'Sensory Language', 'Other'];
+            const data = [40, 25, 15, 10, 7, 3];
+            
+            window.techniqueDistributionChart.data.labels = labels;
+            window.techniqueDistributionChart.data.datasets[0].data = data;
+            window.techniqueDistributionChart.update();
+        }
+        
+        function updateUserEngagementChart() {
+            // Simulate API data
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const activeUsers = [420, 480, 510, 547];
+            const messageCounts = [8500, 9800, 11200, 12854];
+            const avgMessages = [20.2, 20.4, 22.0, 23.5];
+            
+            window.userEngagementChart.data.labels = labels;
+            window.userEngagementChart.data.datasets[0].data = activeUsers;
+            
+            // Set up click handlers for metric buttons if not already set
+            const metricBtns = document.querySelectorAll('[data-metric]');
+            metricBtns.forEach(btn => {
+                if (!btn.hasEventListener) {
+                    btn.hasEventListener = true;
+                    btn.addEventListener('click', function() {
+                        // Remove active class from all buttons
+                        metricBtns.forEach(b => b.classList.remove('active'));
+                        // Add active class to clicked button
+                        this.classList.add('active');
+                        
+                        // Update chart based on selected metric
+                        const metric = this.getAttribute('data-metric');
+                        if (metric === 'active-users') {
+                            window.userEngagementChart.data.datasets[0].label = 'Active Users';
+                            window.userEngagementChart.data.datasets[0].data = activeUsers;
+                        } else if (metric === 'message-counts') {
+                            window.userEngagementChart.data.datasets[0].label = 'Message Count';
+                            window.userEngagementChart.data.datasets[0].data = messageCounts;
+                        } else if (metric === 'avg-messages') {
+                            window.userEngagementChart.data.datasets[0].label = 'Avg. Messages per User';
+                            window.userEngagementChart.data.datasets[0].data = avgMessages;
+                        }
+                        
+                        window.userEngagementChart.update();
+                    });
+                }
+            });
+            
+            window.userEngagementChart.update();
+        }
+        
+        function updateNewUsersChart() {
+            // Simulate API data
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const data = [65, 85, 50, 45];
+            
+            window.newUsersChart.data.labels = labels;
+            window.newUsersChart.data.datasets[0].data = data;
+            window.newUsersChart.update();
+        }
+        
+        function updateMessageDistributionChart() {
+            // Simulate API data - message distribution by hour
+            const data = [
+                10, 5, 3, 2, 1, 8,
+                20, 45, 72, 85, 78, 65,
+                70, 82, 76, 68, 75, 95,
+                87, 65, 45, 30, 25, 15
+            ];
+            
+            window.messageDistributionChart.data.datasets[0].data = data;
+            window.messageDistributionChart.update();
+        }
+        
+        function updateUserRetentionChart() {
+            // Simulate API data
+            const data = [100, 68, 52, 43, 35, 30, 28];
+            
+            window.userRetentionChart.data.datasets[0].data = data;
+            window.userRetentionChart.update();
+        }
+        
+        function updateTechniqueUsageChart() {
+            // Simulate API data
+            const labels = ['Reframing', 'Anchoring', 'Pattern Interruption', 'Future Pacing', 'Sensory Language'];
+            const usageCounts = [4582, 3120, 1845, 1245, 895];
+            const avgRatings = [4.5, 4.7, 4.3, 4.1, 4.2];
+            
+            window.techniqueUsageChart.data.labels = labels;
+            window.techniqueUsageChart.data.datasets[0].data = usageCounts;
+            window.techniqueUsageChart.data.datasets[1].data = avgRatings;
+            window.techniqueUsageChart.update();
+        }
+        
+        function updateRatingDistributionChart() {
+            // Simulate API data
+            const data = [4.5, 4.7, 4.3, 4.1, 4.2];
+            
+            window.ratingDistributionChart.data.datasets[0].data = data;
+            window.ratingDistributionChart.update();
+        }
+        
+        function updateTechniqueMoodChart() {
+            // Simulate API data
+            const labels = ['Reframing', 'Anchoring', 'Pattern Interruption', 'Future Pacing', 'Sensory Language'];
+            const moods = ['Anxious', 'Frustrated', 'Sad', 'Confident', 'Neutral'];
+            
+            // Create datasets for each mood
+            const datasets = moods.map((mood, index) => {
+                // Generate random data for each technique and mood
+                const data = labels.map(() => Math.floor(Math.random() * 100) + 20);
+                
+                // Different color for each mood
+                const colors = [primaryColor, successColor, dangerColor, infoColor, secondaryColor];
+                
+                return {
+                    label: mood,
+                    data: data,
+                    backgroundColor: colors[index]
+                };
+            });
+            
+            window.techniqueMoodChart.data.labels = labels;
+            window.techniqueMoodChart.data.datasets = datasets;
+            window.techniqueMoodChart.update();
+        }
+        
+        function updateExerciseCompletionChart() {
+            // Simulate API data
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const startData = [750, 820, 785, 865];
+            const completionData = [520, 585, 530, 615];
+            
+            window.exerciseCompletionChart.data.labels = labels;
+            window.exerciseCompletionChart.data.datasets[0].data = startData;
+            window.exerciseCompletionChart.data.datasets[1].data = completionData;
+            window.exerciseCompletionChart.update();
+        }
+        
+        function updateExerciseCompletionRateChart() {
+            // Simulate API data
+            const labels = ['Confidence Anchor', 'Reframing Practice', 'Pattern Interruption', 'Future Pacing', 'Sensory Awareness'];
+            const data = [85, 78, 65, 72, 58];
+            
+            // Create horizontal bar chart
+            const chart = Chart.getChart('exerciseCompletionRateChart');
+            if (chart) {
+                chart.destroy();
+            }
+            
+            const ctx = document.getElementById('exerciseCompletionRateChart').getContext('2d');
+            window.exerciseCompletionRateChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Completion Rate',
+                        data: data,
+                        backgroundColor: [
+                            primaryColor,
+                            successColor,
+                            infoColor,
+                            warningColor,
+                            dangerColor
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateExerciseTimeChart() {
+            // Simulate API data
+            const labels = ['Confidence Anchor', 'Reframing Practice', 'Pattern Interruption', 'Future Pacing', 'Sensory Awareness'];
+            const data = [22.5, 18.3, 15.8, 25.2, 12.4];
+            
+            window.exerciseTimeChart.data.labels = labels;
+            window.exerciseTimeChart.data.datasets[0].data = data;
+            window.exerciseTimeChart.update();
+        }
+        
+        function updateProgressDistributionChart() {
+            // Simulate API data
+            const data = [30, 40, 30];
+            
+            window.progressDistributionChart.data.datasets[0].data = data;
+            window.progressDistributionChart.update();
+        }
+        
+        function updateGrowthTrendsChart() {
+            // Simulate API data
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const newUsers = [65, 85, 50, 45];
+            const newPremium = [12, 15, 8, 10];
+            const conversionRate = [18.5, 17.6, 16.0, 22.2];
+            
+            window.growthTrendsChart.data.labels = labels;
+            window.growthTrendsChart.data.datasets[0].data = newUsers;
+            
+            // Set up click handlers for metric buttons if not already set
+            const metricBtns = document.querySelectorAll('[data-metric]');
+            metricBtns.forEach(btn => {
+                if (!btn.hasEventListener) {
+                    btn.hasEventListener = true;
+                    btn.addEventListener('click', function() {
+                        // Remove active class from all buttons
+                        metricBtns.forEach(b => b.classList.remove('active'));
+                        // Add active class to clicked button
+                        this.classList.add('active');
+                        
+                        // Update chart based on selected metric
+                        const metric = this.getAttribute('data-metric');
+                        if (metric === 'new-users') {
+                            window.growthTrendsChart.data.datasets[0].label = 'New Users';
+                            window.growthTrendsChart.data.datasets[0].data = newUsers;
+                        } else if (metric === 'new-premium') {
+                            window.growthTrendsChart.data.datasets[0].label = 'New Premium';
+                            window.growthTrendsChart.data.datasets[0].data = newPremium;
+                        } else if (metric === 'conversion-rate') {
+                            window.growthTrendsChart.data.datasets[0].label = 'Conversion Rate';
+                            window.growthTrendsChart.data.datasets[0].data = conversionRate;
+                        }
+                        
+                        window.growthTrendsChart.update();
+                    });
+                }
+            });
+            
+            window.growthTrendsChart.update();
+        }
+        
+        function updateSubscriptionDistributionChart() {
+            // Simulate API data
+            const data = [1065, 178, 57];
+            
+            window.subscriptionDistributionChart.data.datasets[0].data = data;
+            window.subscriptionDistributionChart.update();
+        }
+        
+        function updateRetentionCohortChart() {
+            // Cohort analysis can't be properly represented in Chart.js without plugins
+            // Here's a simple implementation using colors to show retention rates
+            
+            // Destroy existing chart
+            const chart = Chart.getChart('retentionCohortChart');
+            if (chart) {
+                chart.destroy();
+            }
+            
+            // Create a custom HTML table instead
+            const container = document.getElementById('retentionCohortChart').parentNode;
+            const tableContainer = document.createElement('div');
+            tableContainer.style.height = '300px';
+            tableContainer.style.overflowY = 'auto';
+            tableContainer.className = 'table-responsive';
+            
+            const table = document.createElement('table');
+            table.className = 'table table-bordered';
+            table.style.textAlign = 'center';
+            
+            // Create header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<th>Cohort</th><th>Week 1</th><th>Week 2</th><th>Week 3</th><th>Week 4</th><th>Week 5</th><th>Week 6</th><th>Week 7</th><th>Week 8</th>';
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create body
+            const tbody = document.createElement('tbody');
+            
+            // Sample retention data (percentages)
+            const cohorts = ['Jun 1-7', 'Jun 8-14', 'Jun 15-21', 'Jun 22-28', 'Jun 29-Jul 5', 'Jul 6-12', 'Jul 13-19', 'Jul 20-26'];
+            const retentionData = [
+                [100, 68, 52, 43, 35, 30, 28, 26],
+                [100, 72, 58, 48, 40, 35, 32, '-'],
+                [100, 75, 60, 50, 42, 38, '-', '-'],
+                [100, 70, 55, 45, 38, '-', '-', '-'],
+                [100, 68, 52, 43, '-', '-', '-', '-'],
+                [100, 72, 58, '-', '-', '-', '-', '-'],
+                [100, 75, '-', '-', '-', '-', '-', '-'],
+                [100, '-', '-', '-', '-', '-', '-', '-']
+            ];
+            
+            // Create rows
+            cohorts.forEach((cohort, i) => {
+                const row = document.createElement('tr');
+                const cohortCell = document.createElement('th');
+                cohortCell.textContent = cohort;
+                cohortCell.scope = 'row';
+                row.appendChild(cohortCell);
+                
+                // Add cells with retention rates
+                retentionData[i].forEach(rate => {
+                    const cell = document.createElement('td');
+                    
+                    if (rate === '-') {
+                        cell.textContent = '-';
+                        cell.style.backgroundColor = '#f8f9fa';
+                    } else {
+                        cell.textContent = rate + '%';
+                        
+                        // Color based on retention rate
+                        if (rate >= 70) {
+                            cell.style.backgroundColor = successColorLight;
+                        } else if (rate >= 50) {
+                            cell.style.backgroundColor = primaryColorLight;
+                        } else if (rate >= 30) {
+                            cell.style.backgroundColor = warningColorLight;
+                        } else {
+                            cell.style.backgroundColor = dangerColorLight;
+                        }
+                    }
+                    
+                    row.appendChild(cell);
+                });
+                
+                tbody.appendChild(row);
+            });
+            
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+            
+            // Replace canvas with table
+            container.innerHTML = '';
+            container.appendChild(tableContainer);
+        }
+        
+        function updateSubscriptionForecastChart() {
+            // Data is already set in initialization
+            window.subscriptionForecastChart.update();
+        }
+    });
+</script>
+{% endblock %}

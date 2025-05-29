@@ -6,10 +6,10 @@ import json
 import functools
 import logging
 from typing import Any, Dict, Optional, Union, Callable
-from flask import flash, g
+from flask import flash, g, current_app
 
 # Create logger for this module
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('inner_architect.api_fallback')
 
 # Default timeout for API calls (in seconds)
 DEFAULT_TIMEOUT = 15
@@ -57,6 +57,11 @@ def with_retry_and_timeout(
         def wrapper(*args, **kwargs):
             retry_count = 0
             last_error = None
+            provider = kwargs.get('provider', 'unknown')
+            
+            # Extract provider and endpoint for logging
+            module_name = func.__module__.split('.')[-1] if func.__module__ else 'unknown'
+            endpoint = f"{module_name}.{func.__name__}"
             
             while retry_count <= retries:
                 # Set timeout for this API call
@@ -68,8 +73,20 @@ def with_retry_and_timeout(
                     result = func(*args, **kwargs)
                     elapsed_time = time.time() - start_time
                     
-                    # Log successful call with timing
-                    logger.info(f"API call to {func.__name__} succeeded in {elapsed_time:.2f}s")
+                    # Log successful call with timing using the specialized API logger
+                    try:
+                        from inner_architect.app.utils.logging_setup import log_api_call
+                        log_api_call(
+                            provider=provider,
+                            endpoint=endpoint,
+                            duration=elapsed_time,
+                            success=True,
+                            function=func.__name__,
+                            retry_count=retry_count
+                        )
+                    except ImportError:
+                        # Fall back to standard logging if specialized logger not available
+                        logger.info(f"API call to {provider}/{endpoint} succeeded in {elapsed_time:.2f}s (retries: {retry_count})")
                     
                     return result
                     
@@ -81,22 +98,39 @@ def with_retry_and_timeout(
                     # Categorize error
                     if "timeout" in str(e).lower() or elapsed_time >= timeout:
                         error_type = "timeout"
-                        logger.warning(f"API timeout in {func.__name__}: {elapsed_time:.2f}s > {timeout}s")
+                        error_message = f"API timeout in {provider}/{endpoint}: {elapsed_time:.2f}s > {timeout}s"
                     elif "connection" in str(e).lower():
                         error_type = "connection"
-                        logger.warning(f"API connection error in {func.__name__}: {str(e)}")
+                        error_message = f"API connection error in {provider}/{endpoint}: {str(e)}"
                     else:
                         error_type = "response"
-                        logger.warning(f"API response error in {func.__name__}: {str(e)}")
+                        error_message = f"API response error in {provider}/{endpoint}: {str(e)}"
+                    
+                    # Log error
+                    logger.warning(error_message)
                     
                     # Log retry attempt
                     if retry_count <= retries:
                         wait_time = backoff_factor * (2 ** (retry_count - 1))
-                        logger.info(f"Retrying {func.__name__} after {wait_time:.2f}s (attempt {retry_count}/{retries})")
+                        logger.info(f"Retrying {provider}/{endpoint} after {wait_time:.2f}s (attempt {retry_count}/{retries})")
                         time.sleep(wait_time)
                     else:
-                        # Log final failure
-                        logger.error(f"API call to {func.__name__} failed after {retries} retries: {str(last_error)}")
+                        # Log final failure using the specialized API logger
+                        try:
+                            from inner_architect.app.utils.logging_setup import log_api_call
+                            log_api_call(
+                                provider=provider,
+                                endpoint=endpoint,
+                                duration=elapsed_time,
+                                success=False,
+                                error=last_error,
+                                error_type=error_type,
+                                function=func.__name__,
+                                retry_count=retry_count
+                            )
+                        except ImportError:
+                            # Fall back to standard logging if specialized logger not available
+                            logger.error(f"API call to {provider}/{endpoint} failed after {retries} retries: {str(last_error)}")
             
             # All retries exhausted, raise appropriate exception
             if "timeout" in str(last_error).lower():

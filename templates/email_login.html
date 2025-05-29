@@ -9,7 +9,7 @@
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
                     <h1 class="h3 mb-4 text-center">Log In</h1>
-                    
+
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
@@ -17,10 +17,10 @@
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
-                    
-                    <form method="POST" action="{{ url_for('email_login') }}">
+
+                    <form method="POST" action="{{ url_for('email_login') }}" id="login-form">
                         {{ form.hidden_tag() }}
-                        
+
                         <div class="mb-3">
                             {{ form.email.label(class="form-label") }}
                             {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="Enter your email") }}
@@ -32,7 +32,7 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <div class="mb-3">
                             {{ form.password.label(class="form-label") }}
                             {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Enter your password") }}
@@ -44,27 +44,61 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
                         <div class="mb-3 form-check">
                             {{ form.remember_me(class="form-check-input") }}
                             {{ form.remember_me.label(class="form-check-label") }}
                         </div>
-                        
+
                         <div class="d-grid gap-2">
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>
-                    
+
                     <hr class="my-4">
-                    
+
                     <div class="text-center">
                         <p>Don't have an account? <a href="{{ url_for('email_register') }}">Register here</a></p>
                         <p><a href="{{ url_for('reset_password_request') }}">Forgot your password?</a></p>
-                        <p>Or sign in with <a href="{{ url_for('replit_auth.login') }}">Replit Auth</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('login-form');
+    const submitBtn = form.querySelector('input[type="submit"]');
+
+    console.log('🔧 Login form loaded');
+    console.log('Form action:', form.action);
+    console.log('Submit button:', submitBtn);
+
+    form.addEventListener('submit', function(e) {
+        console.log('🚀 Login form submission started');
+        console.log('Form data:', new FormData(form));
+
+        // Add loading state to button
+        if (submitBtn) {
+            submitBtn.value = 'Logging In...';
+            submitBtn.disabled = true;
+        }
+
+        // Let the form submit normally
+        // Don't prevent default unless there's a validation error
+    });
+
+    // Re-enable button if there's an error
+    window.addEventListener('load', function() {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.value = 'Log In';
+        }
+    });
+});
+</script>
 {% endblock %}

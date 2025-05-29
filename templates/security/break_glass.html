@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Emergency Access Protocol - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-danger text-white py-3">
+                    <h2 class="card-title mb-0 text-center">Emergency Access Protocol</h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-danger mb-4">
+                        <h5 class="alert-heading"><i class="fas fa-exclamation-circle me-2"></i> HIPAA Break Glass Protocol</h5>
+                        <p>You are initiating emergency access to protected health information outside of normal authorization procedures.</p>
+                        <hr>
+                        <p class="mb-0"><strong>Important:</strong> All actions taken during emergency access will be extensively logged and audited. Use this protocol only for legitimate emergencies.</p>
+                    </div>
+                    
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="reason" class="form-label">Detailed Reason for Emergency Access</label>
+                            <textarea name="reason" id="reason" class="form-control" rows="4" required minlength="10"></textarea>
+                            <div class="form-text">Provide a detailed explanation of the emergency situation requiring this access.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Confirm Your Password</label>
+                            <input type="password" name="password" id="password" class="form-control" required>
+                            <div class="form-text">For security verification purposes.</div>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" value="" id="acknowledgment" required>
+                            <label class="form-check-label" for="acknowledgment">
+                                I acknowledge that this access is for emergency purposes only and all of my actions will be logged and reviewed.
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Initiate Emergency Access</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">Emergency Access Policy</h5>
+                    <p>The break-glass protocol should only be used in cases where:</p>
+                    <ul>
+                        <li>There is an immediate need to access PHI for patient care</li>
+                        <li>Normal access procedures would cause unacceptable delay</li>
+                        <li>The situation constitutes a legitimate medical emergency</li>
+                    </ul>
+                    <p class="small text-muted mb-0">For full details, refer to the organization's HIPAA Emergency Access Policy.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

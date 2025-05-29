@@ -1,0 +1,581 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('user_insights_analytics', 'User Insights Analytics') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-card {
+    height: 100%;
+    transition: all 0.3s;
+    border-radius: 10px;
+  }
+  
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+  
+  .dashboard-nav .nav-link {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    border-radius: 10px;
+    margin: 0 5px;
+    transition: all 0.2s;
+  }
+  
+  .dashboard-nav .nav-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+  }
+  
+  .dashboard-nav .nav-link.active {
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  .segment-badge {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+    border-radius: 10px;
+  }
+  
+  .insight-card {
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .insight-header {
+    padding: 1rem;
+    font-weight: 600;
+  }
+  
+  .insight-body {
+    padding: 1rem;
+    background-color: var(--card-bg);
+  }
+  
+  .user-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 0;
+  }
+  
+  .user-item:last-child {
+    border-bottom: none;
+  }
+  
+  .segment-chart-container {
+    height: 200px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">{{ g.translate('user_insights_analytics', 'User Insights Analytics') }}</h1>
+  </div>
+  
+  <!-- Analytics Navigation -->
+  <ul class="nav dashboard-nav mb-4">
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/">{{ g.translate('overview', 'Overview') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-engagement">{{ g.translate('user_engagement', 'User Engagement') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/technique-effectiveness">{{ g.translate('technique_effectiveness', 'Technique Effectiveness') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-progress">{{ g.translate('user_progress', 'User Progress') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/business-metrics">{{ g.translate('business_metrics', 'Business Metrics') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="/analytics/user-insights">{{ g.translate('user_insights', 'User Insights') }}</a>
+    </li>
+  </ul>
+  
+  <div class="row g-4">
+    <!-- User Segments -->
+    <div class="col-12">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4">{{ g.translate('user_segments', 'User Segments') }}</h5>
+          
+          <div class="row">
+            <!-- Engagement Segments -->
+            <div class="col-md-4">
+              <h6 class="text-muted mb-3">{{ g.translate('by_engagement', 'By Engagement') }}</h6>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('active', 'Active') }}</span>
+                <span class="segment-badge bg-success">{{ segments.engagement.active }}</span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('engaged', 'Engaged') }}</span>
+                <span class="segment-badge bg-primary">{{ segments.engagement.engaged }}</span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('dormant', 'Dormant') }}</span>
+                <span class="segment-badge bg-danger">{{ segments.engagement.dormant }}</span>
+              </div>
+              
+              <div class="segment-chart-container">
+                <canvas id="engagementSegmentChart"></canvas>
+              </div>
+            </div>
+            
+            <!-- Subscription Segments -->
+            <div class="col-md-4">
+              <h6 class="text-muted mb-3">{{ g.translate('by_subscription', 'By Subscription') }}</h6>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('free', 'Free') }}</span>
+                <span class="segment-badge bg-secondary">{{ segments.subscription.free }}</span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('premium', 'Premium') }}</span>
+                <span class="segment-badge bg-primary">{{ segments.subscription.premium }}</span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('professional', 'Professional') }}</span>
+                <span class="segment-badge bg-success">{{ segments.subscription.professional }}</span>
+              </div>
+              
+              <div class="segment-chart-container">
+                <canvas id="subscriptionSegmentChart"></canvas>
+              </div>
+            </div>
+            
+            <!-- Onboarding Segments -->
+            <div class="col-md-4">
+              <h6 class="text-muted mb-3">{{ g.translate('by_onboarding', 'By Onboarding') }}</h6>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('completed', 'Completed') }}</span>
+                <span class="segment-badge bg-success">{{ segments.onboarding.completed }}</span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <span>{{ g.translate('incomplete', 'Incomplete') }}</span>
+                <span class="segment-badge bg-warning">{{ segments.onboarding.incomplete }}</span>
+              </div>
+              
+              <div class="segment-chart-container">
+                <canvas id="onboardingSegmentChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Insights -->
+    <div class="col-12">
+      <h5 class="mb-3">{{ g.translate('key_user_insights', 'Key User Insights') }}</h5>
+      
+      <div class="row g-4">
+        {% for insight in insights %}
+        <div class="col-md-6">
+          <div class="card insight-card border-0 shadow-sm">
+            <div class="insight-header bg-light">
+              {{ insight.title }}
+              <div class="small text-muted">{{ insight.description }}</div>
+            </div>
+            <div class="insight-body">
+              {% for user in insight.users %}
+              <div class="user-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="text-truncate d-inline-block" style="max-width: 250px;">{{ user.email }}</span>
+                  </div>
+                  <div>
+                    <span class="badge bg-light text-dark">{{ user.metric }}</span>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              
+              {% if insight.users|length == 0 %}
+              <div class="text-center text-muted py-3">
+                {{ g.translate('no_users_in_segment', 'No users in this segment') }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-footer bg-white border-0">
+              <button class="btn btn-sm btn-outline-primary view-all-btn" data-insight="{{ insight.title }}">
+                {{ g.translate('view_all', 'View All') }}
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Additional Insights -->
+        <div class="col-md-6">
+          <div class="card insight-card border-0 shadow-sm">
+            <div class="insight-header bg-light">
+              {{ g.translate('users_by_primary_goal', 'Users by Primary Goal') }}
+              <div class="small text-muted">{{ g.translate('distribution_of_users_primary_goals', 'Distribution of users\' primary goals') }}</div>
+            </div>
+            <div class="insight-body">
+              <div class="chart-container" style="height: 250px;">
+                <canvas id="goalDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card insight-card border-0 shadow-sm">
+            <div class="insight-header bg-light">
+              {{ g.translate('users_by_experience_level', 'Users by Experience Level') }}
+              <div class="small text-muted">{{ g.translate('distribution_of_users_experience', 'Distribution of users\' experience with NLP') }}</div>
+            </div>
+            <div class="insight-body">
+              <div class="chart-container" style="height: 250px;">
+                <canvas id="experienceDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- User Details Modal -->
+    <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userDetailsModalLabel">{{ g.translate('user_details', 'User Details') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="userDetailsContent">
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">{{ g.translate('loading', 'Loading') }}...</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('close', 'Close') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js global configuration
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    Chart.defaults.color = '#6c757d';
+    Chart.defaults.scale.grid.color = 'rgba(0, 0, 0, 0.05)';
+    
+    // Set color palette
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#6e8efb';
+    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim() || '#a4a4a4';
+    const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim() || '#28a745';
+    const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim() || '#dc3545';
+    const infoColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color').trim() || '#17a2b8';
+    const warningColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim() || '#ffc107';
+    
+    // Initialize segment charts
+    initSegmentCharts();
+    
+    // Initialize distribution charts
+    initDistributionCharts();
+    
+    // Set up view all buttons
+    setupViewAllButtons();
+    
+    function initSegmentCharts() {
+      // Engagement Segments Chart
+      const engagementCtx = document.getElementById('engagementSegmentChart').getContext('2d');
+      new Chart(engagementCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Active', 'Engaged', 'Dormant'],
+          datasets: [{
+            data: [
+              {{ segments.engagement.active }}, 
+              {{ segments.engagement.engaged }}, 
+              {{ segments.engagement.dormant }}
+            ],
+            backgroundColor: [
+              successColor,
+              primaryColor,
+              dangerColor
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                boxWidth: 12
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+      
+      // Subscription Segments Chart
+      const subscriptionCtx = document.getElementById('subscriptionSegmentChart').getContext('2d');
+      new Chart(subscriptionCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Free', 'Premium', 'Professional'],
+          datasets: [{
+            data: [
+              {{ segments.subscription.free }}, 
+              {{ segments.subscription.premium }}, 
+              {{ segments.subscription.professional }}
+            ],
+            backgroundColor: [
+              secondaryColor,
+              primaryColor,
+              successColor
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                boxWidth: 12
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+      
+      // Onboarding Segments Chart
+      const onboardingCtx = document.getElementById('onboardingSegmentChart').getContext('2d');
+      new Chart(onboardingCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'Incomplete'],
+          datasets: [{
+            data: [
+              {{ segments.onboarding.completed }}, 
+              {{ segments.onboarding.incomplete }}
+            ],
+            backgroundColor: [
+              successColor,
+              warningColor
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                boxWidth: 12
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+    
+    function initDistributionCharts() {
+      // Goals Distribution Chart (sample data - would come from API in production)
+      const goalCtx = document.getElementById('goalDistributionChart').getContext('2d');
+      new Chart(goalCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Stress Reduction', 'Communication', 'Confidence', 'Relationship', 'Career', 'Other'],
+          datasets: [{
+            label: 'Users',
+            data: [352, 287, 214, 183, 156, 108],
+            backgroundColor: primaryColor
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+      
+      // Experience Distribution Chart (sample data - would come from API in production)
+      const experienceCtx = document.getElementById('experienceDistributionChart').getContext('2d');
+      new Chart(experienceCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Beginner', 'Intermediate', 'Advanced'],
+          datasets: [{
+            data: [62, 28, 10],
+            backgroundColor: [
+              infoColor,
+              primaryColor,
+              successColor
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right'
+            }
+          }
+        }
+      });
+    }
+    
+    function setupViewAllButtons() {
+      // Set up click handlers for "View All" buttons
+      const viewAllButtons = document.querySelectorAll('.view-all-btn');
+      viewAllButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const insight = this.getAttribute('data-insight');
+          
+          // Open modal
+          const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+          modal.show();
+          
+          // Update modal title
+          document.getElementById('userDetailsModalLabel').textContent = insight;
+          
+          // Simulate loading user data
+          // In a real app, this would fetch data from the server
+          setTimeout(() => {
+            document.getElementById('userDetailsContent').innerHTML = generateUserListHTML(insight);
+          }, 500);
+        });
+      });
+    }
+    
+    function generateUserListHTML(insight) {
+      // This would fetch real data from the server in production
+      // For now, generate some sample data
+      const sampleUsers = [];
+      
+      if (insight === 'Conversion Opportunities') {
+        for (let i = 1; i <= 10; i++) {
+          sampleUsers.push({
+            id: `user${i}`,
+            email: `user${i}@example.com`,
+            metric: `${Math.floor(50 + Math.random() * 50)} messages`
+          });
+        }
+      } else if (insight === 'Churn Risk') {
+        for (let i = 1; i <= 10; i++) {
+          const recent = Math.floor(Math.random() * 10);
+          const previous = Math.floor(recent + 20 + Math.random() * 30);
+          sampleUsers.push({
+            id: `premium${i}`,
+            email: `premium${i}@example.com`,
+            metric: `${recent} msgs (down from ${previous})`
+          });
+        }
+      } else if (insight === 'Most Improved Users') {
+        for (let i = 1; i <= 10; i++) {
+          const current = Math.floor(70 + Math.random() * 30);
+          const previous = Math.floor(20 + Math.random() * 40);
+          sampleUsers.push({
+            id: `improved${i}`,
+            email: `improved${i}@example.com`,
+            metric: `${current}% (up from ${previous}%)`
+          });
+        }
+      }
+      
+      // Generate HTML
+      let html = '<div class="list-group">';
+      
+      sampleUsers.forEach(user => {
+        html += `
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-1">${user.email}</h6>
+              <small class="text-muted">ID: ${user.id}</small>
+            </div>
+            <div>
+              <span class="badge bg-light text-dark">${user.metric}</span>
+              <button class="btn btn-sm btn-outline-primary ms-2" onclick="showUserDetails('${user.id}')">
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+        `;
+      });
+      
+      html += '</div>';
+      return html;
+    }
+    
+    // Make function available globally for onclick handlers
+    window.showUserDetails = function(userId) {
+      alert(`Showing details for user: ${userId}`);
+      // In a real app, this would fetch and display user details
+    };
+  });
+</script>
+{% endblock %}

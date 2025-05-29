@@ -6,18 +6,18 @@
 <!-- Hero Section - Stripe-inspired design -->
 <section class="hero-section">
     <!-- The colorful gradient background is handled by CSS ::before pseudo-element -->
-    
+
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <h1 class="hero-title">
-                    {{ g.translate('landing_hero_title_start', 'Reshape Your') }} 
+                    {{ g.translate('landing_hero_title_start', 'Reshape Your') }}
                     <span>{{ g.translate('landing_hero_title_highlight', 'Thoughts') }}</span>,
                     {{ g.translate('landing_hero_title_end', 'Transform Your Life') }}
                 </h1>
-                
+
                 <p class="hero-subtitle">{{ g.translate('landing_hero_subtitle', 'The Inner Architect uses AI-powered Neuro-Linguistic Programming techniques to help you recognize patterns, reframe negative thoughts, and build emotional resilience.') }}</p>
-                
+
                 <div class="d-flex flex-column flex-sm-row gap-3 mt-5">
                     {% if current_user and current_user.is_authenticated %}
                     <a href="{{ url_for('index') }}" class="btn btn-primary hero-cta-btn">
@@ -27,7 +27,7 @@
                         <i class="fas fa-route me-2"></i> {{ g.translate('landing_cta_onboarding', 'Take the Tour') }}
                     </a>
                     {% else %}
-                    <a href="{{ url_for('login_check') }}" class="btn btn-primary hero-cta-btn">
+                    <a href="{{ url_for('email_login') }}" class="btn btn-primary hero-cta-btn">
                         <i class="fas fa-sign-in-alt me-2"></i> {{ g.translate('landing_cta_login', 'Get Started Free') }}
                     </a>
                     <a href="{{ url_for('onboarding_route') }}" class="btn btn-outline-success rounded-pill px-4">
@@ -39,12 +39,12 @@
                     </a>
                 </div>
             </div>
-            
+
             <div class="col-lg-6">
                 <div class="hero-image-container">
                     <div class="hero-image-backdrop"></div>
-                    <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                         alt="Mind transformation concept" 
+                    <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                         alt="Mind transformation concept"
                          class="hero-image">
                 </div>
             </div>
@@ -63,7 +63,7 @@
                 {{ g.translate('landing_features_subtitle', 'Leverage the power of Neuro-Linguistic Programming') }}
             </p>
         </div>
-        
+
         <div class="row g-4">
             <div class="col-lg-4">
                 <div class="feature-card h-100 p-4">
@@ -74,7 +74,7 @@
                     <p class="text-center text-muted">{{ g.translate('landing_feature1_desc', 'Learn to view situations from different perspectives, turning challenges into opportunities for growth.') }}</p>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 <div class="feature-card h-100 p-4">
                     <div class="feature-icon">
@@ -84,7 +84,7 @@
                     <p class="text-center text-muted">{{ g.translate('landing_feature2_desc', 'Understand your communication style and learn techniques to connect more effectively with others.') }}</p>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 <div class="feature-card h-100 p-4">
                     <div class="feature-icon">
@@ -95,7 +95,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Additional features in a second row -->
         <div class="row g-4 mt-4">
             <div class="col-lg-4">
@@ -107,7 +107,7 @@
                     <p class="text-center text-muted">{{ g.translate('landing_feature4_desc', 'Enhance your verbal communication skills through targeted voice exercises and feedback.') }}</p>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 <div class="feature-card h-100 p-4">
                     <div class="feature-icon">
@@ -117,7 +117,7 @@
                     <p class="text-center text-muted">{{ g.translate('landing_feature5_desc', 'Monitor your growth with detailed progress analytics and personalized insights.') }}</p>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 <div class="feature-card h-100 p-4">
                     <div class="feature-icon">
@@ -131,262 +131,98 @@
     </div>
 </section>
 
-<!-- Premium Features Showcase -->
-<section id="premium-features" class="py-5 bg-light">
+<!-- All Features Now Free -->
+<section id="all-features" class="py-5 bg-light">
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="fw-bold mb-2" style="font-size: 2.5rem; letter-spacing: -0.02em;">
-                {{ g.translate('premium_features_title', 'Premium Features') }}
+                {{ g.translate('all_features_title', 'All Features Available Free') }}
             </h2>
             <p class="lead text-muted mx-auto" style="max-width: 700px;">
-                {{ g.translate('premium_features_subtitle', 'Unlock advanced tools for your personal transformation') }}
+                {{ g.translate('all_features_subtitle', 'Complete access to all tools for your personal transformation journey') }}
             </p>
         </div>
-        
-        <!-- Load the premium badge macro -->
-        {% from 'partials/premium_badge.html' import premium_badge, premium_feature_card %}
-        
+
         <div class="row g-4 justify-content-center">
-            <!-- Premium Feature 1: Advanced NLP Techniques -->
+            <!-- Feature 1: Advanced NLP Techniques -->
             <div class="col-lg-6">
-                {{ premium_feature_card(
-                    title=g.translate('premium_feature_nlp_title', 'Advanced NLP Techniques'),
-                    description=g.translate('premium_feature_nlp_desc', 'Access our full library of advanced Neuro-Linguistic Programming techniques, including Meta Model, Milton Model, and more.'),
-                    plan='premium',
-                    feature_link=url_for('techniques_page'),
-                    button_text=g.translate('explore_techniques', 'Explore Techniques')
-                ) }}
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-primary bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-brain text-primary fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('feature_nlp_title', 'Advanced NLP Techniques') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('feature_nlp_desc', 'Access our full library of advanced Neuro-Linguistic Programming techniques, including Meta Model, Milton Model, and more.') }}</p>
+                        <a href="{{ url_for('techniques_page') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>{{ g.translate('explore_techniques', 'Explore Techniques') }}
+                        </a>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Premium Feature 2: Progress Dashboard -->
+
+            <!-- Feature 2: Detailed Progress Analytics -->
             <div class="col-lg-6">
-                {{ premium_feature_card(
-                    title=g.translate('premium_feature_dashboard_title', 'Detailed Progress Analytics'),
-                    description=g.translate('premium_feature_dashboard_desc', 'Track your growth journey with detailed analytics, technique effectiveness ratings, and personalized insights.'),
-                    plan='premium',
-                    feature_link=url_for('progress_dashboard'),
-                    button_text=g.translate('view_dashboard', 'View Dashboard')
-                ) }}
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-success bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-chart-line text-success fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('feature_analytics_title', 'Detailed Progress Analytics') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('feature_analytics_desc', 'Track your growth journey with detailed analytics, technique effectiveness ratings, and personalized insights.') }}</p>
+                        <a href="{{ url_for('progress_dashboard') }}" class="btn btn-success">
+                            <i class="fas fa-chart-bar me-2"></i>{{ g.translate('view_analytics', 'View Analytics') }}
+                        </a>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Professional Feature 1: Personalized Journeys -->
+
+            <!-- Feature 3: Personalized Development Journeys -->
             <div class="col-lg-6">
-                {{ premium_feature_card(
-                    title=g.translate('pro_feature_journey_title', 'Personalized Development Journeys'),
-                    description=g.translate('pro_feature_journey_desc', 'Follow structured development paths tailored to your specific goals, with milestones and achievements.'),
-                    plan='professional',
-                    feature_link=url_for('personalized_journeys_page'),
-                    button_text=g.translate('start_journey', 'Start Journey')
-                ) }}
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-info bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-route text-info fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('feature_journeys_title', 'Personalized Development Journeys') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('feature_journeys_desc', 'Follow structured development paths tailored to your specific goals, with milestones and achievements.') }}</p>
+                        <a href="{{ url_for('personalized_journeys_page') }}" class="btn btn-info">
+                            <i class="fas fa-map me-2"></i>{{ g.translate('start_journey', 'Start Journey') }}
+                        </a>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Professional Feature 2: Belief Change Protocol -->
+
+            <!-- Feature 4: Belief Change Protocol -->
             <div class="col-lg-6">
-                {{ premium_feature_card(
-                    title=g.translate('pro_feature_belief_title', 'Belief Change Protocol'),
-                    description=g.translate('pro_feature_belief_desc', 'Transform limiting beliefs using our structured protocol based on advanced NLP models and cognitive psychology.'),
-                    plan='professional',
-                    feature_link=url_for('belief_change_page'),
-                    button_text=g.translate('transform_beliefs', 'Transform Beliefs')
-                ) }}
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-inline-block bg-warning bg-opacity-10 p-3 rounded-circle mb-3">
+                            <i class="fas fa-lightbulb text-warning fa-2x"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ g.translate('feature_belief_title', 'Belief Change Protocol') }}</h5>
+                        <p class="card-text text-muted">{{ g.translate('feature_belief_desc', 'Transform limiting beliefs using our structured protocol based on advanced NLP models and cognitive psychology.') }}</p>
+                        <a href="{{ url_for('belief_change_page') }}" class="btn btn-warning">
+                            <i class="fas fa-magic me-2"></i>{{ g.translate('transform_beliefs', 'Transform Beliefs') }}
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <!-- Start Trial Call to Action -->
+
+        <!-- Free Access Call to Action -->
         <div class="text-center mt-5">
-            <h4 class="mb-4">{{ g.translate('try_premium_features', 'Try Premium Features Free') }}</h4>
-            
-            {% if current_user and current_user.is_authenticated %}
-                <form action="{{ url_for('start_trial') }}" method="POST" class="d-inline-block">
-                    <input type="hidden" name="trial_plan" value="premium">
-                    <button type="submit" class="btn btn-premium py-2 px-4 mb-2 mb-md-0 me-md-2">
-                        <i class="fas fa-crown me-2"></i>
-                        {{ g.translate('start_premium_trial', 'Start Premium Trial') }}
-                    </button>
-                </form>
-                
-                <form action="{{ url_for('start_trial') }}" method="POST" class="d-inline-block">
-                    <input type="hidden" name="trial_plan" value="professional">
-                    <button type="submit" class="btn btn-professional py-2 px-4">
-                        <i class="fas fa-star me-2"></i>
-                        {{ g.translate('start_professional_trial', 'Start Professional Trial') }}
-                    </button>
-                </form>
-            {% else %}
-                <a href="{{ url_for('login_check') }}" class="btn btn-primary rounded-pill py-2 px-4">
-                    <i class="fas fa-sign-in-alt me-2"></i>
-                    {{ g.translate('sign_up_for_trial', 'Sign Up For Free Trial') }}
+            <h4 class="mb-4">{{ g.translate('free_access_message', 'All Features Available - No Subscription Required') }}</h4>
+            <p class="text-muted">{{ g.translate('free_access_subtitle', 'Funded by organizations that believe in supporting recovery and personal growth') }}</p>
+            {% if not current_user or not current_user.is_authenticated %}
+                <a href="{{ url_for('email_login') }}" class="btn btn-primary btn-lg px-4 mt-3">
+                    <i class="fas fa-sign-in-alt me-2"></i>{{ g.translate('get_started_free', 'Get Started Free') }}
                 </a>
             {% endif %}
         </div>
     </div>
 </section>
 
-<!-- Pricing -->
-<section id="pricing" class="py-5 position-relative overflow-hidden">
-    <!-- Subtle gradient backdrop created with ::before in CSS -->
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="display-5 fw-bold mb-3">{{ g.translate('landing_pricing_title', 'Choose Your Plan') }}</h2>
-            <p class="lead text-secondary mx-auto" style="max-width: 600px;">{{ g.translate('landing_pricing_subtitle', 'Flexible plans designed to meet your needs at any stage of your journey') }}</p>
-        </div>
-        
-        <div class="row g-4 justify-content-center">
-            <!-- Free Tier -->
-            <div class="col-lg-4">
-                <div class="card border border-light h-100 pricing-card">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold m-0">{{ g.translate('pricing_free_title', 'Free') }}</h3>
-                            <span class="badge bg-light text-dark px-3 py-2 rounded-pill">{{ g.translate('pricing_starter', 'Starter') }}</span>
-                        </div>
-                        
-                        <div class="mb-4 pricing-amount">
-                            <span class="display-5 fw-bold">$0</span>
-                            <span class="text-secondary">/{{ g.translate('pricing_month', 'month') }}</span>
-                        </div>
-                        
-                        <p class="text-secondary mb-4">{{ g.translate('pricing_free_desc', 'Perfect for getting started with cognitive reframing') }}</p>
-                        
-                        <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_free_feature1', 'Basic cognitive reframing techniques') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_free_feature2', 'Limited AI chat interactions (10/day)') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_free_feature3', 'Access to basic dashboard') }}</span>
-                            </li>
-                            <li class="mb-3 text-secondary d-flex align-items-start">
-                                <i class="fas fa-minus me-2 mt-1 opacity-50"></i>
-                                <span class="opacity-75">{{ g.translate('pricing_free_limit1', 'Advanced NLP techniques') }}</span>
-                            </li>
-                            <li class="mb-3 text-secondary d-flex align-items-start">
-                                <i class="fas fa-minus me-2 mt-1 opacity-50"></i>
-                                <span class="opacity-75">{{ g.translate('pricing_free_limit2', 'Progress tracking') }}</span>
-                            </li>
-                        </ul>
-                        
-                        <div class="d-grid mt-auto">
-                            <a href="{{ url_for('login_check') }}" class="btn btn-outline-primary py-3 rounded-pill">
-                                {{ g.translate('pricing_free_cta', 'Start Free') }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Premium Tier -->
-            <div class="col-lg-4">
-                <div class="card border border-primary h-100 pricing-card pricing-card-popular shadow-sm">
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge bg-primary px-3 py-2 rounded-pill">
-                            {{ g.translate('pricing_popular', 'Most Popular') }}
-                        </span>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold m-0">{{ g.translate('pricing_premium_title', 'Premium') }}</h3>
-                            <span class="badge bg-light text-primary px-3 py-2 rounded-pill">{{ g.translate('pricing_standard', 'Standard') }}</span>
-                        </div>
-                        
-                        <div class="mb-4 pricing-amount">
-                            <span class="display-5 fw-bold">$9.99</span>
-                            <span class="text-secondary">/{{ g.translate('pricing_month', 'month') }}</span>
-                        </div>
-                        
-                        <p class="text-secondary mb-4">{{ g.translate('pricing_premium_desc', 'Unlock the full power of NLP techniques') }}</p>
-                        
-                        <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span><strong>{{ g.translate('pricing_premium_everything_free', 'Everything in Free') }}</strong></span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_premium_feature1', 'All NLP techniques') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_premium_feature2', 'Unlimited AI chat interactions') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_premium_feature3', 'Full progress tracking') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_premium_feature4', 'Communication analysis') }}</span>
-                            </li>
-                        </ul>
-                        
-                        <div class="d-grid mt-auto">
-                            <button class="btn btn-primary py-3 rounded-pill" type="button" id="premiumSubscribeBtn">
-                                {{ g.translate('pricing_premium_cta', 'Subscribe Now') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Professional Tier -->
-            <div class="col-lg-4">
-                <div class="card border border-light h-100 pricing-card">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold m-0">{{ g.translate('pricing_pro_title', 'Professional') }}</h3>
-                            <span class="badge bg-light text-dark px-3 py-2 rounded-pill">{{ g.translate('pricing_advanced', 'Advanced') }}</span>
-                        </div>
-                        
-                        <div class="mb-4 pricing-amount">
-                            <span class="display-5 fw-bold">$19.99</span>
-                            <span class="text-secondary">/{{ g.translate('pricing_month', 'month') }}</span>
-                        </div>
-                        
-                        <p class="text-secondary mb-4">{{ g.translate('pricing_pro_desc', 'Complete toolkit for advanced personal development') }}</p>
-                        
-                        <ul class="list-unstyled mb-4">
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span><strong>{{ g.translate('pricing_pro_everything_premium', 'Everything in Premium') }}</strong></span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_pro_feature2', 'Voice practice features') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_pro_feature3', 'Personalized journeys') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_pro_feature4', 'Belief change protocol') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_pro_feature5', 'Practice reminders') }}</span>
-                            </li>
-                            <li class="mb-3 d-flex align-items-start">
-                                <i class="fas fa-check text-success me-2 mt-1"></i>
-                                <span>{{ g.translate('pricing_pro_feature6', 'Priority support') }}</span>
-                            </li>
-                        </ul>
-                        
-                        <div class="d-grid mt-auto">
-                            <button class="btn btn-outline-primary py-3 rounded-pill" type="button" id="proSubscribeBtn">
-                                {{ g.translate('pricing_pro_cta', 'Go Professional') }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+
 
 <!-- Testimonials -->
 <section class="testimonials-section py-5">
@@ -399,7 +235,7 @@
                 {{ g.translate('landing_testimonials_subtitle', 'Real stories of transformation') }}
             </p>
         </div>
-        
+
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="testimonial-card h-100 p-4">
@@ -424,7 +260,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="testimonial-card h-100 p-4">
                     <div class="testimonial-content">
@@ -448,7 +284,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="testimonial-card h-100 p-4">
                     <div class="testimonial-content">
@@ -487,7 +323,7 @@
                 {{ g.translate('landing_faq_subtitle', 'Find answers to common questions') }}
             </p>
         </div>
-        
+
         <div class="row justify-content-center">
             <div class="col-lg-9">
                 <div class="faq-card">
@@ -503,7 +339,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="faq-card">
                     <button class="faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
                         {{ g.translate('landing_faq2_question', 'Is my data private and secure?') }}
@@ -517,7 +353,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="faq-card">
                     <button class="faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
                         {{ g.translate('landing_faq3_question', 'Can I cancel my subscription at any time?') }}
@@ -531,7 +367,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="faq-card">
                     <button class="faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
                         {{ g.translate('landing_faq4_question', 'Is The Inner Architect a replacement for therapy?') }}
@@ -545,7 +381,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="faq-card">
                     <button class="faq-question" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
                         {{ g.translate('landing_faq5_question', 'How long does it take to see results?') }}
@@ -559,7 +395,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="text-center mt-5">
                     <p class="mb-4">{{ g.translate('landing_more_questions', 'Have more questions?') }}</p>
                     <a href="#" class="btn btn-outline-primary px-4 py-2">{{ g.translate('landing_contact_us', 'Contact Us') }}</a>
@@ -580,7 +416,7 @@
                 <i class="fas fa-brain me-2"></i> {{ g.translate('landing_final_cta_logged_in', 'Go to Dashboard') }}
             </a>
             {% else %}
-            <a href="{{ url_for('login_check') }}" class="btn btn-light btn-lg px-4">
+            <a href="{{ url_for('email_login') }}" class="btn btn-light btn-lg px-4">
                 <i class="fas fa-sign-in-alt me-2"></i> {{ g.translate('landing_final_cta_login', 'Get Started Free') }}
             </a>
             {% endif %}
@@ -592,29 +428,8 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Premium subscription button
-    document.getElementById('premiumSubscribeBtn').addEventListener('click', function() {
-        // Check if user is logged in
-        {% if current_user and current_user.is_authenticated %}
-        // Redirect to checkout for premium plan
-        window.location.href = "{{ url_for('create_checkout', plan='premium') }}";
-        {% else %}
-        // Redirect to login first
-        window.location.href = "{{ url_for('login_check') }}";
-        {% endif %}
-    });
-    
-    // Professional subscription button
-    document.getElementById('proSubscribeBtn').addEventListener('click', function() {
-        // Check if user is logged in
-        {% if current_user and current_user.is_authenticated %}
-        // Redirect to checkout for professional plan
-        window.location.href = "{{ url_for('create_checkout', plan='professional') }}";
-        {% else %}
-        // Redirect to login first
-        window.location.href = "{{ url_for('login_check') }}";
-        {% endif %}
-    });
+    // All features are now free - no subscription needed!
+    console.log('Inner Architect: All features available free for recovery and personal growth');
 });
 </script>
 {% endblock %}

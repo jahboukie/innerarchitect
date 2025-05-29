@@ -16,7 +16,7 @@ class PrivacySettings(db.Model):
     marketing_emails = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<PrivacySettings {self.id} for user {self.user_id}>'
 
@@ -29,7 +29,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String, nullable=True)
     last_name = db.Column(db.String, nullable=True)
     profile_image_url = db.Column(db.String, nullable=True)
-    
+
     # New fields for email auth
     password_hash = db.Column(db.String(256), nullable=True)
     email_verified = db.Column(db.Boolean, default=False)
@@ -37,48 +37,48 @@ class User(UserMixin, db.Model):
     verification_token_expiry = db.Column(db.DateTime, nullable=True)
     reset_password_token = db.Column(db.String(100), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
-    
+
     # Authentication provider (replit_auth, email, etc.)
     auth_provider = db.Column(db.String(20), nullable=True)
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationship with ChatHistory
     chats = db.relationship('ChatHistory', backref='user', lazy='dynamic')
-    
+
     # Relationship with NLPExerciseProgress
     exercise_progress = db.relationship('NLPExerciseProgress', backref='user', lazy='dynamic')
-    
+
     # Relationship with TechniqueEffectiveness
     technique_ratings = db.relationship('TechniqueEffectiveness', backref='user', lazy='dynamic')
-    
+
     # Relationship with PrivacySettings
     privacy_settings = db.relationship('PrivacySettings', backref='user', uselist=False, lazy='joined', cascade='all, delete-orphan')
-    
+
     # Relationship with UserPreferences
     preferences = db.relationship('UserPreferences', backref='user', uselist=False, lazy='joined', cascade='all, delete-orphan')
-    
+
     def __repr__(self):
         return f'<User {self.id}>'
-        
+
     def set_password(self, password):
         """Set the password hash for the user."""
         from werkzeug.security import generate_password_hash
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         """Check if the provided password matches the hash."""
         from werkzeug.security import check_password_hash
         if self.password_hash:
             return check_password_hash(self.password_hash, password)
         return False
-        
+
 class OAuth(OAuthConsumerMixin, db.Model):
     user_id = db.Column(db.String, db.ForeignKey(User.id))
     browser_session_key = db.Column(db.String, nullable=False)
     user = db.relationship(User)
-    
+
     __table_args__ = (
         db.UniqueConstraint(
             'user_id',
@@ -92,7 +92,7 @@ class OAuth(OAuthConsumerMixin, db.Model):
 class Subscription(db.Model):
     """Model for user subscription information."""
     __tablename__ = 'subscriptions'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey(User.id), nullable=False)
     stripe_customer_id = db.Column(db.String, unique=True, nullable=True)
@@ -102,70 +102,70 @@ class Subscription(db.Model):
     current_period_start = db.Column(db.DateTime, nullable=True)
     current_period_end = db.Column(db.DateTime, nullable=True)
     cancel_at_period_end = db.Column(db.Boolean, default=False)
-    
+
     # NOTE: These fields are defined here but may not exist in the database yet.
     # We'll add migration code to handle this gracefully.
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationship to User
     user = db.relationship('User', backref=db.backref('subscription', uselist=False))
-    
+
     def __repr__(self):
         return f'<Subscription {self.id} - {self.plan_name} - {self.status}>'
-        
+
     @property
     def is_active(self):
         """Check if subscription is active."""
         return self.status == 'active'
-    
+
     # Note: Trial functionality isn't in the database yet
     # These are placeholders to prevent errors
-    
+
     @property
     def has_active_trial(self):
         """Check if user has an active trial."""
         # Trials aren't supported yet
         return False
-    
+
     @property
     def trial_days_remaining(self):
         """Get days remaining in trial or 0 if no active trial."""
         # Trials aren't supported yet
         return 0
-        
+
     @property
     def has_premium_access(self):
         """Check if the user has premium or better access."""
-        # Only check regular subscription status for now
-        return self.is_active and self.plan_name in ['premium', 'professional']
-        
+        # ALL USERS NOW HAVE PREMIUM ACCESS - EVERYTHING IS FREE!
+        return True
+
     @property
     def has_professional_access(self):
         """Check if the user has professional access."""
-        # Only check regular subscription status for now
-        return self.is_active and self.plan_name == 'professional'
-        
+        # ALL USERS NOW HAVE PROFESSIONAL ACCESS - EVERYTHING IS FREE!
+        return True
+
     @property
     def is_premium_trial(self):
         """Check if the user has an active premium trial."""
         # Always return False since trial functionality isn't in the database yet
         return False
-    
+
     @property
     def is_professional_trial(self):
         """Check if the user has an active professional trial."""
         # Always return False since trial functionality isn't in the database yet
         return False
-        
+
     def to_dict(self):
         """Convert subscription to dictionary for JSON serialization."""
         # Import here to avoid circular import
         from subscription_manager import SUBSCRIPTION_PLANS
-        
+
         # Use plan_name directly since trials aren't yet supported
         effective_plan = self.plan_name
-        
+
         result = {
             'id': self.id,
             'user_id': self.user_id,
@@ -177,14 +177,14 @@ class Subscription(db.Model):
             'features': SUBSCRIPTION_PLANS.get(effective_plan, {}).get('features', []),
             'quotas': SUBSCRIPTION_PLANS.get(effective_plan, {}).get('quotas', {})
         }
-        
+
         # No trial support for now
         result.update({
             'is_trial': False,
             'trial_days_remaining': 0,
             'has_active_trial': False
         })
-        
+
         return result
 
 
@@ -198,10 +198,10 @@ class ChatHistory(db.Model):
     mood = db.Column(db.String(20), nullable=True)
     nlp_technique = db.Column(db.String(30), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationship with conversation contexts
     context_id = db.Column(db.Integer, db.ForeignKey('conversation_context.id'), nullable=True)
-    
+
     def __repr__(self):
         return f'<ChatHistory {self.id}>'
 
@@ -217,11 +217,11 @@ class ConversationContext(db.Model):
     themes = db.Column(db.Text, nullable=True)  # JSON array of identified themes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     messages = db.relationship('ChatHistory', backref='context', lazy='dynamic')
     memory_items = db.relationship('ConversationMemoryItem', backref='context', lazy='dynamic', cascade="all, delete-orphan")
-    
+
     def __repr__(self):
         return f'<ConversationContext {self.id}: {self.title}>'
 
@@ -237,7 +237,7 @@ class ConversationMemoryItem(db.Model):
     relevance = db.Column(db.Float, nullable=False, default=1.0)  # Current relevance score (0-1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_used_at = db.Column(db.DateTime, nullable=True)  # Last time this memory was used in a response
-    
+
     def __repr__(self):
         return f'<ConversationMemoryItem {self.id}: {self.memory_type}>'
 
@@ -249,7 +249,7 @@ class JournalEntry(db.Model):
     content = db.Column(db.Text, nullable=False)
     mood = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<JournalEntry {self.id}>'
 
@@ -264,10 +264,10 @@ class NLPExercise(db.Model):
     difficulty = db.Column(db.String(20), nullable=False, default='beginner')  # beginner, intermediate, advanced
     estimated_time = db.Column(db.Integer, nullable=False, default=5)  # in minutes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationship with user progress
     progress = db.relationship('NLPExerciseProgress', backref='exercise', lazy='dynamic')
-    
+
     def __repr__(self):
         return f'<NLPExercise {self.technique}: {self.title}>'
 
@@ -283,7 +283,7 @@ class NLPExerciseProgress(db.Model):
     notes = db.Column(db.Text, nullable=True)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime, nullable=True)
-    
+
     def __repr__(self):
         status = "completed" if self.completed else f"step {self.current_step}"
         return f'<NLPExerciseProgress {self.exercise_id} - {status}>'
@@ -299,7 +299,7 @@ class TechniqueEffectiveness(db.Model):
     notes = db.Column(db.Text, nullable=True)
     situation = db.Column(db.String(100), nullable=True)  # Brief context/situation description
     entry_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<TechniqueEffectiveness {self.technique} - Rating: {self.rating}>'
 
@@ -312,9 +312,9 @@ class TechniqueUsageStats(db.Model):
     usage_count = db.Column(db.Integer, default=0)
     avg_rating = db.Column(db.Float, default=0.0)
     last_used = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (db.UniqueConstraint('session_id', 'technique', name='_session_technique_uc'),)
-    
+
     def __repr__(self):
         return f'<TechniqueUsageStats {self.technique} - Count: {self.usage_count}>'
 
@@ -323,7 +323,7 @@ class UserPreferences(db.Model):
     """Model for storing user preferences collected during onboarding."""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
-    
+
     # Onboarding data
     primary_goal = db.Column(db.String(50), nullable=True)
     custom_goal = db.Column(db.String(200), nullable=True)
@@ -332,17 +332,17 @@ class UserPreferences(db.Model):
     show_explanations = db.Column(db.Boolean, default=True)
     first_challenge = db.Column(db.Text, nullable=True)
     challenge_intensity = db.Column(db.Integer, nullable=True)
-    
+
     # Reminder preferences
     enable_reminders = db.Column(db.Boolean, default=False)
     reminder_frequency = db.Column(db.String(20), nullable=True)
     preferred_time = db.Column(db.Time, nullable=True)
-    
+
     # Onboarding status
     onboarding_completed = db.Column(db.Boolean, default=False)
     onboarding_step = db.Column(db.Integer, default=1)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def __repr__(self):
         return f'<UserPreferences {self.id}>'
 
@@ -350,40 +350,40 @@ class UserPreferences(db.Model):
 class UsageQuota(db.Model):
     """Model to track usage quotas for subscription limits."""
     __tablename__ = 'usage_quota'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=True)
     session_id = db.Column(db.String(64), nullable=True)  # Session ID for non-logged-in users
     browser_session_id = db.Column(db.String(64), nullable=True)  # For backward compatibility
     quota_type = db.Column(db.String(30), nullable=True)  # e.g., 'messages_per_day', 'exercises_per_week'
     usage_count = db.Column(db.Integer, default=0)
-    
+
     # Fields used in subscription_manager.py
     messages_used_today = db.Column(db.Integer, default=0)
     exercises_used_today = db.Column(db.Integer, default=0)
     analyses_used_this_month = db.Column(db.Integer, default=0)
     last_reset_date = db.Column(db.DateTime, default=datetime.utcnow)
     last_monthly_reset_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # For specific quota periods
     date = db.Column(db.Date, nullable=True, index=True)  # For daily quotas
     week_start = db.Column(db.Date, nullable=True, index=True)  # For weekly quotas
     month_start = db.Column(db.Date, nullable=True, index=True)  # For monthly quotas
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationship with User
     user = db.relationship('User', backref=db.backref('usage_quotas', lazy='dynamic'))
-    
+
     def __repr__(self):
         return f'<UsageQuota {self.quota_type} - {self.usage_count}>'
-        
+
     @classmethod
     def get_or_create_daily(cls, user_id, session_id, quota_type):
         """Get or create a daily quota record."""
         today = datetime.utcnow().date()
-        
+
         # Try to find existing record
         if user_id:
             record = cls.query.filter_by(
@@ -397,7 +397,7 @@ class UsageQuota(db.Model):
                 quota_type=quota_type,
                 date=today
             ).first()
-            
+
         if not record:
             # Create new record
             record = cls(
@@ -409,15 +409,15 @@ class UsageQuota(db.Model):
             )
             db.session.add(record)
             db.session.commit()
-            
+
         return record
-        
+
     @classmethod
     def get_or_create_weekly(cls, user_id, session_id, quota_type):
         """Get or create a weekly quota record."""
         today = datetime.utcnow().date()
         week_start = today - timedelta(days=today.weekday())
-        
+
         # Try to find existing record
         if user_id:
             record = cls.query.filter_by(
@@ -431,7 +431,7 @@ class UsageQuota(db.Model):
                 quota_type=quota_type,
                 week_start=week_start
             ).first()
-            
+
         if not record:
             # Create new record
             record = cls(
@@ -443,5 +443,5 @@ class UsageQuota(db.Model):
             )
             db.session.add(record)
             db.session.commit()
-            
+
         return record

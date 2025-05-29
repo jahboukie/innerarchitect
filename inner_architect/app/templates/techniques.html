@@ -17,17 +17,13 @@
             </p>
         </div>
     </div>
-    
+
     <div class="row g-4">
         {% for technique_id, technique in techniques.items() %}
         <div class="col-md-6 col-lg-4">
             <div class="card technique-card">
-                {% if technique_id != 'reframing' and not has_premium %}
-                <span class="premium-badge">
-                    <i class="fas fa-crown me-1"></i> {{ g.translate('premium', 'Premium') }}
-                </span>
-                {% endif %}
-                
+                <!-- All techniques are now free! No premium badges needed -->
+
                 <div class="bg-gradient-primary text-white p-4">
                     <div class="d-flex justify-content-center align-items-center bg-white bg-opacity-20 rounded-circle mb-3 mx-auto" style="width: 64px; height: 64px;">
                         {% if technique_id == 'reframing' %}
@@ -49,7 +45,7 @@
                     <h3 class="mb-2">{{ technique.name }}</h3>
                     <p class="mb-0">{{ technique.description }}</p>
                 </div>
-                
+
                 <div class="card-body">
                     <h5>{{ g.translate('key_concepts', 'Key Concepts') }}</h5>
                     <div class="mb-4">
@@ -57,12 +53,12 @@
                         <div class="bg-light rounded p-3 mb-2">{{ prompt }}</div>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="mt-4">
                         <a href="{{ url_for('main.technique_detail', technique_id=technique_id) }}" class="btn btn-outline-primary">
                             {{ g.translate('learn_more', 'Learn More') }}
                         </a>
-                        
+
                         <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary ms-2"
                            {% if technique_id != 'reframing' and not has_premium %}
                            data-bs-toggle="modal" data-bs-target="#premiumFeatureModal"
@@ -83,15 +79,15 @@
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <h2 class="mb-4 text-center">{{ g.translate('what_is_nlp', 'What is Neuro-Linguistic Programming?') }}</h2>
-                
+
                 <p>
                     {{ g.translate('nlp_definition', 'Neuro-Linguistic Programming (NLP) is an approach to communication, personal development, and psychotherapy created in the 1970s. It explores the relationships between how we think (neuro), how we communicate (linguistic), and our patterns of behavior and emotion (programming).') }}
                 </p>
-                
+
                 <p>
                     {{ g.translate('nlp_purpose', 'The core premise of NLP is that our thoughts, feelings, and behaviors are not fixed traits but learned patterns that can be changed. By understanding and modifying these patterns, we can improve communication, manage emotions more effectively, and create positive behavioral changes.') }}
                 </p>
-                
+
                 <div class="row mt-5">
                     <div class="col-md-4 text-center mb-4 mb-md-0">
                         <div class="card h-100 shadow-sm">
@@ -106,7 +102,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-4 text-center mb-4 mb-md-0">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body p-4">
@@ -120,7 +116,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-4 text-center">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body p-4">
@@ -150,7 +146,7 @@
             </p>
         </div>
     </div>
-    
+
     <div class="grid-layout-3 gap-lg">
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body p-4">
@@ -165,7 +161,7 @@
                 </p>
             </div>
         </div>
-        
+
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -179,7 +175,7 @@
                 </p>
             </div>
         </div>
-        
+
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -193,7 +189,7 @@
                 </p>
             </div>
         </div>
-        
+
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -207,7 +203,7 @@
                 </p>
             </div>
         </div>
-        
+
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -221,7 +217,7 @@
                 </p>
             </div>
         </div>
-        
+
         <div class="card shadow-sm border-0 h-100">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center mb-3">
@@ -251,7 +247,7 @@
                     <a href="{{ url_for('chat.index') }}" class="btn btn-light btn-lg">
                         <i class="fas fa-comments me-2"></i> {{ g.translate('start_chat', 'Start a Chat') }}
                     </a>
-                    
+
                     <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-outline-light btn-lg">
                         <i class="fas fa-crown me-2"></i> {{ g.translate('explore_premium', 'Explore Premium') }}
                     </a>
@@ -261,36 +257,5 @@
     </div>
 </div>
 
-<!-- Premium Feature Modal -->
-<div class="modal fade" id="premiumFeatureModal" tabindex="-1" aria-labelledby="premiumFeatureModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="premiumFeatureModalLabel">{{ g.translate('premium_feature', 'Premium Feature') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-crown text-accent mb-3" style="font-size: 3rem;"></i>
-                <h5>{{ g.translate('premium_required', 'Premium Subscription Required') }}</h5>
-                <p>{{ g.translate('premium_nlp_message', 'Advanced NLP techniques are available with a Premium or Professional subscription.') }}</p>
-                
-                <div class="bg-light rounded p-3 mb-3">
-                    <h6 class="mb-2">{{ g.translate('premium_includes', 'Premium includes:') }}</h6>
-                    <ul class="list-unstyled text-start mb-0">
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('all_techniques', 'All NLP techniques') }}</li>
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('unlimited_chat', 'Unlimited chat interactions') }}</li>
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> {{ g.translate('progress_tracking', 'Full progress tracking') }}</li>
-                        <li><i class="fas fa-check text-success me-2"></i> {{ g.translate('communication_analysis', 'Communication analysis') }}</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ g.translate('cancel', 'Cancel') }}</button>
-                <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-primary">
-                    <i class="fas fa-crown me-1"></i> {{ g.translate('view_premium', 'View Premium Features') }}
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- All techniques are now free! No premium modal needed -->
 {% endblock %}

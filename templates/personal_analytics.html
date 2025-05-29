@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Personal Analytics - Inner Architect{% endblock %}
+
+{% block extra_css %}
+<style>
+  .analytics-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 15px;
+  }
+  
+  .analytics-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+  
+  .analytics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+  
+  .metric-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .metric-card:hover {
+    transform: scale(1.05);
+  }
+  
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  
+  .insight-card {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-left: 5px solid #667eea;
+  }
+  
+  .correlation-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+  
+  .recommendation-card {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-left: 5px solid #f093fb;
+  }
+  
+  .confidence-bar {
+    height: 8px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+  }
+  
+  .ai-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+  
+  .progress-ring {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+  }
+  
+  .progress-ring-circle {
+    stroke: #667eea;
+    stroke-width: 8;
+    fill: transparent;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.5s ease-in-out;
+  }
+  
+  .loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+  }
+  
+  .spinner-border-custom {
+    width: 3rem;
+    height: 3rem;
+    border: 0.3em solid rgba(102, 126, 234, 0.2);
+    border-top: 0.3em solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <!-- Analytics Header -->
+  <div class="analytics-header text-center">
+    <div class="container">
+      <h1 class="display-4 mb-3">
+        <i class="fas fa-brain me-3"></i>Your Personal Analytics
+      </h1>
+      <p class="lead">Discover how AI analyzes your transformation journey and correlates your progress data</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading-state" class="loading-spinner">
+    <div class="text-center">
+      <div class="spinner-border-custom"></div>
+      <p class="mt-3 text-muted">AI is analyzing your data patterns...</p>
+    </div>
+  </div>
+
+  <!-- Main Analytics Content -->
+  <div id="analytics-content" style="display: none;">
+    
+    <!-- Progress Metrics Row -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-3 col-md-6">
+        <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <div class="metric-value" id="techniques-mastered">0</div>
+          <div class="metric-label">Techniques Mastered</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+          <div class="metric-value" id="exercises-completed">0</div>
+          <div class="metric-label">Exercises Completed</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+          <div class="metric-value" id="improvement-score">0%</div>
+          <div class="metric-label">Improvement Score</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6">
+        <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+          <div class="metric-value" id="consistency-rating">0%</div>
+          <div class="metric-label">Consistency Rating</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insights and Correlations Row -->
+    <div class="row g-4 mb-4">
+      <!-- AI Insights -->
+      <div class="col-lg-6">
+        <div class="analytics-card h-100">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4">
+              <i class="fas fa-robot me-2 text-primary"></i>AI-Powered Insights
+            </h5>
+            <div id="ai-insights-container">
+              <!-- AI insights will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Correlation Analysis -->
+      <div class="col-lg-6">
+        <div class="analytics-card h-100">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4">
+              <i class="fas fa-project-diagram me-2 text-success"></i>Data Correlations
+            </h5>
+            <div id="correlation-container">
+              <!-- Correlations will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Trends Row -->
+    <div class="row g-4 mb-4">
+      <!-- Weekly Progress Chart -->
+      <div class="col-lg-8">
+        <div class="analytics-card">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4">
+              <i class="fas fa-chart-line me-2 text-info"></i>Progress Trends
+            </h5>
+            <div class="chart-container">
+              <canvas id="progressTrendChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Technique Usage -->
+      <div class="col-lg-4">
+        <div class="analytics-card h-100">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4">
+              <i class="fas fa-doughnut-bite me-2 text-warning"></i>Technique Usage
+            </h5>
+            <div class="chart-container">
+              <canvas id="techniqueUsageChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personalized Recommendations -->
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="analytics-card">
+          <div class="card-body p-4">
+            <h5 class="card-title mb-4">
+              <i class="fas fa-lightbulb me-2 text-warning"></i>AI Recommendations
+            </h5>
+            <div id="recommendations-container">
+              <!-- Recommendations will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load personal analytics data
+    loadPersonalAnalytics();
+    
+    function loadPersonalAnalytics() {
+        fetch('/api/personal-analytics/overview')
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                populateMetrics(data.progress_metrics);
+                populateAIInsights(data.ai_insights);
+                populateCorrelations(data.correlation_analysis);
+                createProgressChart(data.trend_analysis);
+                createTechniqueChart(data.trend_analysis);
+                populateRecommendations(data.personalized_recommendations);
+            })
+            .catch(error => {
+                console.error('Error loading analytics:', error);
+                hideLoading();
+                showErrorState();
+            });
+    }
+    
+    function hideLoading() {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('analytics-content').style.display = 'block';
+    }
+    
+    function populateMetrics(metrics) {
+        document.getElementById('techniques-mastered').textContent = metrics.techniques_mastered || 0;
+        document.getElementById('exercises-completed').textContent = metrics.exercises_completed || 0;
+        document.getElementById('improvement-score').textContent = (metrics.improvement_score || 0) + '%';
+        document.getElementById('consistency-rating').textContent = (metrics.consistency_rating || 0) + '%';
+    }
+    
+    function populateAIInsights(insights) {
+        const container = document.getElementById('ai-insights-container');
+        container.innerHTML = `
+            <div class="insight-card">
+                <div class="ai-badge">AI Analysis</div>
+                <h6>Primary Communication Style</h6>
+                <p class="mb-2"><strong>${insights.primary_communication_style}</strong></p>
+            </div>
+            <div class="insight-card">
+                <div class="ai-badge">Most Effective</div>
+                <h6>Top Technique</h6>
+                <p class="mb-2"><strong>${insights.most_effective_technique}</strong></p>
+            </div>
+            <div class="insight-card">
+                <div class="ai-badge">Growth Areas</div>
+                <h6>Focus Recommendations</h6>
+                <p class="mb-0">${insights.growth_areas.join(', ')}</p>
+            </div>
+        `;
+    }
+    
+    function populateCorrelations(correlations) {
+        const container = document.getElementById('correlation-container');
+        let html = '<h6 class="mb-3">Mood-Technique Correlations</h6>';
+        
+        Object.entries(correlations.mood_technique_correlation).forEach(([technique, correlation]) => {
+            const percentage = Math.round(correlation * 100);
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-capitalize">${technique.replace('_', ' ')}</span>
+                    <span class="correlation-badge">${percentage}%</span>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    function createProgressChart(trendData) {
+        const ctx = document.getElementById('progressTrendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7'],
+                datasets: [{
+                    label: 'Progress Score',
+                    data: trendData.weekly_progress,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+    
+    function createTechniqueChart(trendData) {
+        const ctx = document.getElementById('techniqueUsageChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Reframing', 'Anchoring', 'Pattern Interruption'],
+                datasets: [{
+                    data: [15, 11, 9],
+                    backgroundColor: [
+                        '#667eea',
+                        '#f093fb',
+                        '#4facfe'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    function populateRecommendations(recommendations) {
+        const container = document.getElementById('recommendations-container');
+        let html = '';
+        
+        recommendations.forEach(rec => {
+            const confidenceWidth = Math.round(rec.confidence * 100);
+            html += `
+                <div class="recommendation-card">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-0">${rec.title}</h6>
+                        <span class="badge bg-primary">${confidenceWidth}% confidence</span>
+                    </div>
+                    <p class="mb-2 text-muted">${rec.reason}</p>
+                    <div class="confidence-bar" style="width: ${confidenceWidth}%"></div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    function showErrorState() {
+        document.getElementById('analytics-content').innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h4>Unable to Load Analytics</h4>
+                <p class="text-muted">Please try refreshing the page or contact support if the issue persists.</p>
+            </div>
+        `;
+        document.getElementById('analytics-content').style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

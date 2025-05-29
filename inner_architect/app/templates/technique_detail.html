@@ -38,24 +38,8 @@
 
 <!-- Main Content -->
 <div class="container py-4">
-    {% if technique_id != 'reframing' and not has_premium %}
-    <div class="premium-banner mb-4">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h4><i class="fas fa-crown text-warning me-2"></i> {{ g.translate('premium_feature', 'Premium Feature') }}</h4>
-                <p class="mb-0">
-                    {{ g.translate('premium_required_detail', 'This advanced NLP technique is available with a Premium or Professional subscription. Upgrade to access all techniques and unlock unlimited chat interactions.') }}
-                </p>
-            </div>
-            <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{{ url_for('main.premium_features_route') }}" class="btn btn-light">
-                    <i class="fas fa-crown me-1"></i> {{ g.translate('upgrade', 'Upgrade Now') }}
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    
+    <!-- All techniques are now free! No premium banners needed -->
+
     <!-- Technique Navigation -->
     <ul class="nav technique-tabs" id="techniqueTab" role="tablist">
         <li class="nav-item" role="presentation">
@@ -79,7 +63,7 @@
             </button>
         </li>
     </ul>
-    
+
     <!-- Tab Content -->
     <div class="tab-content technique-tab-content" id="techniqueTabContent">
         <!-- Overview Tab -->
@@ -88,11 +72,11 @@
                 <div class="col-lg-8">
                     <h3>{{ g.translate('about', 'About') }} {{ technique.name }}</h3>
                     <p class="lead">{{ technique.description }}</p>
-                    
+
                     <div class="mb-5">
                         {{ technique_details.description|safe }}
                     </div>
-                    
+
                     <h4>{{ g.translate('key_concepts', 'Key Concepts') }}</h4>
                     <div class="mb-5">
                         {% for concept in technique_details.key_concepts %}
@@ -101,7 +85,7 @@
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                     <h4>{{ g.translate('benefits', 'Benefits') }}</h4>
                     <div class="mb-5">
                         {% for benefit in technique_details.benefits %}
@@ -111,7 +95,7 @@
                         </div>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="mt-5">
                         <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
                            {% if technique_id != 'reframing' and not has_premium %}
@@ -121,7 +105,7 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <div class="col-lg-4 mt-4 mt-lg-0">
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-light">
@@ -135,7 +119,7 @@
                             </ul>
                         </div>
                     </div>
-                    
+
                     <div class="card shadow-sm">
                         <div class="card-header bg-light">
                             <h5 class="mb-0">{{ g.translate('other_techniques', 'Other Techniques') }}</h5>
@@ -162,7 +146,7 @@
                                         {% endif %}
                                     </span>
                                     {{ other.name }}
-                                    
+
                                     {% if other_id != 'reframing' and not has_premium %}
                                     <span class="badge bg-warning text-dark ms-auto">{{ g.translate('premium', 'Premium') }}</span>
                                     {% endif %}
@@ -174,15 +158,15 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Examples Tab -->
         <div class="tab-pane fade" id="examples" role="tabpanel" aria-labelledby="examples-tab">
             <h3 class="mb-4">{{ g.translate('examples', 'Examples of') }} {{ technique.name }}</h3>
-            
+
             {% for example in technique_details.examples %}
             <div class="example-card">
                 <h5>{{ example.situation }}</h5>
-                
+
                 {% if technique_id == 'reframing' %}
                 <div class="before-after">
                     <div class="before-box">
@@ -219,7 +203,7 @@
                 {% endif %}
             </div>
             {% endfor %}
-            
+
             <div class="text-center mt-5">
                 <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
                    {% if technique_id != 'reframing' and not has_premium %}
@@ -229,11 +213,11 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- Practice Tips Tab -->
         <div class="tab-pane fade" id="practice" role="tabpanel" aria-labelledby="practice-tab">
             <h3 class="mb-4">{{ g.translate('practice_tips', 'Practice Tips for') }} {{ technique.name }}</h3>
-            
+
             <div class="mb-5">
                 {% for tip in technique_details.practice_tips %}
                 <div class="practice-tip">
@@ -242,7 +226,7 @@
                 </div>
                 {% endfor %}
             </div>
-            
+
             <h4 class="mb-3">{{ g.translate('common_pitfalls', 'Common Pitfalls to Avoid') }}</h4>
             <div class="alert alert-warning">
                 <ul class="mb-0">
@@ -251,7 +235,7 @@
                     {% endfor %}
                 </ul>
             </div>
-            
+
             <div class="text-center mt-5">
                 <a href="{{ url_for('chat.index') }}?technique={{ technique_id }}" class="btn btn-primary btn-lg"
                    {% if technique_id != 'reframing' and not has_premium %}
@@ -261,15 +245,15 @@
                 </a>
             </div>
         </div>
-        
+
         <!-- Science Tab -->
         <div class="tab-pane fade" id="science" role="tabpanel" aria-labelledby="science-tab">
             <h3 class="mb-4">{{ g.translate('scientific_basis', 'Scientific Basis of') }} {{ technique.name }}</h3>
-            
+
             <div class="science-box mb-5">
                 {{ technique_details.scientific_basis|safe }}
             </div>
-            
+
             <h4 class="mb-3">{{ g.translate('related_fields', 'Related Fields and Approaches') }}</h4>
             <div class="row g-4">
                 {% if technique_id == 'reframing' %}
@@ -414,7 +398,7 @@
                 <i class="fas fa-crown text-warning mb-3" style="font-size: 3rem;"></i>
                 <h5>{{ g.translate('premium_required', 'Premium Subscription Required') }}</h5>
                 <p>{{ g.translate('premium_nlp_message', 'Advanced NLP techniques are available with a Premium or Professional subscription.') }}</p>
-                
+
                 <div class="bg-light p-3 rounded mb-3">
                     <h6>{{ g.translate('premium_includes', 'Premium includes:') }}</h6>
                     <ul class="list-unstyled text-start">

@@ -1,0 +1,123 @@
+{
+    "roles": {
+        "admin": {
+            "description": "Administrator with full system access",
+            "permissions": ["*"]
+        },
+        "practitioner": {
+            "description": "Mental health practitioner",
+            "permissions": [
+                "read:phi",
+                "write:phi",
+                "read:user",
+                "read:analytics",
+                "read:techniques",
+                "write:techniques",
+                "break_glass"
+            ]
+        },
+        "supervisor": {
+            "description": "Clinical supervisor",
+            "permissions": [
+                "read:phi",
+                "read:user",
+                "read:analytics",
+                "read:techniques",
+                "approve:techniques",
+                "read:practitioner_logs",
+                "break_glass"
+            ]
+        },
+        "analyst": {
+            "description": "Data analyst with de-identified access",
+            "permissions": [
+                "read:analytics",
+                "read:deidentified",
+                "export:analytics"
+            ]
+        },
+        "user": {
+            "description": "Standard user",
+            "permissions": [
+                "read:own",
+                "write:own",
+                "read:techniques"
+            ]
+        },
+        "premium_user": {
+            "description": "Premium tier user",
+            "permissions": [
+                "read:own",
+                "write:own",
+                "read:techniques",
+                "read:advanced_techniques",
+                "premium:features"
+            ]
+        },
+        "professional_user": {
+            "description": "Professional tier user",
+            "permissions": [
+                "read:own",
+                "write:own",
+                "read:techniques",
+                "read:advanced_techniques",
+                "premium:features",
+                "professional:features"
+            ]
+        }
+    },
+    "permissions": {
+        "read:phi": "Read protected health information",
+        "write:phi": "Modify protected health information",
+        "delete:phi": "Delete protected health information",
+        "read:user": "Read user information",
+        "write:user": "Modify user information",
+        "read:own": "Read own data",
+        "write:own": "Modify own data",
+        "read:techniques": "Read basic NLP techniques",
+        "read:advanced_techniques": "Read advanced NLP techniques",
+        "write:techniques": "Create or modify NLP techniques",
+        "approve:techniques": "Approve NLP techniques for production use",
+        "read:analytics": "Access analytics data",
+        "read:deidentified": "Access de-identified user data",
+        "export:analytics": "Export analytics reports",
+        "read:practitioner_logs": "View practitioner activity logs",
+        "premium:features": "Access premium tier features",
+        "professional:features": "Access professional tier features",
+        "break_glass": "Emergency access to protected data",
+        "admin:user": "Administer user accounts",
+        "admin:system": "Administer system settings"
+    },
+    "permission_groups": {
+        "phi_access": [
+            "read:phi",
+            "write:phi",
+            "delete:phi"
+        ],
+        "user_management": [
+            "read:user",
+            "write:user",
+            "admin:user"
+        ],
+        "technique_management": [
+            "read:techniques",
+            "read:advanced_techniques",
+            "write:techniques",
+            "approve:techniques"
+        ],
+        "analytics_access": [
+            "read:analytics",
+            "read:deidentified",
+            "export:analytics"
+        ],
+        "premium_features": [
+            "read:advanced_techniques",
+            "premium:features"
+        ],
+        "professional_features": [
+            "read:advanced_techniques",
+            "premium:features",
+            "professional:features"
+        ]
+    }
+}

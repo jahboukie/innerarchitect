@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% import 'i18n_components.html' as i18n %}
+
+{% block title %}{{ t('privacy_consent', 'Privacy Consent') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">{{ t('privacy_consent', 'Privacy Consent') }}</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        {{ t('pipeda_intro', 'In compliance with the Personal Information Protection and Electronic Documents Act (PIPEDA), we require your explicit consent before collecting, using, or disclosing your personal information.') }}
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <p>{{ t('consent_instructions', 'Please review the following consent statements and check the boxes to indicate your agreement. You can modify these consents at any time through your privacy settings.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <form action="{{ url_for('privacy.update_consent') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ g.csrf_token }}">
+        
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card shadow-sm border-light mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">{{ t('core_service_consent', 'Core Service Consent (Required)') }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="core_service_consent" name="consent_purposes[]" value="core_service" required {% if has_consent('core_service') %}checked{% endif %}>
+                            <label class="form-check-label" for="core_service_consent">
+                                {{ t('core_service_consent_text', 'I consent to the collection, use, and storage of my personal information for the purpose of providing the core service features of The Inner Architect. This includes creating and managing my account, processing my inputs, and delivering personalized responses.') }}
+                            </label>
+                        </div>
+                        <small class="text-muted">{{ t('required_notice', 'This consent is required to use The Inner Architect.') }}</small>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-light mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">{{ t('enhancement_consent', 'Experience Enhancement Consent (Optional)') }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enhancement_consent" name="consent_purposes[]" value="enhancement" {% if has_consent('enhancement') %}checked{% endif %}>
+                            <label class="form-check-label" for="enhancement_consent">
+                                {{ t('enhancement_consent_text', 'I consent to the collection and use of my personal information to enhance my experience with The Inner Architect. This includes personalization of content, remembering my preferences, and providing customized recommendations based on my usage patterns.') }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-light mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">{{ t('analytics_consent', 'Analytics Consent (Optional)') }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="analytics_consent" name="consent_purposes[]" value="analytics" {% if has_consent('analytics') %}checked{% endif %}>
+                            <label class="form-check-label" for="analytics_consent">
+                                {{ t('analytics_consent_text', 'I consent to the collection and analysis of information about how I use The Inner Architect for the purpose of improving the service. This includes analyzing usage patterns, feature engagement, and performance metrics to enhance functionality and user experience.') }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-light mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">{{ t('marketing_consent', 'Marketing Consent (Optional)') }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="marketing_consent" name="consent_purposes[]" value="marketing" {% if has_consent('marketing') %}checked{% endif %}>
+                            <label class="form-check-label" for="marketing_consent">
+                                {{ t('marketing_consent_text', 'I consent to receiving marketing communications from The Inner Architect about new features, services, and relevant offerings. I understand I can withdraw this consent at any time.') }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card shadow-sm border-light mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">{{ t('third_party_consent', 'Third-Party Sharing Consent (Optional)') }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="third_party_consent" name="consent_purposes[]" value="third_party" {% if has_consent('third_party') %}checked{% endif %}>
+                            <label class="form-check-label" for="third_party_consent">
+                                {{ t('third_party_consent_text', 'I consent to sharing my personal information with carefully selected third parties who provide services that enhance The Inner Architect\'s functionality, such as payment processing, cloud storage, and analytics. These third parties are bound by strict confidentiality agreements and will only use my information for the specified purposes.') }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card shadow-sm border-light">
+                    <div class="card-body">
+                        <h3 class="h5">{{ t('your_rights', 'Your Privacy Rights') }}</h3>
+                        <p>{{ t('pipeda_rights', 'Under PIPEDA, you have the right to:') }}</p>
+                        <ul>
+                            <li>{{ t('right_access', 'Access your personal information that we hold') }}</li>
+                            <li>{{ t('right_correct', 'Request corrections to your personal information') }}</li>
+                            <li>{{ t('right_withdraw', 'Withdraw your consent at any time') }}</li>
+                            <li>{{ t('right_delete', 'Request deletion of your personal information') }}</li>
+                            <li>{{ t('right_complain', 'File a complaint with the Privacy Commissioner of Canada') }}</li>
+                        </ul>
+                        <p>{{ t('exercise_rights', 'To exercise these rights, please visit the') }} <a href="{{ url_for('privacy.data_request') }}">{{ t('data_request_page', 'Data Request Page') }}</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <button type="submit" class="btn btn-primary btn-lg px-5">{{ t('save_consent_preferences', 'Save Consent Preferences') }}</button>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary btn-lg px-5 ms-2">{{ t('cancel', 'Cancel') }}</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Enable/disable submit button based on core service consent
+    document.addEventListener('DOMContentLoaded', function() {
+        const coreServiceCheckbox = document.getElementById('core_service_consent');
+        const submitButton = document.querySelector('button[type="submit"]');
+        
+        function updateSubmitButton() {
+            submitButton.disabled = !coreServiceCheckbox.checked;
+        }
+        
+        coreServiceCheckbox.addEventListener('change', updateSubmitButton);
+        updateSubmitButton();
+    });
+</script>
+{% endblock %}

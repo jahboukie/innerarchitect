@@ -1,258 +1,219 @@
 {% extends "base.html" %}
 
-{% block title %}{{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+{% block title %}{{ g.translate('dashboard', 'Dashboard') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
 
 {% block content %}
+<style>
+.dashboard-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    height: 100%;
+}
 
-    <!-- Main Content -->
-    <main class="container my-4">
-        <div class="row g-4">
-            <!-- Introduction panel (New) -->
-            <div class="col-12 mb-2">
-                <div class="card welcome-card">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h2 class="h4 mb-3">{{ g.translate('welcome', 'Welcome to Your Mental Wellness Journey') }}</h2>
-                                <p class="text-secondary mb-0">
-                                    {{ g.translate('welcome_subtitle', 'The Inner Architect helps you build healthier thought patterns through guided conversation. Share your thoughts and feelings, and receive personalized insights to help reframe negative thinking.') }}
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
-                                <i class="fas fa-brain" style="font-size: 3rem; background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; color: transparent;"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.dashboard-card .card-body {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dashboard-card .feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.dashboard-card h5 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.dashboard-card p {
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.dashboard-card .btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    font-weight: 500;
+}
+
+.dashboard-card .btn:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+    color: white;
+}
+
+.welcome-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* Individual card color schemes */
+.card-nlp { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.card-communication { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.card-journeys { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.card-voice { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.card-reminders { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.card-belief { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+.card-chat { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333; }
+.card-analytics { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
+</style>
+
+<!-- Dashboard Header -->
+<div class="container my-4">
+    <div class="welcome-header text-center">
+        <div class="row align-items-center">
+            <div class="col-md-8 text-md-start">
+                <h1 class="h2 mb-3">
+                    <i class="fas fa-brain me-3"></i>
+                    Welcome back, {% if current_user.first_name %}{{ current_user.first_name }}{% else %}{{ g.translate('user', 'User') }}{% endif %}!
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    {{ g.translate('dashboard_subtitle', 'Your personal transformation toolkit awaits. Choose a feature below to continue your journey of growth and self-discovery.') }}
+                </p>
             </div>
-            
-            <!-- Sidebar - Mood selection controls -->
-            <div class="col-md-3">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-heart me-2 text-danger"></i>
-                        <h5 class="mb-0">{{ g.translate('mood_check', 'Mood Check-in') }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-secondary mb-3">{{ g.translate('how_feeling', 'How are you feeling today?') }}</p>
-                        
-                        <!-- Mood selection interface -->
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-secondary mood-btn" data-mood="happy">
-                                <i class="fas fa-smile me-2"></i>{{ g.translate('happy', 'Happy') }}
-                            </button>
-                            <button class="btn btn-outline-secondary mood-btn" data-mood="neutral">
-                                <i class="fas fa-meh me-2"></i>{{ g.translate('neutral', 'Neutral') }}
-                            </button>
-                            <button class="btn btn-outline-secondary mood-btn" data-mood="sad">
-                                <i class="fas fa-frown me-2"></i>{{ g.translate('sad', 'Sad') }}
-                            </button>
-                            <button class="btn btn-outline-secondary mood-btn" data-mood="frustrated">
-                                <i class="fas fa-angry me-2"></i>{{ g.translate('frustrated', 'Frustrated') }}
-                            </button>
-                            <button class="btn btn-outline-secondary mood-btn" data-mood="exhausted">
-                                <i class="fas fa-tired me-2"></i>{{ g.translate('exhausted', 'Exhausted') }}
-                            </button>
-                        </div>
-                        
-                        <hr class="my-4 border-secondary">
-                        
-                        <!-- NLP Techniques Section -->
-                        <h6 class="mb-3">
-                            <i class="fas fa-brain me-2"></i>{{ g.translate('nlp_techniques', 'NLP Techniques') }}
-                        </h6>
-                        <p class="text-secondary small mb-3">
-                            {{ g.translate('select_technique', 'Select a technique to focus on in your conversation:') }}
-                        </p>
-                        <!-- Recommendation Button -->
-                        <button id="recommendButton" class="btn btn-sm btn-outline-primary w-100 mb-3">
-                            <i class="fas fa-magic me-1"></i> {{ g.translate('recommended_technique', 'Recommend Technique') }}
-                        </button>
-                        
-                        <select class="form-select mb-3" id="nlpTechniqueSelect">
-                            <option value="reframing">{{ g.translate('reframing', 'Reframing') }}</option>
-                            <option value="pattern_interruption">{{ g.translate('pattern_interruption', 'Pattern Interruption') }}</option>
-                            <option value="anchoring">{{ g.translate('anchoring', 'Anchoring') }}</option>
-                            <option value="future_pacing">{{ g.translate('future_pacing', 'Future Pacing') }}</option>
-                            <option value="sensory_language">{{ g.translate('sensory_language', 'Sensory Language') }}</option>
-                            <option value="meta_model">{{ g.translate('meta_model', 'Meta Model Questions') }}</option>
-                        </select>
-                        <div id="techniqueDescription" class="text-secondary small mb-3 p-2 bg-dark rounded">
-                            <p class="mb-0"><strong>{{ g.translate('reframing', 'Reframing') }}</strong>: {{ g.translate('reframing_description', 'See situations from new perspectives and find positive aspects in challenges.') }}</p>
-                        </div>
-                        
-                        <!-- Recommendation Explanation (hidden by default) -->
-                        <div id="recommendationExplanation" class="text-secondary small mb-3 p-2 bg-gradient rounded border border-info d-none">
-                            <p class="mb-1 fw-bold"><i class="fas fa-lightbulb me-1 text-warning"></i> Recommendation:</p>
-                            <p class="mb-0 recommendation-text"></p>
-                        </div>
-                        
-                        <hr class="my-4 border-secondary">
-                        
-                        <!-- NLP Exercises Section -->
-                        <h6 class="mb-3">
-                            <i class="fas fa-dumbbell me-2"></i>NLP Exercises
-                        </h6>
-                        <p class="text-secondary small mb-3">
-                            Practice with guided exercises for your chosen technique:
-                        </p>
-                        <button id="findExercisesBtn" class="btn btn-outline-primary w-100 mb-3">
-                            <i class="fas fa-search me-1"></i> Find Exercises
-                        </button>
-                        <div id="exercisesList" class="list-group exercise-list d-none mb-3">
-                            <!-- Exercise items will be inserted here dynamically -->
-                        </div>
-                        
-                        <hr class="my-4 border-secondary">
-                        
-                        <!-- Daily Reflection -->
-                        <h6 class="mb-3">
-                            <i class="fas fa-pen-to-square me-2"></i>Daily Reflection
-                        </h6>
-                        <p class="text-secondary small">
-                            Track your progress with NLP techniques and build self-awareness.
-                        </p>
-                        <button class="btn btn-outline-secondary w-100" disabled>
-                            <i class="fas fa-journal-whills me-2"></i>Start Journal Entry
-                        </button>
-                        <p class="text-secondary small mt-2">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Journal feature coming soon
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Chat Interface -->
-            <div class="col-md-9">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-comments me-2 text-primary"></i>
-                            <h5 class="mb-0">{{ g.translate('chat_with_ai', 'Chat with Your Inner Architect') }}</h5>
-                        </div>
-                        <div id="selectedMood" class="badge bg-secondary px-2 py-1 d-none">
-                            <i class="fas fa-meh me-1"></i> {{ g.translate('neutral', 'Neutral') }}
-                        </div>
-                    </div>
-                    
-                    <!-- Chat display area -->
-                    <div class="card-body d-flex flex-column">
-                        <div id="chatbox" class="flex-grow-1">
-                            <!-- Welcome message -->
-                            <div class="chat-message assistant">
-                                <div class="message-content">
-                                    <p>{{ g.translate('welcome_message', 'Welcome to The Inner Architect! I\'m here to help you reframe thoughts and build more positive mental patterns.') }}</p>
-                                    <p class="mb-0">{{ g.translate('how_assist', 'How can I assist you today?') }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Message input form -->
-                        <div class="input-group">
-                            <input 
-                                type="text" 
-                                id="messageInput" 
-                                class="form-control" 
-                                placeholder="{{ g.translate('your_message', 'Type your message here...') }}"
-                                aria-label="{{ g.translate('message', 'Message') }}">
-                            <button 
-                                class="btn btn-secondary" 
-                                type="button" 
-                                id="sendButton">
-                                {{ g.translate('submit', 'Send') }} <i class="fas fa-paper-plane ms-1"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-    
-    <!-- NLP Exercise Modal -->
-    <div class="modal fade" id="exerciseModal" tabindex="-1" aria-labelledby="exerciseModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exerciseModalLabel">NLP Exercise</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="exerciseContainer">
-                        <!-- Exercise content will be dynamically loaded here -->
-                        <div class="exercise-loading text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-3">Loading exercise...</p>
-                        </div>
-                    </div>
-                    
-                    <div id="exerciseStepContainer" class="d-none">
-                        <!-- Current step will be shown here -->
-                    </div>
-                    
-                    <div id="exerciseProgress" class="mt-4 d-none">
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between mt-2">
-                            <small class="text-secondary">Step <span id="currentStepNumber">0</span> of <span id="totalSteps">0</span></small>
-                            <small class="text-secondary"><span id="estimatedTimeRemaining">0</span> min remaining</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-outline-secondary" id="prevStepBtn" disabled>Previous</button>
-                    <button type="button" class="btn btn-primary" id="nextStepBtn">Next</button>
-                </div>
+            <div class="col-md-4 text-center mt-3 mt-md-0">
+                <i class="fas fa-chart-line" style="font-size: 4rem; opacity: 0.7;"></i>
             </div>
         </div>
     </div>
 
-    <!-- NLP Exercise Modal -->
-    <div class="modal fade" id="exerciseModal" tabindex="-1" aria-labelledby="exerciseModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exerciseModalLabel">{{ g.translate('nlp_exercise', 'NLP Exercise') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Feature Dashboard Grid -->
+    <div class="feature-grid">
+        <!-- AI Chat Interface -->
+        <div class="dashboard-card card-chat">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-comments"></i>
                 </div>
-                <div class="modal-body">
-                    <div id="exerciseContainer">
-                        <!-- Exercise content will be dynamically loaded here -->
-                        <div class="exercise-loading text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">{{ g.translate('loading', 'Loading...') }}</span>
-                            </div>
-                            <p class="mt-3">{{ g.translate('loading_exercise', 'Loading exercise...') }}</p>
-                        </div>
-                    </div>
-                    
-                    <div id="exerciseStepContainer" class="d-none">
-                        <!-- Current step will be shown here -->
-                    </div>
-                    
-                    <div id="exerciseProgress" class="mt-4 d-none">
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between mt-2">
-                            <small class="text-secondary">{{ g.translate('step', 'Step') }} <span id="currentStepNumber">0</span> {{ g.translate('of', 'of') }} <span id="totalSteps">0</span></small>
-                            <small class="text-secondary"><span id="estimatedTimeRemaining">0</span> {{ g.translate('min_remaining', 'min remaining') }}</small>
-                        </div>
-                    </div>
+                <h5>{{ g.translate('ai_chat', 'AI Chat Interface') }}</h5>
+                <p>{{ g.translate('ai_chat_desc', 'Start a conversation with your personal AI coach. Get instant insights, guidance, and support for your mental wellness journey.') }}</p>
+                <a href="/chat" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('start_chat', 'Start Chat') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- NLP Techniques -->
+        <div class="dashboard-card card-nlp">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ g.translate('close', 'Close') }}</button>
-                    <button type="button" class="btn btn-outline-secondary" id="prevStepBtn" disabled>{{ g.translate('previous_step', 'Previous') }}</button>
-                    <button type="button" class="btn btn-primary" id="nextStepBtn">{{ g.translate('next_step', 'Next') }}</button>
+                <h5>{{ g.translate('nlp_techniques', 'NLP Techniques') }}</h5>
+                <p>{{ g.translate('nlp_desc', 'Explore powerful Neuro-Linguistic Programming techniques for cognitive reframing, pattern interruption, and positive mindset development.') }}</p>
+                <a href="/techniques" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('explore_techniques', 'Explore Techniques') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Communication Analysis -->
+        <div class="dashboard-card card-communication">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-comments-dollar"></i>
                 </div>
+                <h5>{{ g.translate('communication_analysis', 'Communication Analysis') }}</h5>
+                <p>{{ g.translate('communication_desc', 'Analyze your communication patterns, improve emotional intelligence, and enhance your interpersonal skills.') }}</p>
+                <a href="/communication-analysis" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('analyze_communication', 'Analyze Communication') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Personalized Journeys -->
+        <div class="dashboard-card card-journeys">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-map-signs"></i>
+                </div>
+                <h5>{{ g.translate('personalized_journeys', 'Personalized Journeys') }}</h5>
+                <p>{{ g.translate('journeys_desc', 'Follow customized transformation paths designed specifically for your goals, challenges, and personal growth objectives.') }}</p>
+                <a href="/personalized-journeys" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('start_journey', 'Start Journey') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Voice Practice -->
+        <div class="dashboard-card card-voice">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <h5>{{ g.translate('voice_practice', 'Voice Practice') }}</h5>
+                <p>{{ g.translate('voice_desc', 'Practice vocal delivery, improve confidence in speaking, and develop powerful communication skills through guided exercises.') }}</p>
+                <a href="/voice-practice" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('practice_voice', 'Practice Voice') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Practice Reminders -->
+        <div class="dashboard-card card-reminders">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h5>{{ g.translate('practice_reminders', 'Practice Reminders') }}</h5>
+                <p>{{ g.translate('reminders_desc', 'Set up intelligent reminders for your daily practices, exercises, and mindfulness sessions to maintain consistent growth.') }}</p>
+                <a href="/practice-reminders" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('set_reminders', 'Set Reminders') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Belief Change Protocol -->
+        <div class="dashboard-card card-belief">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <h5>{{ g.translate('belief_change', 'Belief Change Protocol') }}</h5>
+                <p>{{ g.translate('belief_desc', 'Transform limiting beliefs into empowering ones through structured protocols and evidence-based techniques.') }}</p>
+                <a href="/belief-change" class="btn btn-outline-dark">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('change_beliefs', 'Change Beliefs') }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Personal Analytics Dashboard -->
+        <div class="dashboard-card card-analytics">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h5>{{ g.translate('personal_analytics', 'Personal Analytics') }}</h5>
+                <p>{{ g.translate('personal_analytics_desc', 'Discover how AI correlates your data points for personalized insights, progress patterns, and transformation recommendations.') }}</p>
+                <a href="/personal-analytics" class="btn btn-outline-dark">
+                    <i class="fas fa-arrow-right me-2"></i>{{ g.translate('view_insights', 'View AI Insights') }}
+                </a>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}

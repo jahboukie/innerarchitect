@@ -26,54 +26,54 @@ CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY")
 claude_client = Anthropic(api_key=CLAUDE_API_KEY) if CLAUDE_API_KEY else None
 
 # Default parameters for Claude API calls
-DEFAULT_MODEL = "claude-3-sonnet-20240229"
+DEFAULT_MODEL = "claude-3-5-sonnet-20241022"
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
 
 def safe_claude_call(
-    func: Callable, 
-    *args, 
-    retry_count: int = MAX_RETRIES, 
+    func: Callable,
+    *args,
+    retry_count: int = MAX_RETRIES,
     fallback_value: Any = None,
     **kwargs
 ) -> Any:
     """
     Safely execute a Claude API call with error handling and retries.
-    
+
     Args:
         func: The Claude function to call
         *args: Positional arguments to pass to the function
         retry_count: Number of retries on temporary errors
         fallback_value: Value to return if all retries fail
         **kwargs: Keyword arguments to pass to the function
-        
+
     Returns:
         The result of the API call or fallback_value if it fails
     """
     if not claude_client:
         warning("Claude client not initialized - API key may be missing")
         return fallback_value
-        
+
     attempts = 0
     last_error = None
-    
+
     while attempts < retry_count:
         try:
             result = func(*args, **kwargs)
             if attempts > 0:
                 info(f"Claude API call succeeded after {attempts+1} attempts")
             return result
-            
+
         except Exception as e:
             error_type = type(e).__name__
             attempts += 1
-            
+
             # Determine if the error is retryable
             retryable = "Timeout" in error_type or \
                         "RateLimitError" in error_type or \
                         "ServiceUnavailableError" in error_type or \
                         "APIConnectionError" in error_type
-                        
+
             if retryable and attempts < retry_count:
                 retry_delay = RETRY_DELAY * attempts  # Exponential backoff
                 warning(f"Retryable error on Claude API call ({error_type}): {str(e)}. Retrying in {retry_delay}s...")
@@ -86,24 +86,24 @@ def safe_claude_call(
                 error(error_message)
                 last_error = e
                 break
-                
+
     # If we got here, all retries failed
     if "AuthenticationError" in type(last_error).__name__:
         critical("Authentication error with Claude API. Check your API key.")
-    
+
     return fallback_value
 
 def safe_message_creation(
     system_prompt: str,
     user_prompt: str,
     model: str = DEFAULT_MODEL,
-    max_tokens: int = 1000, 
+    max_tokens: int = 1000,
     temperature: float = 0.7,
     fallback_response: str = ""
 ) -> str:
     """
     Safely create a message with the Claude API.
-    
+
     Args:
         system_prompt: System prompt to set context
         user_prompt: User prompt for the message
@@ -111,20 +111,20 @@ def safe_message_creation(
         max_tokens: Maximum number of tokens to generate
         temperature: Sampling temperature
         fallback_response: Response to return if the API call fails
-        
+
     Returns:
         The generated text or fallback_response if the call fails
     """
     if not claude_client:
         warning("Claude client not initialized - API key may be missing")
         return fallback_response
-    
+
     # Define the closure function to be called by safe_claude_call
     def execute_message_creation():
         # Check if we have a valid client
         if not claude_client:
             return fallback_response
-            
+
         # Make the API call
         message = claude_client.messages.create(
             model=model,
@@ -135,19 +135,19 @@ def safe_message_creation(
                 {"role": "user", "content": user_prompt}
             ]
         )
-        
+
         # Extract and return the response
         if message and message.content:
             content_blocks = [block.text for block in message.content if hasattr(block, 'text')]
             result = ''.join(content_blocks)
             return result.strip() if result else fallback_response
         return fallback_response
-    
+
     result = safe_claude_call(
         execute_message_creation,
         fallback_value=fallback_response
     )
-    
+
     return result if result is not None else fallback_response
 
 # Supported languages
@@ -175,46 +175,46 @@ _translations_cache = {}
 def detect_language(text):
     """
     Detect the language of a given text.
-    
+
     Args:
         text (str): The text to analyze.
-        
+
     Returns:
         str: The language code (ISO 639-1) or 'en' if detection fails.
     """
     if not text or len(text.strip()) < 3:
         return DEFAULT_LANGUAGE
-    
+
     if not claude_client:
         # Simple fallback - check for specific characters
         # This is a very basic approach and not very accurate
         text = text.lower()
-        
+
         # Check for Chinese characters
         if any('\u4e00' <= char <= '\u9fff' for char in text):
             return 'zh'
-            
+
         # Check for Japanese characters (Hiragana or Katakana)
         if any('\u3040' <= char <= '\u30ff' for char in text):
             return 'ja'
-            
+
         # Check for Cyrillic (Russian)
         if any('\u0400' <= char <= '\u04FF' for char in text):
             return 'ru'
-            
+
         # For other languages, a more sophisticated approach would be needed
         # Default to English for now in this fallback
         return DEFAULT_LANGUAGE
-    
+
     # Use the safe message creation helper
     system_prompt = "You are a language detection specialist. Respond with only the ISO 639-1 language code."
-    
+
     user_prompt = f"""Detect the language of the following text. Respond with only the ISO 639-1 language code (e.g., 'en' for English, 'es' for Spanish, etc.).
 
 Text: "{text}"
 
 Language code:"""
-    
+
     # Use our safe message creation function with appropriate parameters
     lang_code = safe_message_creation(
         system_prompt=system_prompt,
@@ -224,64 +224,64 @@ Language code:"""
         temperature=0.3,  # Lower temperature for more deterministic output
         fallback_response=DEFAULT_LANGUAGE
     ).lower()
-    
+
     # Extract the language code if it's wrapped in quotes or other characters
     if "'" in lang_code or '"' in lang_code:
         lang_code = ''.join(c for c in lang_code if c.isalpha())
-    
+
     # Verify it's a supported language code, default to English if not
     if lang_code in SUPPORTED_LANGUAGES:
         return lang_code
-    
+
     return DEFAULT_LANGUAGE
 
 
 def translate_text(text, target_lang='en', source_lang=None):
     """
     Translate text to the target language.
-    
+
     Args:
         text (str): The text to translate.
         target_lang (str): The target language code.
         source_lang (str, optional): The source language code. If not provided, it will be detected.
-        
+
     Returns:
         str: The translated text or original text if translation fails.
     """
     if not text or len(text.strip()) < 3:
         return text
-    
+
     # If target is already the source language, no need to translate
     if source_lang and source_lang == target_lang:
         return text
-    
+
     if target_lang == DEFAULT_LANGUAGE and not source_lang:
-        # Assume it's already in English if we're translating to English and 
+        # Assume it's already in English if we're translating to English and
         # don't know the source language
         return text
-    
+
     if not claude_client:
         # Cannot translate without Claude API
         return text
-    
+
     # Detect source language if not provided
     if not source_lang:
         source_lang = detect_language(text)
-        
+
         # If source is already the target language, no need to translate
         if source_lang == target_lang:
             return text
-    
+
     # Use safe message creation for translation
     system_prompt = "You are a professional translator. Provide only the translated text with no additional comments."
-    
+
     user_prompt = f"""Translate the following text from {SUPPORTED_LANGUAGES.get(source_lang, source_lang)} to {SUPPORTED_LANGUAGES.get(target_lang, target_lang)}.
 Only provide the translated text with no additional explanations or notes.
 
 Text: "{text}"
 
 Translation:"""
-    
+
     # Use our safe message creation function with appropriate parameters
     translated_text = safe_message_creation(
         system_prompt=system_prompt,
@@ -291,14 +291,14 @@ Translation:"""
         temperature=0.3,  # Lower temperature for more accurate translation
         fallback_response=text  # Return original text if translation fails
     )
-    
+
     # If we got a valid response, clean it up
     if translated_text and translated_text != text:
         # Remove quotes if they were added by the AI
         if (translated_text.startswith('"') and translated_text.endswith('"')) or \
            (translated_text.startswith("'") and translated_text.endswith("'")):
             translated_text = translated_text[1:-1]
-    
+
     return translated_text
 
 
@@ -306,33 +306,33 @@ Translation:"""
 def load_translations(lang_code):
     """
     Load translations for a specific language.
-    
+
     Args:
         lang_code (str): The language code.
-        
+
     Returns:
         dict: A dictionary of translations.
     """
     if lang_code == DEFAULT_LANGUAGE:
         return {}
-    
+
     if lang_code in _translations_cache:
         return _translations_cache[lang_code]
-    
+
     try:
         # Try to load from file first
         translation_file = f"translations/{lang_code}.json"
-        
+
         if os.path.exists(translation_file):
             with open(translation_file, 'r', encoding='utf-8') as f:
                 translations = json.load(f)
                 _translations_cache[lang_code] = translations
                 return translations
-        
+
         # If no file exists, return empty dict
         _translations_cache[lang_code] = {}
         return {}
-        
+
     except Exception as e:
         error(f"Error loading translations for {lang_code}: {e}")
         _translations_cache[lang_code] = {}
@@ -342,29 +342,29 @@ def load_translations(lang_code):
 def translate_ui_text(text_key, target_lang='en', default=None):
     """
     Get the translated UI text for a specific key.
-    
+
     Args:
         text_key (str): The text key in the translations dictionary.
         target_lang (str): The target language code.
         default (str, optional): Default text if translation is not found.
-        
+
     Returns:
         str: The translated text or default/key if not found.
     """
     if target_lang == DEFAULT_LANGUAGE:
         return default or text_key
-    
+
     translations = load_translations(target_lang)
-    
+
     # If key exists in translations, return it
     if text_key in translations:
         return translations[text_key]
-    
+
     # If default is provided, return that
     if default:
         # Optionally translate the default text if it's not a key
         return translate_text(default, target_lang, DEFAULT_LANGUAGE)
-    
+
     # Otherwise return the key itself
     return text_key
 
@@ -372,10 +372,10 @@ def translate_ui_text(text_key, target_lang='en', default=None):
 def is_rtl(lang_code):
     """
     Check if a language is right-to-left.
-    
+
     Args:
         lang_code (str): The language code.
-        
+
     Returns:
         bool: True if the language is RTL, False otherwise.
     """
@@ -385,10 +385,10 @@ def is_rtl(lang_code):
 def get_language_name(lang_code):
     """
     Get the display name of a language.
-    
+
     Args:
         lang_code (str): The language code.
-        
+
     Returns:
         str: The language name.
     """
@@ -398,7 +398,7 @@ def get_language_name(lang_code):
 def get_supported_languages():
     """
     Get a list of supported languages.
-    
+
     Returns:
         dict: A dictionary of supported language codes and their names.
     """
@@ -408,25 +408,25 @@ def get_supported_languages():
 def translate_content(content, target_lang='en'):
     """
     Translate a content object (dictionary with text fields).
-    
+
     Args:
         content (dict): The content dictionary.
         target_lang (str): The target language code.
-        
+
     Returns:
         dict: The translated content dictionary.
     """
     if target_lang == DEFAULT_LANGUAGE:
         return content
-    
+
     if not isinstance(content, dict):
         if isinstance(content, str):
             return translate_text(content, target_lang)
         return content
-    
+
     # Create a new dictionary to hold the translations
     translated_content = {}
-    
+
     # Translate each field, recursively handling nested dictionaries and lists
     for key, value in content.items():
         if isinstance(value, str):
@@ -447,5 +447,5 @@ def translate_content(content, target_lang='en'):
         else:
             # For non-string values (like numbers, booleans), keep as is
             translated_content[key] = value
-    
+
     return translated_content

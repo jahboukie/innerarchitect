@@ -9,8 +9,8 @@ bind = "0.0.0.0:5000"
 # Otherwise, use (2 * number of cores) + 1, which is a common formula
 workers = int(os.environ.get("WEB_CONCURRENCY", (multiprocessing.cpu_count() * 2) + 1))
 
-# Use a non-blocking worker
-worker_class = "gevent"
+# Use a basic worker (sync)
+worker_class = "sync"
 
 # Timeout for workers (in seconds)
 timeout = 120

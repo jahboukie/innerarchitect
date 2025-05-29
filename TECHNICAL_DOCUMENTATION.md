@@ -77,6 +77,20 @@ The app functions as a Progressive Web App with:
 - Offline support via service worker
 - Installation capability with manifest.json
 - Icon assets for multiple device sizes
+- Push notifications for practice reminders
+- Background sync for offline actions
+- Voice input support for hands-free interaction
+- Haptic feedback for improved mobile experience
+
+### Analytics Dashboard
+
+The application includes a comprehensive analytics dashboard:
+- User engagement tracking with activity metrics
+- Technique effectiveness measurement
+- User progress analysis
+- Business metrics and subscription insights
+- Cohort analysis for user retention
+- Data visualization with Chart.js
 
 ## Database Schema
 
@@ -89,6 +103,10 @@ Key database models include:
 - **ConversationMemoryItem**: Stores specific memory items
 - **NLPExercise**: Technique exercises for users
 - **NLPExerciseProgress**: Tracks user progress on exercises
+- **TechniqueEffectiveness**: Stores user ratings of techniques
+- **TechniqueUsageStats**: Tracks technique usage metrics
+- **UserPreferences**: Stores user settings and preferences
+- **UsageQuota**: Manages user usage limits and quotas
 
 ## API Integrations
 
@@ -115,11 +133,27 @@ The application implements comprehensive error handling including:
 
 ## Security Features
 
+### HIPAA-Compliant Security Implementation
+
+The application implements military-grade security controls to ensure HIPAA compliance:
+
+- **Encryption**: AES-256-GCM encryption for all PHI at rest and in transit
+- **Access Control**: Role-based and attribute-based access control with least privilege
+- **Multi-Factor Authentication**: TOTP-based MFA for staff and users
+- **Audit Logging**: Immutable, tamper-evident audit trail for all PHI access
+- **Break-Glass Protocol**: Emergency access procedures with comprehensive logging
+- **Session Security**: Secure cookies, session timeout, and hijacking detection
+- **Security Monitoring**: Anomaly detection and proactive threat monitoring
+
+### Additional Security Controls
+
 - CSRF protection
-- Secure password handling
+- Secure password handling with PBKDF2
 - Token-based authentication
 - Environment variable secrets management
 - Database constraint enforcement
+- Field-level encryption for sensitive data
+- Just-In-Time elevated access for sensitive operations
 
 ## Filesystem Structure
 
@@ -130,8 +164,17 @@ The application implements comprehensive error handling including:
 - `/nlp_*.py`: NLP technique implementation
 - `/replit_auth_new.py` & `/email_auth.py`: Authentication systems
 - `/templates/`: HTML templates
+  - `/templates/security/`: Security-related templates for MFA, etc.
 - `/static/`: CSS, JS, and static assets
 - `/translations/`: Language files
+- `/analytics/`: Analytics dashboard modules
+- `/api/`: API endpoints for various features
+- `/security/`: HIPAA-compliant security implementation
+  - `/security/encryption.py`: Data encryption at rest and in transit
+  - `/security/access_control.py`: Role-based access control and MFA
+  - `/security/audit.py`: Tamper-evident audit logging
+  - `/security/routes.py`: Security-related routes
+  - `/security/rbac_config.json`: Role and permission definitions
 
 ## Known Issues and Limitations
 

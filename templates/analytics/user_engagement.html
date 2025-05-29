@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('user_engagement_analytics', 'User Engagement Analytics') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-card {
+    height: 100%;
+    transition: all 0.3s;
+    border-radius: 10px;
+  }
+  
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+  
+  .dashboard-nav .nav-link {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    border-radius: 10px;
+    margin: 0 5px;
+    transition: all 0.2s;
+  }
+  
+  .dashboard-nav .nav-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+  }
+  
+  .dashboard-nav .nav-link.active {
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">{{ g.translate('user_engagement_analytics', 'User Engagement Analytics') }}</h1>
+    
+    <div class="dropdown">
+      <button class="btn btn-outline-primary dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {{ time_range }}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="timeRangeDropdown">
+        <li><a class="dropdown-item" href="?time_range=7d">{{ g.translate('last_7_days', 'Last 7 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=30d">{{ g.translate('last_30_days', 'Last 30 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=90d">{{ g.translate('last_90_days', 'Last 90 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=1y">{{ g.translate('last_year', 'Last Year') }}</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Analytics Navigation -->
+  <ul class="nav dashboard-nav mb-4">
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/">{{ g.translate('overview', 'Overview') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="/analytics/user-engagement">{{ g.translate('user_engagement', 'User Engagement') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/technique-effectiveness">{{ g.translate('technique_effectiveness', 'Technique Effectiveness') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-progress">{{ g.translate('user_progress', 'User Progress') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/business-metrics">{{ g.translate('business_metrics', 'Business Metrics') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-insights">{{ g.translate('user_insights', 'User Insights') }}</a>
+    </li>
+  </ul>
+  
+  <div class="row g-4">
+    <!-- Metrics -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('active_users', 'Active Users') }}</div>
+          <div class="metric-value">{{ metrics.active_users }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('out_of_total_users', 'Out of') }} {{ metrics.total_users }} {{ g.translate('total_users', 'total users') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('active_rate', 'Active Rate') }}</div>
+          <div class="metric-value">{{ metrics.active_rate }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('users_active_in_period', 'Users active in selected period') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('avg_sessions', 'Avg. Sessions') }}</div>
+          <div class="metric-value">{{ metrics.avg_sessions }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('per_active_user', 'Per active user') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('avg_duration', 'Avg. Duration') }}</div>
+          <div class="metric-value">{{ metrics.avg_duration }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('per_session', 'Per session') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- User Engagement Chart -->
+    <div class="col-lg-8">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">{{ g.translate('user_engagement_trends', 'User Engagement Trends') }}</h5>
+            <div class="btn-group btn-group-sm" role="group">
+              <button type="button" class="btn btn-outline-primary active" data-metric="active-users">{{ g.translate('active_users', 'Active Users') }}</button>
+              <button type="button" class="btn btn-outline-primary" data-metric="message-counts">{{ g.translate('message_count', 'Message Count') }}</button>
+              <button type="button" class="btn btn-outline-primary" data-metric="avg-messages">{{ g.translate('avg_messages', 'Avg. Messages') }}</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="userEngagementChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- New Users Chart -->
+    <div class="col-lg-4">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('new_users', 'New Users') }}</h5>
+          <div class="chart-container">
+            <canvas id="newUsersChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Message Distribution by Hour -->
+    <div class="col-lg-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('message_distribution_by_hour', 'Message Distribution by Hour') }}</h5>
+          <div class="chart-container">
+            <canvas id="messageDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- User Retention -->
+    <div class="col-lg-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('user_retention', 'User Retention') }}</h5>
+          <div class="chart-container">
+            <canvas id="userRetentionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js global configuration
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    Chart.defaults.color = '#6c757d';
+    Chart.defaults.scale.grid.color = 'rgba(0, 0, 0, 0.05)';
+    
+    // Set color palette
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#6e8efb';
+    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim() || '#a4a4a4';
+    const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim() || '#28a745';
+    const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim() || '#dc3545';
+    const infoColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color').trim() || '#17a2b8';
+    const warningColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim() || '#ffc107';
+    
+    // Opacity variants
+    const primaryColorLight = `${primaryColor}40`;
+    const secondaryColorLight = `${secondaryColor}40`;
+    const successColorLight = `${successColor}40`;
+    const dangerColorLight = `${dangerColor}40`;
+    const infoColorLight = `${infoColor}40`;
+    const warningColorLight = `${warningColor}40`;
+    
+    // Get data from API
+    fetch('/analytics/data/user-engagement')
+      .then(response => response.json())
+      .then(data => {
+        // Initialize charts with data
+        initUserEngagementChart(data);
+        initNewUsersChart(data);
+        initMessageDistributionChart(data);
+        initUserRetentionChart(data);
+      })
+      .catch(error => {
+        console.error('Error fetching user engagement data:', error);
+      });
+    
+    function initUserEngagementChart(data) {
+      const ctx = document.getElementById('userEngagementChart').getContext('2d');
+      
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.periods,
+          datasets: [{
+            label: 'Active Users',
+            data: data.active_users,
+            borderColor: primaryColor,
+            backgroundColor: primaryColorLight,
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+      
+      // Set up click handlers for metric buttons
+      const metricBtns = document.querySelectorAll('[data-metric]');
+      metricBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Remove active class from all buttons
+          metricBtns.forEach(b => b.classList.remove('active'));
+          // Add active class to clicked button
+          this.classList.add('active');
+          
+          // Update chart based on selected metric
+          const metric = this.getAttribute('data-metric');
+          if (metric === 'active-users') {
+            chart.data.datasets[0].label = 'Active Users';
+            chart.data.datasets[0].data = data.active_users;
+          } else if (metric === 'message-counts') {
+            chart.data.datasets[0].label = 'Message Count';
+            chart.data.datasets[0].data = data.message_counts;
+          } else if (metric === 'avg-messages') {
+            chart.data.datasets[0].label = 'Avg. Messages per User';
+            chart.data.datasets[0].data = data.avg_messages;
+          }
+          
+          chart.update();
+        });
+      });
+    }
+    
+    function initNewUsersChart(data) {
+      const ctx = document.getElementById('newUsersChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.periods,
+          datasets: [{
+            label: 'New Users',
+            data: data.new_users,
+            backgroundColor: successColor
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    function initMessageDistributionChart(data) {
+      // Simulated hourly distribution if not provided by API
+      const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
+      const distribution = data.hourly_distribution || Array(24).fill(0).map(() => Math.floor(Math.random() * 100));
+      
+      const ctx = document.getElementById('messageDistributionChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [{
+            label: 'Messages',
+            data: distribution,
+            backgroundColor: infoColor
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    function initUserRetentionChart(data) {
+      // Retention data (either from API or simulated)
+      const retentionLabels = data.retention_labels || ['Day 1', 'Day 3', 'Day 7', 'Day 14', 'Day 30', 'Day 60', 'Day 90'];
+      const retentionData = data.retention_data || [100, 68, 52, 43, 35, 30, 28];
+      
+      const ctx = document.getElementById('userRetentionChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: retentionLabels,
+          datasets: [{
+            label: 'Retention Rate',
+            data: retentionData,
+            borderColor: primaryColor,
+            backgroundColor: primaryColorLight,
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

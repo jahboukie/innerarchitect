@@ -1,0 +1,502 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('technique_effectiveness_analytics', 'Technique Effectiveness Analytics') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-card {
+    height: 100%;
+    transition: all 0.3s;
+    border-radius: 10px;
+  }
+  
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+  
+  .dashboard-nav .nav-link {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    border-radius: 10px;
+    margin: 0 5px;
+    transition: all 0.2s;
+  }
+  
+  .dashboard-nav .nav-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+  }
+  
+  .dashboard-nav .nav-link.active {
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  .rating-star {
+    color: gold;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">{{ g.translate('technique_effectiveness_analytics', 'Technique Effectiveness Analytics') }}</h1>
+    
+    <div class="dropdown">
+      <button class="btn btn-outline-primary dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {{ time_range }}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="timeRangeDropdown">
+        <li><a class="dropdown-item" href="?time_range=7d">{{ g.translate('last_7_days', 'Last 7 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=30d">{{ g.translate('last_30_days', 'Last 30 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=90d">{{ g.translate('last_90_days', 'Last 90 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=1y">{{ g.translate('last_year', 'Last Year') }}</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Analytics Navigation -->
+  <ul class="nav dashboard-nav mb-4">
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/">{{ g.translate('overview', 'Overview') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-engagement">{{ g.translate('user_engagement', 'User Engagement') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="/analytics/technique-effectiveness">{{ g.translate('technique_effectiveness', 'Technique Effectiveness') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-progress">{{ g.translate('user_progress', 'User Progress') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/business-metrics">{{ g.translate('business_metrics', 'Business Metrics') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-insights">{{ g.translate('user_insights', 'User Insights') }}</a>
+    </li>
+  </ul>
+  
+  <div class="row g-4">
+    <!-- Metrics -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('most_used_technique', 'Most Used Technique') }}</div>
+          <div class="metric-value text-truncate" id="most-used-technique">{{ metrics.most_used_technique }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('used_times', 'Used') }} <span id="most-used-count">{{ metrics.most_used_count }}</span> {{ g.translate('times', 'times') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('highest_rated', 'Highest Rated') }}</div>
+          <div class="metric-value text-truncate" id="highest-rated-technique">{{ metrics.highest_rated_technique }}</div>
+          <div class="small text-muted mt-2">
+            {{ g.translate('average_rating', 'Average rating') }}: <span id="highest-rating">{{ metrics.highest_rating }}</span>/5
+            <i class="fas fa-star rating-star"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('overall_rating', 'Overall Rating') }}</div>
+          <div class="metric-value" id="overall-rating">{{ metrics.overall_rating }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('average_across_techniques', 'Average across all techniques') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('techniques_used', 'Techniques Used') }}</div>
+          <div class="metric-value" id="techniques-count">{{ metrics.techniques_count }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('different_techniques_applied', 'Different techniques applied') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Technique Usage Chart -->
+    <div class="col-lg-8">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('technique_usage_effectiveness', 'Technique Usage & Effectiveness') }}</h5>
+          <div class="chart-container">
+            <canvas id="techniqueUsageChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Rating Distribution -->
+    <div class="col-lg-4">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('rating_distribution', 'Rating Distribution') }}</h5>
+          <div class="chart-container">
+            <canvas id="ratingDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Technique by Mood -->
+    <div class="col-12">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('technique_effectiveness_by_mood', 'Technique Effectiveness by Mood') }}</h5>
+          <div class="chart-container">
+            <canvas id="techniqueMoodChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Technique Comparison Table -->
+    <div class="col-12">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('technique_comparison', 'Technique Comparison') }}</h5>
+          <div class="table-responsive mt-3">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>{{ g.translate('technique', 'Technique') }}</th>
+                  <th>{{ g.translate('usage_count', 'Usage Count') }}</th>
+                  <th>{{ g.translate('avg_rating', 'Avg. Rating') }}</th>
+                  <th>{{ g.translate('highest_for_mood', 'Highest For Mood') }}</th>
+                  <th>{{ g.translate('most_frequent_context', 'Most Frequent Context') }}</th>
+                </tr>
+              </thead>
+              <tbody id="techniques-table-body">
+                <!-- Will be populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js global configuration
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    Chart.defaults.color = '#6c757d';
+    Chart.defaults.scale.grid.color = 'rgba(0, 0, 0, 0.05)';
+    
+    // Set color palette
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#6e8efb';
+    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim() || '#a4a4a4';
+    const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim() || '#28a745';
+    const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim() || '#dc3545';
+    const infoColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color').trim() || '#17a2b8';
+    const warningColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim() || '#ffc107';
+    
+    // Opacity variants
+    const primaryColorLight = `${primaryColor}40`;
+    const secondaryColorLight = `${secondaryColor}40`;
+    const successColorLight = `${successColor}40`;
+    const dangerColorLight = `${dangerColor}40`;
+    const infoColorLight = `${infoColor}40`;
+    const warningColorLight = `${warningColor}40`;
+    
+    // Color palette for charts
+    const colorPalette = [
+      primaryColor,
+      successColor,
+      infoColor,
+      warningColor,
+      dangerColor,
+      secondaryColor,
+      '#9c27b0',
+      '#2196f3'
+    ];
+    
+    // Technique mapping for display names
+    const techniqueNames = {
+      'reframing': 'Reframing',
+      'pattern_interruption': 'Pattern Interruption',
+      'anchoring': 'Anchoring',
+      'future_pacing': 'Future Pacing',
+      'sensory_language': 'Sensory Language',
+      'meta_model': 'Meta Model'
+    };
+    
+    // Get data from API
+    fetch('/analytics/data/technique-effectiveness')
+      .then(response => response.json())
+      .then(data => {
+        // Initialize charts with data
+        initTechniqueUsageChart(data);
+        initRatingDistributionChart(data);
+        initTechniqueMoodChart(data);
+        populateTechniqueTable(data);
+      })
+      .catch(error => {
+        console.error('Error fetching technique effectiveness data:', error);
+      });
+    
+    function initTechniqueUsageChart(data) {
+      const ctx = document.getElementById('techniqueUsageChart').getContext('2d');
+      
+      // Format technique names for display
+      const techniqueLabels = data.techniques.map(t => techniqueNames[t] || t);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: techniqueLabels,
+          datasets: [
+            {
+              label: 'Usage Count',
+              data: data.usage_counts,
+              backgroundColor: primaryColor,
+              order: 1,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Avg. Rating',
+              data: data.avg_ratings,
+              backgroundColor: 'rgba(0, 0, 0, 0)',
+              borderColor: successColor,
+              borderWidth: 2,
+              type: 'line',
+              order: 0,
+              yAxisID: 'y1',
+              pointBackgroundColor: successColor
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              position: 'left',
+              title: {
+                display: true,
+                text: 'Usage Count'
+              }
+            },
+            y1: {
+              beginAtZero: true,
+              position: 'right',
+              min: 0,
+              max: 5,
+              title: {
+                display: true,
+                text: 'Avg. Rating (0-5)'
+              },
+              grid: {
+                drawOnChartArea: false
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function initRatingDistributionChart(data) {
+      const ctx = document.getElementById('ratingDistributionChart').getContext('2d');
+      
+      // Format technique names for display
+      const techniqueLabels = data.techniques.map(t => techniqueNames[t] || t);
+      
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: techniqueLabels,
+          datasets: [{
+            label: 'Avg. Rating',
+            data: data.avg_ratings,
+            backgroundColor: primaryColorLight,
+            borderColor: primaryColor,
+            pointBackgroundColor: primaryColor,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: primaryColor
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0,
+              max: 5,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function initTechniqueMoodChart(data) {
+      const ctx = document.getElementById('techniqueMoodChart').getContext('2d');
+      
+      // Format technique names for display
+      const techniqueLabels = data.techniques.map(t => techniqueNames[t] || t);
+      
+      // If mood data is available, use it
+      if (data.mood_data && data.mood_data.moods && data.mood_data.data) {
+        const datasets = data.mood_data.moods.map((mood, index) => {
+          return {
+            label: mood,
+            data: data.mood_data.data[index] || Array(techniqueLabels.length).fill(0),
+            backgroundColor: colorPalette[index % colorPalette.length]
+          };
+        });
+        
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: techniqueLabels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      } else {
+        // Fallback to simulated data
+        const moods = ['Anxious', 'Frustrated', 'Sad', 'Confident', 'Neutral'];
+        
+        const datasets = moods.map((mood, index) => {
+          return {
+            label: mood,
+            data: Array(techniqueLabels.length).fill(0).map(() => Math.floor(Math.random() * 100) + 20),
+            backgroundColor: colorPalette[index % colorPalette.length]
+          };
+        });
+        
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: techniqueLabels,
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+              }
+            },
+            scales: {
+              x: {
+                stacked: true,
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    function populateTechniqueTable(data) {
+      const tableBody = document.getElementById('techniques-table-body');
+      
+      // Simulated mood and context data (would come from the API in production)
+      const moodMap = {
+        'reframing': 'Anxious',
+        'pattern_interruption': 'Frustrated',
+        'anchoring': 'Confident',
+        'future_pacing': 'Sad',
+        'sensory_language': 'Neutral',
+        'meta_model': 'Anxious'
+      };
+      
+      const contextMap = {
+        'reframing': 'Work Stress',
+        'pattern_interruption': 'Personal Conflicts',
+        'anchoring': 'Self-Confidence',
+        'future_pacing': 'Goal Setting',
+        'sensory_language': 'Communication',
+        'meta_model': 'Limiting Beliefs'
+      };
+      
+      // Create table rows
+      data.techniques.forEach((technique, index) => {
+        const displayName = techniqueNames[technique] || technique;
+        const usageCount = data.usage_counts[index] || 0;
+        const avgRating = data.avg_ratings[index] || 0;
+        const mood = moodMap[technique] || 'N/A';
+        const context = contextMap[technique] || 'N/A';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${displayName}</td>
+          <td>${usageCount}</td>
+          <td>${avgRating.toFixed(1)} <i class="fas fa-star rating-star"></i></td>
+          <td>${mood}</td>
+          <td>${context}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+  });
+</script>
+{% endblock %}

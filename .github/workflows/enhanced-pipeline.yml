@@ -1,0 +1,433 @@
+name: Enhanced InnerArchitect CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, development, feature/* ]
+  pull_request:
+    branches: [ main, development ]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly security scan at 2 AM on Mondays
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install bandit safety pip-audit
+      
+      - name: Run Bandit security scan
+        run: bandit -r inner_architect -f json -o bandit-results.json || true
+      
+      - name: Run dependency security scan
+        run: |
+          safety check -r requirements.txt --json > safety-results.json || true
+          pip-audit --format json > pip-audit-results.json || true
+      
+      - name: Run HIPAA security tests
+        run: |
+          python -m pip install -e .
+          python -m pip install cryptography pyotp
+          chmod +x security/test_security.sh
+          ./security/test_security.sh || true
+      
+      - name: Upload security results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-results
+          path: |
+            bandit-results.json
+            safety-results.json
+            pip-audit-results.json
+            security_test.log
+            /tmp/security_test_*/
+  
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install flake8 black isort mypy pylint
+      
+      - name: Check code formatting with Black
+        run: black --check .
+      
+      - name: Check import sorting with isort
+        run: isort --check-only --profile black .
+      
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Static type checking with mypy
+        run: mypy inner_architect
+      
+      - name: Run pylint
+        run: pylint inner_architect --output-format=text:pylint-report.txt,json:pylint-report.json || true
+      
+      - name: Upload lint results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-results
+          path: |
+            pylint-report.txt
+            pylint-report.json
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [security-scan, lint]
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: inner_architect_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    
+    strategy:
+      matrix:
+        python-version: [3.11]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pytest-cov pytest-xdist pytest-mock pytest-flask pytest-env
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install -e ".[dev]"; fi
+      
+      - name: Run tests with coverage
+        env:
+          SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@localhost:5432/inner_architect_test
+          REDIS_URL: redis://localhost:6379/0
+          TESTING: true
+          SECRET_KEY: testing_key
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'test_api_key' }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'test_stripe_key' }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY || 'test_stripe_pub_key' }}
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY || 'test_sendgrid_key' }}
+        run: |
+          pytest --cov=inner_architect --cov-report=xml --cov-report=html -xvs
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+      
+      - name: Archive test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            htmlcov/
+            coverage.xml
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      
+      - name: Build and export Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: innerarchitect:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+      
+      - name: Run container security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: innerarchitect:${{ github.sha }}
+          format: 'json'
+          output: 'trivy-results.json'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-results
+          path: trivy-results.json
+      
+      # This is necessary to avoid cache corruption
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  package:
+    name: Package Application
+    runs-on: ubuntu-latest
+    needs: [test, docker-build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build wheel setuptools
+      
+      - name: Build package
+        run: |
+          python -m build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+      
+      # For Docker image to be used in deployment
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha,format=short
+      
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: package
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.innerarchitect.app
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist/
+      
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp deploy.sh deploy/
+          cp -r nginx deploy/
+          cp docker-compose.yml deploy/
+          cp -r .github/workflows/scripts deploy/scripts
+          tar -czf deployment.tar.gz deploy/
+      
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Deploy to staging server
+        env:
+          SERVER_IP: ${{ secrets.STAGING_SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          # Add server to known hosts
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          
+          # Transfer deployment package
+          scp deployment.tar.gz $SERVER_USER@$SERVER_IP:/tmp/
+          
+          # Execute deployment
+          ssh $SERVER_USER@$SERVER_IP '
+            set -e
+            mkdir -p /var/www/innerarchitect/staging
+            tar -xzf /tmp/deployment.tar.gz -C /var/www/innerarchitect/staging --strip-components=1
+            cd /var/www/innerarchitect/staging
+            export DEPLOYMENT_ENV="staging"
+            export NOTIFICATION_EMAIL="${{ secrets.NOTIFICATION_EMAIL }}"
+            bash deploy.sh
+          '
+      
+      - name: Run post-deployment checks
+        env:
+          SERVER_IP: ${{ secrets.STAGING_SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          # Execute health checks
+          ssh $SERVER_USER@$SERVER_IP '
+            cd /var/www/innerarchitect/staging
+            bash scripts/health_check.sh
+          '
+      
+      - name: Notify deployment
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Staging Deployment ${{ job.status == 'success' && 'Succeeded' || 'Failed' }}!\nEnvironment: Staging\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  deploy-production:
+    name: Deploy to Production
+    needs: package
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://innerarchitect.app
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist/
+      
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp deploy.sh deploy/
+          cp -r nginx deploy/
+          cp docker-compose.yml deploy/
+          cp -r .github/workflows/scripts deploy/scripts
+          tar -czf deployment.tar.gz deploy/
+      
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Deploy to production server
+        env:
+          SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          # Add server to known hosts
+          mkdir -p ~/.ssh
+          ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+          
+          # Transfer deployment package
+          scp deployment.tar.gz $SERVER_USER@$SERVER_IP:/tmp/
+          
+          # Execute deployment
+          ssh $SERVER_USER@$SERVER_IP '
+            set -e
+            mkdir -p /var/www/innerarchitect/production
+            tar -xzf /tmp/deployment.tar.gz -C /var/www/innerarchitect/production --strip-components=1
+            cd /var/www/innerarchitect/production
+            export DEPLOYMENT_ENV="production"
+            export NOTIFICATION_EMAIL="${{ secrets.NOTIFICATION_EMAIL }}"
+            bash deploy.sh
+          '
+      
+      - name: Run post-deployment checks
+        env:
+          SERVER_IP: ${{ secrets.PRODUCTION_SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          # Execute health checks
+          ssh $SERVER_USER@$SERVER_IP '
+            cd /var/www/innerarchitect/production
+            bash scripts/health_check.sh
+          '
+      
+      - name: Notify deployment
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Production Deployment ${{ job.status == 'success' && 'Succeeded' || 'Failed' }}!\nEnvironment: Production\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Elevated Access Required - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-key fa-3x text-warning"></i>
+                        <h2 class="card-title mt-3">Elevated Access Required</h2>
+                        <p class="text-muted">This sensitive operation requires additional verification</p>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <p class="mb-0"><i class="fas fa-info-circle me-2"></i> For your security, sensitive operations require re-authentication. This elevated access will remain active for 30 minutes.</p>
+                    </div>
+                    
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Confirm Your Password</label>
+                            <input type="password" name="password" id="password" class="form-control" required>
+                        </div>
+                        
+                        {% if current_user.mfa_enabled %}
+                        <div class="mb-4">
+                            <label for="code" class="form-label">Two-Factor Authentication Code</label>
+                            <input type="text" name="code" id="code" class="form-control text-center" placeholder="6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off">
+                            <div class="form-text">Enter the code from your authenticator app</div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning">Confirm and Continue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('main.index') }}" class="btn btn-link">Cancel and return to dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

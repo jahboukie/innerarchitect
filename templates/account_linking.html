@@ -9,7 +9,7 @@
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
                     <h1 class="h3 mb-4 text-center">Link Your Accounts</h1>
-                    
+
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
@@ -17,12 +17,12 @@
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
-                    
+
                     <div class="alert alert-info mb-4">
                         <i class="fas fa-info-circle me-2"></i>
                         Link your accounts to maintain the same user profile and data across different login methods.
                     </div>
-                    
+
                     {% if current_user.auth_provider == 'replit_auth' %}
                     <div class="card mb-4 p-3 border shadow-sm">
                         <h5 class="mb-3">Link Email Account</h5>
@@ -54,12 +54,11 @@
                             Link your Replit account to access your profile regardless of how you log in.
                         </p>
                         <div class="mt-3">
-                            <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary">Link Replit Account</a>
-                            <div class="form-text mt-2">You'll be redirected to Replit to complete the linking process.</div>
+                            <p class="text-muted">Account linking is no longer available. All users now use email authentication.</p>
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <div class="card p-3 border shadow-sm mb-4">
                         <h5 class="mb-3">Benefits of Linking Accounts</h5>
                         <ul class="list-group list-group-flush">
@@ -81,7 +80,7 @@
                             </li>
                         </ul>
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Profile

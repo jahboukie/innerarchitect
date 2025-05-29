@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Disable Two-Factor Authentication - The Inner Architect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="card-title text-center mb-4">Disable Two-Factor Authentication</h2>
+                    
+                    <div class="alert alert-warning mb-4">
+                        <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i> Security Warning</h6>
+                        <p>Turning off two-factor authentication will make your account less secure. Are you sure you want to continue?</p>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <p>Two-factor authentication is currently <strong class="text-success">enabled</strong> for your account.</p>
+                        <p class="mb-0">Without two-factor authentication, only your password will be required to access your account, which provides less protection for your personal information.</p>
+                    </div>
+                    
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Confirm your password to disable 2FA</label>
+                            <input type="password" name="password" id="password" class="form-control" required>
+                            <div class="form-text">For security, please confirm your password.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('profile.settings') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Disable Two-Factor Authentication</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,565 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ g.translate('business_metrics_analytics', 'Business Metrics Analytics') }} - {{ g.translate('app_name', 'The Inner Architect') }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-card {
+    height: 100%;
+    transition: all 0.3s;
+    border-radius: 10px;
+  }
+  
+  .dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+  
+  .metric-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+  
+  .dashboard-nav .nav-link {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    border-radius: 10px;
+    margin: 0 5px;
+    transition: all 0.2s;
+  }
+  
+  .dashboard-nav .nav-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+  }
+  
+  .dashboard-nav .nav-link.active {
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  .cohort-table {
+    font-size: 0.85rem;
+  }
+  
+  .cohort-table th, .cohort-table td {
+    text-align: center;
+    padding: 0.5rem;
+  }
+  
+  .cohort-cell-high {
+    background-color: rgba(var(--success-color-rgb), 0.2);
+  }
+  
+  .cohort-cell-medium {
+    background-color: rgba(var(--primary-color-rgb), 0.2);
+  }
+  
+  .cohort-cell-low {
+    background-color: rgba(var(--warning-color-rgb), 0.2);
+  }
+  
+  .cohort-cell-very-low {
+    background-color: rgba(var(--danger-color-rgb), 0.2);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">{{ g.translate('business_metrics_analytics', 'Business Metrics Analytics') }}</h1>
+    
+    <div class="dropdown">
+      <button class="btn btn-outline-primary dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {{ time_range }}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="timeRangeDropdown">
+        <li><a class="dropdown-item" href="?time_range=7d">{{ g.translate('last_7_days', 'Last 7 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=30d">{{ g.translate('last_30_days', 'Last 30 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=90d">{{ g.translate('last_90_days', 'Last 90 Days') }}</a></li>
+        <li><a class="dropdown-item" href="?time_range=1y">{{ g.translate('last_year', 'Last Year') }}</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <!-- Analytics Navigation -->
+  <ul class="nav dashboard-nav mb-4">
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/">{{ g.translate('overview', 'Overview') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-engagement">{{ g.translate('user_engagement', 'User Engagement') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/technique-effectiveness">{{ g.translate('technique_effectiveness', 'Technique Effectiveness') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-progress">{{ g.translate('user_progress', 'User Progress') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="/analytics/business-metrics">{{ g.translate('business_metrics', 'Business Metrics') }}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/analytics/user-insights">{{ g.translate('user_insights', 'User Insights') }}</a>
+    </li>
+  </ul>
+  
+  <div class="row g-4">
+    <!-- Metrics -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('total_users', 'Total Users') }}</div>
+          <div class="metric-value">{{ metrics.total_users }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('all_time', 'All time') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('new_users', 'New Users') }}</div>
+          <div class="metric-value">{{ metrics.new_users }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('in_selected_time_period', 'In selected time period') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('premium_subscriptions', 'Premium Subscriptions') }}</div>
+          <div class="metric-value">{{ metrics.premium_subscriptions }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('active_premium_professional', 'Active premium or professional') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="metric-label">{{ g.translate('premium_conversion', 'Premium Conversion') }}</div>
+          <div class="metric-value">{{ metrics.premium_conversion_rate }}</div>
+          <div class="small text-muted mt-2">{{ g.translate('of_total_users', 'Of total users') }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Growth Trends -->
+    <div class="col-lg-8">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">{{ g.translate('growth_trends', 'Growth Trends') }}</h5>
+            <div class="btn-group btn-group-sm" role="group">
+              <button type="button" class="btn btn-outline-primary active" data-metric="new-users">{{ g.translate('new_users', 'New Users') }}</button>
+              <button type="button" class="btn btn-outline-primary" data-metric="new-premium">{{ g.translate('new_premium', 'New Premium') }}</button>
+              <button type="button" class="btn btn-outline-primary" data-metric="conversion-rate">{{ g.translate('conversion_rate', 'Conversion Rate') }}</button>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="growthTrendsChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Subscription Distribution -->
+    <div class="col-lg-4">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('subscription_distribution', 'Subscription Distribution') }}</h5>
+          <div class="chart-container">
+            <canvas id="subscriptionDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Retention Cohort Analysis -->
+    <div class="col-12">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('user_retention_cohort_analysis', 'User Retention Cohort Analysis') }}</h5>
+          <div id="cohortTableContainer" class="table-responsive mt-3">
+            <!-- Cohort table will be added here -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Key Business Metrics -->
+    <div class="col-lg-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('key_business_metrics', 'Key Business Metrics') }}</h5>
+          <div class="mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="fw-medium">{{ g.translate('user_retention_rate', 'User Retention Rate') }}</span>
+              <span class="badge bg-primary">{{ metrics.user_retention_rate }}</span>
+            </div>
+            <div class="progress mb-4" style="height: 8px;">
+              <div class="progress-bar" id="retention-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="fw-medium">{{ g.translate('new_premium_subscriptions', 'New Premium Subscriptions') }}</span>
+              <span class="badge bg-success">{{ metrics.new_premium_subscriptions }}</span>
+            </div>
+            <div class="progress mb-4" style="height: 8px;">
+              <div class="progress-bar bg-success" id="new-premium-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="fw-medium">{{ g.translate('premium_conversion_rate', 'Premium Conversion Rate') }}</span>
+              <span class="badge bg-info">{{ metrics.premium_conversion_rate }}</span>
+            </div>
+            <div class="progress mb-4" style="height: 8px;">
+              <div class="progress-bar bg-info" id="conversion-progress" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Subscription Forecast -->
+    <div class="col-lg-6">
+      <div class="card dashboard-card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="card-title">{{ g.translate('subscription_forecast', 'Subscription Forecast') }}</h5>
+          <div class="chart-container">
+            <canvas id="subscriptionForecastChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js global configuration
+    Chart.defaults.font.family = 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    Chart.defaults.color = '#6c757d';
+    Chart.defaults.scale.grid.color = 'rgba(0, 0, 0, 0.05)';
+    
+    // Set color palette
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#6e8efb';
+    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim() || '#a4a4a4';
+    const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim() || '#28a745';
+    const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim() || '#dc3545';
+    const infoColor = getComputedStyle(document.documentElement).getPropertyValue('--info-color').trim() || '#17a2b8';
+    const warningColor = getComputedStyle(document.documentElement).getPropertyValue('--warning-color').trim() || '#ffc107';
+    
+    // Opacity variants
+    const primaryColorLight = `${primaryColor}40`;
+    const secondaryColorLight = `${secondaryColor}40`;
+    const successColorLight = `${successColor}40`;
+    const dangerColorLight = `${dangerColor}40`;
+    const infoColorLight = `${infoColor}40`;
+    const warningColorLight = `${warningColor}40`;
+    
+    // Parse retention rate for progress bar
+    const retentionRateStr = "{{ metrics.user_retention_rate }}".replace('%', '');
+    const retentionRate = parseFloat(retentionRateStr) || 0;
+    document.getElementById('retention-progress').style.width = `${retentionRate}%`;
+    document.getElementById('retention-progress').setAttribute('aria-valuenow', retentionRate);
+    
+    // Parse conversion rate for progress bar
+    const conversionRateStr = "{{ metrics.premium_conversion_rate }}".replace('%', '');
+    const conversionRate = parseFloat(conversionRateStr) || 0;
+    document.getElementById('conversion-progress').style.width = `${conversionRate}%`;
+    document.getElementById('conversion-progress').setAttribute('aria-valuenow', conversionRate);
+    
+    // Set new premium progress (based on estimated target)
+    const newPremiumCount = parseInt("{{ metrics.new_premium_subscriptions }}") || 0;
+    const newPremiumTarget = 100; // This would come from business targets
+    const newPremiumProgress = Math.min(100, (newPremiumCount / newPremiumTarget) * 100);
+    document.getElementById('new-premium-progress').style.width = `${newPremiumProgress}%`;
+    document.getElementById('new-premium-progress').setAttribute('aria-valuenow', newPremiumProgress);
+    
+    // Get data from API
+    fetch('/analytics/data/business-metrics')
+      .then(response => response.json())
+      .then(data => {
+        // Initialize charts with data
+        initGrowthTrendsChart(data);
+        initSubscriptionDistributionChart(data);
+        createCohortTable(data.retention_data);
+        initSubscriptionForecastChart();
+      })
+      .catch(error => {
+        console.error('Error fetching business metrics data:', error);
+        // Initialize with fallback data if API fails
+        initWithFallbackData();
+      });
+    
+    function initGrowthTrendsChart(data) {
+      const ctx = document.getElementById('growthTrendsChart').getContext('2d');
+      
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.periods,
+          datasets: [{
+            label: 'New Users',
+            data: data.new_users,
+            borderColor: primaryColor,
+            backgroundColor: primaryColorLight,
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+      
+      // Set up click handlers for metric buttons
+      const metricBtns = document.querySelectorAll('[data-metric]');
+      metricBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Remove active class from all buttons
+          metricBtns.forEach(b => b.classList.remove('active'));
+          // Add active class to clicked button
+          this.classList.add('active');
+          
+          // Update chart based on selected metric
+          const metric = this.getAttribute('data-metric');
+          if (metric === 'new-users') {
+            chart.data.datasets[0].label = 'New Users';
+            chart.data.datasets[0].data = data.new_users;
+            chart.options.scales.y.beginAtZero = true;
+            chart.options.scales.y.ticks.callback = undefined;
+          } else if (metric === 'new-premium') {
+            chart.data.datasets[0].label = 'New Premium';
+            chart.data.datasets[0].data = data.new_premium;
+            chart.options.scales.y.beginAtZero = true;
+            chart.options.scales.y.ticks.callback = undefined;
+          } else if (metric === 'conversion-rate') {
+            chart.data.datasets[0].label = 'Conversion Rate';
+            chart.data.datasets[0].data = data.conversion_rates;
+            chart.options.scales.y.beginAtZero = true;
+            chart.options.scales.y.ticks.callback = function(value) {
+              return value + '%';
+            };
+          }
+          
+          chart.update();
+        });
+      });
+    }
+    
+    function initSubscriptionDistributionChart(data) {
+      const ctx = document.getElementById('subscriptionDistributionChart').getContext('2d');
+      
+      // Use API data if available, otherwise fallback
+      const labels = data.subscription_distribution?.labels || ['Free', 'Premium', 'Professional'];
+      const counts = data.subscription_distribution?.counts || [70, 20, 10];
+      
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: counts,
+            backgroundColor: [
+              secondaryColor,
+              primaryColor,
+              successColor
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            }
+          }
+        }
+      });
+    }
+    
+    function createCohortTable(retentionData) {
+      const container = document.getElementById('cohortTableContainer');
+      
+      // Check if we have valid retention data
+      if (!retentionData || !retentionData.cohorts || !retentionData.weeks || !retentionData.data) {
+        // Create a placeholder message
+        container.innerHTML = '<div class="alert alert-info">Retention data is not available for the selected period.</div>';
+        return;
+      }
+      
+      // Create table
+      const table = document.createElement('table');
+      table.className = 'table table-bordered cohort-table';
+      
+      // Create header
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      headerRow.innerHTML = `<th>Cohort</th>`;
+      
+      // Add week columns
+      retentionData.weeks.forEach(week => {
+        headerRow.innerHTML += `<th>${week}</th>`;
+      });
+      
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      
+      // Create body
+      const tbody = document.createElement('tbody');
+      
+      // Add rows for each cohort
+      retentionData.cohorts.forEach((cohort, cohortIndex) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<th scope="row">${cohort}</th>`;
+        
+        // Add cells for each week
+        retentionData.data[cohortIndex].forEach(retention => {
+          let cellClass = '';
+          
+          // Apply color classes based on retention rate
+          if (retention === '-') {
+            cellClass = '';
+          } else if (retention >= 70) {
+            cellClass = 'cohort-cell-high';
+          } else if (retention >= 50) {
+            cellClass = 'cohort-cell-medium';
+          } else if (retention >= 30) {
+            cellClass = 'cohort-cell-low';
+          } else {
+            cellClass = 'cohort-cell-very-low';
+          }
+          
+          const displayValue = retention === '-' ? '-' : `${retention}%`;
+          row.innerHTML += `<td class="${cellClass}">${displayValue}</td>`;
+        });
+        
+        tbody.appendChild(row);
+      });
+      
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+    
+    function initSubscriptionForecastChart() {
+      const ctx = document.getElementById('subscriptionForecastChart').getContext('2d');
+      
+      // Simple forecasting model (would be more sophisticated in real app)
+      const currentValue = parseInt("{{ metrics.premium_subscriptions }}") || 235;
+      const growthRate = 0.12; // 12% month-over-month growth
+      
+      const forecastData = [currentValue];
+      for (let i = 1; i <= 6; i++) {
+        forecastData.push(Math.round(currentValue * Math.pow(1 + growthRate, i)));
+      }
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Current', '+1 Month', '+2 Months', '+3 Months', '+4 Months', '+5 Months', '+6 Months'],
+          datasets: [{
+            label: 'Premium Subscriptions',
+            data: forecastData,
+            borderColor: primaryColor,
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `Forecast: ${context.raw} subscribers`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+    
+    function initWithFallbackData() {
+      // Fallback data for charts if API fails
+      const fallbackData = {
+        periods: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        new_users: [65, 85, 50, 45],
+        new_premium: [12, 15, 8, 10],
+        conversion_rates: [18.5, 17.6, 16.0, 22.2],
+        subscription_distribution: {
+          labels: ['Free', 'Premium', 'Professional'],
+          counts: [1065, 178, 57]
+        },
+        retention_data: {
+          cohorts: ['Jun 1-7', 'Jun 8-14', 'Jun 15-21', 'Jun 22-28', 'Jun 29-Jul 5', 'Jul 6-12', 'Jul 13-19', 'Jul 20-26'],
+          weeks: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+          data: [
+            [100, 68, 52, 43, 35, 30, 28, 26],
+            [100, 72, 58, 48, 40, 35, 32, '-'],
+            [100, 75, 60, 50, 42, 38, '-', '-'],
+            [100, 70, 55, 45, 38, '-', '-', '-'],
+            [100, 68, 52, 43, '-', '-', '-', '-'],
+            [100, 72, 58, '-', '-', '-', '-', '-'],
+            [100, 75, '-', '-', '-', '-', '-', '-'],
+            [100, '-', '-', '-', '-', '-', '-', '-']
+          ]
+        }
+      };
+      
+      initGrowthTrendsChart(fallbackData);
+      initSubscriptionDistributionChart(fallbackData);
+      createCohortTable(fallbackData.retention_data);
+      initSubscriptionForecastChart();
+    }
+  });
+</script>
+{% endblock %}

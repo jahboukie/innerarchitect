@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% import 'i18n_components.html' as i18n %}
+
+{% block title %}{{ t('data_request', 'Data Request') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">{{ t('data_request', 'Data Request') }}</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        {{ t('data_request_intro', 'In accordance with the Personal Information Protection and Electronic Documents Act (PIPEDA), you can request access to, correction of, or deletion of your personal information.') }}
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <p>{{ t('request_processing_time', 'We will process your request within 30 days as required by PIPEDA. You will receive a confirmation email once your request has been received, and another notification when it has been completed.') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">{{ t('access_request', 'Access Request') }}</h3>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <p>{{ t('access_request_description', 'Request a copy of all personal data we hold about you, including account information, usage data, and interactions.') }}</p>
+                    <p class="text-muted small">{{ t('access_request_note', 'The data will be provided in a machine-readable format.') }}</p>
+                    <div class="mt-auto">
+                        <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#accessRequestModal">
+                            {{ t('request_data_access', 'Request Data Access') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">{{ t('correction_request', 'Correction Request') }}</h3>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <p>{{ t('correction_request_description', 'Request corrections to inaccurate personal information that we hold about you.') }}</p>
+                    <p class="text-muted small">{{ t('correction_request_note', 'Please specify the information you believe is inaccurate and provide the correct information.') }}</p>
+                    <div class="mt-auto">
+                        <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#correctionRequestModal">
+                            {{ t('request_data_correction', 'Request Data Correction') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">{{ t('deletion_request', 'Deletion Request') }}</h3>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <p>{{ t('deletion_request_description', 'Request deletion of your personal information and account.') }}</p>
+                    <p class="text-muted small">{{ t('deletion_request_note', 'This action cannot be undone. Your account and all associated data will be permanently deleted.') }}</p>
+                    <div class="mt-auto">
+                        <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#deletionRequestModal">
+                            {{ t('request_data_deletion', 'Request Data Deletion') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-header bg-light">
+                    <h3 class="h5 mb-0">{{ t('previous_requests', 'Previous Requests') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if previous_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>{{ t('request_id', 'Request ID') }}</th>
+                                        <th>{{ t('request_type', 'Type') }}</th>
+                                        <th>{{ t('request_date', 'Date') }}</th>
+                                        <th>{{ t('request_status', 'Status') }}</th>
+                                        <th>{{ t('completion_date', 'Completed') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in previous_requests %}
+                                        <tr>
+                                            <td>{{ request.request_id }}</td>
+                                            <td>
+                                                {% if request.request_type == 'access' %}
+                                                    <span class="badge bg-primary">{{ t('access', 'Access') }}</span>
+                                                {% elif request.request_type == 'correction' %}
+                                                    <span class="badge bg-info">{{ t('correction', 'Correction') }}</span>
+                                                {% elif request.request_type == 'deletion' %}
+                                                    <span class="badge bg-danger">{{ t('deletion', 'Deletion') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ i18n.format_date_component(request.timestamp) }}</td>
+                                            <td>
+                                                {% if request.status == 'pending' %}
+                                                    <span class="badge bg-warning text-dark">{{ t('pending', 'Pending') }}</span>
+                                                {% elif request.status == 'completed' %}
+                                                    <span class="badge bg-success">{{ t('completed', 'Completed') }}</span>
+                                                {% elif request.status == 'denied' %}
+                                                    <span class="badge bg-danger">{{ t('denied', 'Denied') }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if request.completion_date %}
+                                                    {{ i18n.format_date_component(request.completion_date) }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted my-4">{{ t('no_previous_requests', 'You have not made any data requests yet.') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow-sm border-light">
+                <div class="card-body">
+                    <h3 class="h5">{{ t('privacy_rights', 'Your Privacy Rights Under PIPEDA') }}</h3>
+                    <p>{{ t('pipeda_rights_explanation', 'The Personal Information Protection and Electronic Documents Act (PIPEDA) is Canada\'s federal privacy law for private-sector organizations. Under PIPEDA, you have the right to:') }}</p>
+                    <ul>
+                        <li>{{ t('know_why_info_collected', 'Know why an organization collects, uses, or discloses your personal information') }}</li>
+                        <li>{{ t('expect_handling', 'Expect an organization to collect, use, or disclose your personal information reasonably and appropriately') }}</li>
+                        <li>{{ t('personal_info_accuracy', 'Know who in the organization is responsible for protecting your personal information') }}</li>
+                        <li>{{ t('expect_protection', 'Expect an organization to protect your personal information') }}</li>
+                        <li>{{ t('correct_info', 'Request correction of your personal information') }}</li>
+                        <li>{{ t('file_complaint', 'File a complaint against an organization') }}</li>
+                    </ul>
+                    <p>{{ t('privacy_commissioner', 'For more information, visit the') }} <a href="https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/" target="_blank" rel="noopener noreferrer">{{ t('privacy_commissioner_site', 'Office of the Privacy Commissioner of Canada') }}</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Access Request Modal -->
+<div class="modal fade" id="accessRequestModal" tabindex="-1" aria-labelledby="accessRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('privacy.create_data_request') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ g.csrf_token }}">
+                <input type="hidden" name="request_type" value="access">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accessRequestModalLabel">{{ t('data_access_request', 'Data Access Request') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ t('access_request_explanation', 'You are requesting a copy of all personal data we hold about you. This includes:') }}</p>
+                    <ul>
+                        <li>{{ t('account_information', 'Account information') }}</li>
+                        <li>{{ t('user_preferences', 'User preferences and settings') }}</li>
+                        <li>{{ t('usage_history', 'Usage history and interactions') }}</li>
+                        <li>{{ t('consent_records', 'Consent records') }}</li>
+                    </ul>
+                    
+                    <div class="mb-3">
+                        <label for="access_reason" class="form-label">{{ t('additional_information', 'Additional Information (Optional)') }}</label>
+                        <textarea class="form-control" id="access_reason" name="request_details[reason]" rows="3" placeholder="{{ t('access_reason_placeholder', 'Please let us know if you are looking for specific information...') }}"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="access_confirmation" name="confirmation" required>
+                        <label class="form-check-label" for="access_confirmation">
+                            {{ t('access_confirmation', 'I confirm that I am requesting access to my personal data') }}
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel', 'Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ t('submit_request', 'Submit Request') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Correction Request Modal -->
+<div class="modal fade" id="correctionRequestModal" tabindex="-1" aria-labelledby="correctionRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('privacy.create_data_request') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ g.csrf_token }}">
+                <input type="hidden" name="request_type" value="correction">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title" id="correctionRequestModalLabel">{{ t('data_correction_request', 'Data Correction Request') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ t('correction_request_explanation', 'Please provide details about the information you would like to correct.') }}</p>
+                    
+                    <div class="mb-3">
+                        <label for="correction_data" class="form-label">{{ t('information_to_correct', 'Information to Correct') }} <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="correction_data" name="request_details[current_data]" rows="3" placeholder="{{ t('correction_data_placeholder', 'Please describe the current information that is incorrect...') }}" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="correction_new_data" class="form-label">{{ t('corrected_information', 'Corrected Information') }} <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="correction_new_data" name="request_details[new_data]" rows="3" placeholder="{{ t('correction_new_data_placeholder', 'Please provide the correct information...') }}" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="correction_reason" class="form-label">{{ t('reason_for_correction', 'Reason for Correction') }}</label>
+                        <textarea class="form-control" id="correction_reason" name="request_details[reason]" rows="2" placeholder="{{ t('correction_reason_placeholder', 'Please explain why this correction is needed...') }}"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="correction_confirmation" name="confirmation" required>
+                        <label class="form-check-label" for="correction_confirmation">
+                            {{ t('correction_confirmation', 'I confirm that the information provided is accurate and should replace the existing data') }}
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel', 'Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ t('submit_request', 'Submit Request') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Deletion Request Modal -->
+<div class="modal fade" id="deletionRequestModal" tabindex="-1" aria-labelledby="deletionRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('privacy.create_data_request') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ g.csrf_token }}">
+                <input type="hidden" name="request_type" value="deletion">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deletionRequestModalLabel">{{ t('data_deletion_request', 'Data Deletion Request') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <p><strong>{{ t('warning', 'Warning:') }}</strong> {{ t('deletion_warning', 'This action cannot be undone. Your account and all associated data will be permanently deleted.') }}</p>
+                    </div>
+                    
+                    <p>{{ t('deletion_explanation', 'When you request deletion of your data, we will:') }}</p>
+                    <ul>
+                        <li>{{ t('delete_account', 'Delete your account and profile information') }}</li>
+                        <li>{{ t('delete_usage_data', 'Delete your usage history and interactions') }}</li>
+                        <li>{{ t('delete_settings', 'Delete your preferences and settings') }}</li>
+                        <li>{{ t('delete_created_content', 'Delete any content you have created') }}</li>
+                    </ul>
+                    
+                    <div class="mb-3">
+                        <label for="deletion_reason" class="form-label">{{ t('reason_for_deletion', 'Reason for Deletion (Optional)') }}</label>
+                        <textarea class="form-control" id="deletion_reason" name="request_details[reason]" rows="3" placeholder="{{ t('deletion_reason_placeholder', 'Please let us know why you are requesting deletion...') }}"></textarea>
+                        <small class="form-text text-muted">{{ t('feedback_helps', 'Your feedback helps us improve our service.') }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="deletion_confirm_password" class="form-label">{{ t('confirm_password', 'Confirm Password') }} <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="deletion_confirm_password" name="password" required>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="deletion_confirmation" name="confirmation" required>
+                        <label class="form-check-label" for="deletion_confirmation">
+                            {{ t('deletion_confirmation', 'I understand that this action is permanent and cannot be undone') }}
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('cancel', 'Cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">{{ t('request_deletion', 'Request Deletion') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
